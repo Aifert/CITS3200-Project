@@ -60,4 +60,4 @@ This will launch the web application. You should be able to see status of applic
 
 Changes made will be automatically updated, so you do not have to keep restarting docker.
 
-The application will be available at `http://127.0.0.1:5000/`
+The application will be available at `http://127.0.0.1:8000/`
