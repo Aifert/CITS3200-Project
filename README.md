@@ -13,3 +13,32 @@ Quick-access hyperlinks:
 |22705919|Jakem Pinchin |JakePinchin    |
 |23334811|Joseph Newman |RedBlueCarrots |
 |23165388|Sigmund Howe  |SigHowe        |
+
+
+## Getting Started / Installation Guide
+
+### Prerequisites
+- Python 3.8+
+- pip
+- Docker
+
+1. **Clone the Respository**:
+```bash
+git clone https://github.com/GravityWorld/CITS3200-Project.git
+
+cd CITS3200-Project #Enter into cloned repository
+```
+
+2. **Start up Docker**
+
+**Make sure you have Docker Desktop Installed (if not https://docs.docker.com/desktop/install/mac-install/)**
+
+```bash
+docker-compose up --build
+```
+
+This will start the containers for the project. You should be able to see status of application in your terminal.
+
+Changes made will be automatically updated, so you do not have to keep restarting docker.
+
+The application will be available at `http://127.0.0.1:5000/`
