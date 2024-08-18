@@ -6,6 +6,8 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+    environment:
+      - FLASK_ENV=development
   db:
     image: postgres:13
     environment:
