@@ -37,7 +37,26 @@ cd CITS3200-Project #Enter into cloned repository
 docker-compose up --build
 ```
 
-This will start the containers for the project. You should be able to see status of application in your terminal.
+3. **Connect to db**
+
+**Default credentials for db is user: user, password: password, to connect**
+
+Open your docker desktop, click into `CITS3200-Project`, then click into `postgres:13`, then click `Exec`
+
+```bash
+psql -U user -d mydb
+```
+
+OR alternatively, open a Terminal and do
+
+```
+docker exec -it cits3200-project-db-1 bash
+
+psql -U user -d mydb
+```
+
+
+This will launch the web application. You should be able to see status of application in your terminal.
 
 Changes made will be automatically updated, so you do not have to keep restarting docker.
 
