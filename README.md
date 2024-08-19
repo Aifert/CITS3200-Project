@@ -31,7 +31,21 @@ cd CITS3200-Project #Enter into cloned repository
 
 2. **Start up Docker**
 
-**Make sure you have Docker Desktop Installed (if not https://docs.docker.com/desktop/install/mac-install/)**
+**Make sure you have Docker Desktop Installed**
+
+- MAC - https://docs.docker.com/desktop/install/mac-install/
+- Windows - https://docs.docker.com/desktop/install/windows-install/
+- Linux - https://docs.docker.com/desktop/install/linux-install/
+
+Before continuing make sure the docker desktop you've downloaded is running, run it by double clicking on it.
+
+If you are using WSL on windows, activate WSL by doing in terminal
+
+```bash
+wsl
+```
+
+Then
 
 ```bash
 docker-compose up --build
