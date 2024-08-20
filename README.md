@@ -18,10 +18,23 @@ Quick-access hyperlinks:
 
 ## Running the Cits3200 Next App
 
+Developed on:
+
+- Ubuntu 22.04.3 LTS WSL 2
+
 Before you start, ensure you have the following installed:
 
 - Node.js (version 14.x or higher recommended)
 - npm (comes with Node.js)
+
+0. Installation of Node.js
+
+- sudo apt update
+- curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+- sudo apt install -y nodejs
+
+- node -v (Should return v20.16.0)
+- npm -v (Should return 10.8.1)
 
 1. Navigate to the Project Directory
    After cloning the repository from github, you need to navigate into the project directory:
