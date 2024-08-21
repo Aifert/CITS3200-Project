@@ -83,15 +83,28 @@ The application will now run in production mode on http://localhost:3000 (or som
 Project Structure
 Here's a brief overview of the project's structure:
 
-my-next-app/
-├── pages/ # Page components (each file corresponds to a route)
-│ ├── index.js # Home page (renders at '/')
-│ └── api/ # API routes (e.g., '/api/hello')
-├── public/ # Public assets (images, fonts, etc.)
-├── styles/ # Global CSS and component-specific styles
-├── .gitignore # Git ignore file
-├── package.json # Dependencies and scripts
-├── README.md # Project documentation
-└── ...
+```plaintext
+CITS3200-Project/
+├── frontend/
+│   └── cits3200-next-app/
+│       ├── pages/
+│       │   ├── api/
+│       │   │   └── auth/
+│       │   │       └── [...nextauth].js  # NextAuth.js API route for authentication
+│       ├── src/
+│       │   ├── app/
+│       │   │   ├── layout.js             # Global layout for the application
+│       │   │   ├── page.js               # Root page (renders at `/`)
+│       │   │   ├── login/
+│       │   │   │   └── page.js           # Login page (renders at `/login`)
+│       │   ├── components/               # Reusable UI components
+│       │   │   ├── Header.js             # Header component
+│       │   │   ├── Footer.js             # Footer component
+│       │   ├── styles/                   # Global and component-specific styles
+│       ├── public/                       # Static assets (images, fonts, etc.)
+│       ├── .env.local                    # Environment variables for local development
+│       ├── next.config.js                # Next.js configuration file
+│       ├── package.json                  # Dependencies and scripts
+└──     └── README.md                     # Project documentation (this file)
 
 ---
