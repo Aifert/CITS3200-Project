@@ -1,5 +1,7 @@
 # RRMS API ‒ SoC ↔ WebServer
 
+> All API calls use JSON and HTTP unless otherwise specified
+
 ## SoC Initialisation
 
 ### POST /init
