@@ -55,20 +55,20 @@ See example for structure
 #### Parameters Example
 
 
-``{    
-	"soc-id": 162.475.163.825.162.9875,
-	"timestamp": 1724322719,
-	"frequencies": [162.475, 163.825, 162.9875],
-	"sample-rate": 5000, 
-	"usage": {
-		162.475: 0.5, 
-		163.825: 0.2, 
-		162.987: 0.0 }, 
-	"strength": {        
-		162.475: 0.5, 
-		163.825: 6.2, 
-		162.9875: 0.0 }
-	}``
+	{    
+		"soc-id": 162.475.163.825.162.9875,
+		"timestamp": 1724322719,
+		"frequencies": [162.475, 163.825, 162.9875],
+		"sample-rate": 5000, 
+		"usage": {
+			162.475: 0.5, 
+			163.825: 0.2, 
+			162.987: 0.0 }, 
+		"strength": {        
+			162.475: 0.5, 
+			163.825: 6.2, 
+			162.9875: 0.0 }
+	}
 
 
 #### Responses
@@ -107,30 +107,30 @@ On 200 response code, the parameter "start-stream" will indicate if the web serv
 
 #### Parameters Example
 
-``{    
-	"soc-id": 162.475.163.825.162.9875, 
-	"timestamps": {        
-		1724322719: {            
-			"usage": {                
-				162.475: 0.5, 
-				163.825: 0.2, 
-				162.987: 0.0 }            
-			"strength": {                
-				162.475: 0.5, 
-				163.825: 6.2, 
-				162.987: 0.0 } }        
-		1724322724: {            
-			"usage": {                
-				162.475: 0.5, 
-				163.825: 0.2, 
-				162.987: 0.0 }            
-			"strength": {                
-				162.475: 0.5, 
-				163.825: 6.2, 
-				162.987: 0.0 } }, 
-	"frequencies": [162.475, 163.825, 162.9875]    
-	"sample-rate": 5000
-}``
+	{    
+		"soc-id": 162.475.163.825.162.9875, 
+		"timestamps": {        
+			1724322719: {            
+				"usage": {                
+					162.475: 0.5, 
+					163.825: 0.2, 
+					162.987: 0.0 }            
+				"strength": {                
+					162.475: 0.5, 
+					163.825: 6.2, 
+					162.987: 0.0 } }        
+			1724322724: {            
+				"usage": {                
+					162.475: 0.5, 
+					163.825: 0.2, 
+					162.987: 0.0 }            
+				"strength": {                
+					162.475: 0.5, 
+					163.825: 6.2, 
+					162.987: 0.0 } }, 
+		"frequencies": [162.475, 163.825, 162.9875]    
+		"sample-rate": 5000
+	}
 
 
 #### Responses
@@ -167,11 +167,11 @@ SoC Monitoring requires a constant connection, so will utilise websockets for th
 
 #### Parameters Example
 
-``{    
-	"type": "soc-init", 
-	"soc-id": 162.475.163.825.162.9875, 
-	"frequencies": [162.475, 163.825, 162.9875]
-}``
+	{    
+		"type": "soc-init", 
+		"soc-id": 162.475.163.825.162.9875, 
+		"frequencies": [162.475, 163.825, 162.9875]
+	}
 
 
 #### Response Parameters
@@ -186,11 +186,11 @@ SoC Monitoring requires a constant connection, so will utilise websockets for th
 
 #### Response Parameters Example
 
-``{    
-	"type": "soc-init", 
-	"frequency": 162.475, 
-	"confirm": true
-}``
+	{    
+		"type": "soc-init", 
+		"frequency": 162.475, 
+		"confirm": true
+	}
 
 
 #### When to Use
@@ -213,10 +213,10 @@ Soc-init is designed to be originally sent from a SoC
 
 #### Parameters Example
 
-``{    
-	"type": "soc-abort", 
-	"frequency": 162.475
-}``
+	{    
+		"type": "soc-abort", 
+		"frequency": 162.475
+	}
 
 
 #### Response Parameters
@@ -232,10 +232,10 @@ Soc-init is designed to be originally sent from a SoC
 
 #### Response Parameters Example
 
-``{    
-	"type": "soc-abort", 
-	"frequency": 162.475
-}``
+	{    
+		"type": "soc-abort", 
+		"frequency": 162.475
+	}
 
 This is how the web server can indicate to an SoC that live RoIP is no longer required
 
