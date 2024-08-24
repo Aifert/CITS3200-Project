@@ -31,6 +31,8 @@
         document.getElementById('sdrForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
+            console.log('submitting')
+
             const data = document.getElementById('data').value;
             const parsedData = JSON.parse(data);
 
