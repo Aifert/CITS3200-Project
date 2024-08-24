@@ -2,6 +2,8 @@
 
 > All API calls use JSON and HTTP unless otherwise specified
 
+>DISCLAIMER: This API is flexible and subject to change
+
 ## SoC Initialisation
 
 ### HTTP from SoC → WebServer Analytics
