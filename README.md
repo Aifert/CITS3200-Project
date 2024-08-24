@@ -75,3 +75,14 @@ This will launch the web application. You should be able to see status of applic
 Changes made will be automatically updated, so you do not have to keep restarting docker.
 
 The application will be available at `http://127.0.0.1:8000/`
+
+### Web Server configuration
+
+A Web server has been made available.
+
+- IP : 20.213.23.98
+- Ports available : [8000, 5001]
+
+Sample request you can make to interact with webserver
+
+```http://20.213.23.98/8000```

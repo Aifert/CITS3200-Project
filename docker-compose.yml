@@ -11,6 +11,18 @@ services:
       - FLASK_APP=src/app.py
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=8000
+
+  sdr:
+    build:
+      context: .
+      dockerfile: Dockerfile.sdr
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=5001
+
   db:
     image: postgres:13
     environment:
