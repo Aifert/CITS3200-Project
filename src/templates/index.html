@@ -34,7 +34,7 @@
             const data = document.getElementById('data').value;
             const parsedData = JSON.parse(data);
 
-            fetch('http://127.0.0.1:5001/sdr', {  // Assuming SDR endpoint is at port 5000
+            fetch('http://127.0.0.1:5001/sdr', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
