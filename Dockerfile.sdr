@@ -1,15 +1,23 @@
-# Dockerfile.sdr
-FROM python:3.10
+# Use the official Node.js image as the base image
+FROM node:18-alpine
 
-WORKDIR /app
+# Set the working directory in the container
+WORKDIR /src
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the package.json and package-lock.json (if available) to the working directory
+COPY package*.json ./
 
+RUN npm install -g nodemon
+
+# Install the dependencies
+RUN npm install
+
+# Copy the rest of the application code to the working directory
 COPY . .
 
-# Set environment variables
-ENV FLASK_APP=src/sdr_simulation.py
-ENV FLASK_ENV=development
+# Expose the port the app runs on
+EXPOSE 5001
 
-CMD ["flask", "--debug", "run"]
+# Command to start the Node.js application
+ENTRYPOINT [ "nodemon","backend/sdr_simulation.js" ]
+CMD ["npm", "run", "dev"]
