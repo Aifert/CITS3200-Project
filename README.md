@@ -137,6 +137,14 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 You can start web server by doing (Make sure you are in the clone project directory)
 
+If you want to set up CI/CD before starting add these env values to your .env file
+```bash
+WEBHOOK_API_KEY="<github_webhook_key>"
+GITHUB_API_KEY="<github_api_key>"
+GITHUB_USERNAME="<github_username>"
+GITHUB_REPO="<user>/<github_repo_name>"
+```
+
 ```bash
 $ sudo docker-compose up --build
 ```
