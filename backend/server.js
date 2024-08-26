@@ -26,6 +26,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const secret = process.env.WEBHOOK_API_KEY;
 
+console.log(secret);
+
 function verifySignature(req, res, buf) {
     const signature = `sha1=${crypto
         .createHmac('sha1', secret)
