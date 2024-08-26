@@ -1,14 +1,15 @@
-FROM python:3.10
+FROM node:18-alpine
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY package*.json ./
+
+RUN npm install -g nodemon
+
+RUN npm install
 
 COPY . .
 
-# Set environment variables
-ENV FLASK_APP=src/app.py
-ENV FLASK_ENV=development
+EXPOSE 8000
 
-CMD ["flask", "--debug", "run"]
+ENTRYPOINT [ "nodemon","backend/server.js" ]
