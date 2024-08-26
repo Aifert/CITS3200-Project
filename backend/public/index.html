@@ -31,10 +31,8 @@
         document.getElementById('sdrForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const data = { "data": document.getElementById('data').value };
+            const data = document.getElementById('data').value
             const parsedData = JSON.parse(data);
-
-            console.log(parsedData);
 
             fetch('http://127.0.0.1:5001/sdr', {
                 method: 'POST',
