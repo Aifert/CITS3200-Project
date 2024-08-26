@@ -47,9 +47,10 @@ app.post('/webhook_handler', (req, res) => {
     verifySignature(req, res, req.rawBody);
 
     const payload = req.body;
+    const url = `https://${process.env.GITHUB_USERNAME}:${process.env.GITHUB_API_KEY}@github.com/${process.env.GITHUB_REPO}.git`
 
     if (payload.ref === 'refs/heads/main') {
-        exec('git pull origin main', { cwd: '~/CITS3200-Project/CITS3200-Project' }, (err, stdout, stderr) => {
+        exec(`git pull ${url}`, { cwd: '/app', shell: '/bin/bash' }, (err, stdout, stderr) => {
             if (err) {
                 console.error(`Error pulling latest changes: ${err.message}`);
                 return res.status(500).send('Failed to update repository.');

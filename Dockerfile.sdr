@@ -13,4 +13,4 @@ COPY . .
 
 EXPOSE 5001
 
-ENTRYPOINT [ "nodemon","backend/sdr_simulation.js" ]
+ENTRYPOINT [ "nodemon", "--legacy-watch", "backend/sdr_simulation.js" ]
