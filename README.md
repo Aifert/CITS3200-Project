@@ -24,9 +24,9 @@ Quick-access hyperlinks:
 
 1. **Clone the Respository**:
 ```bash
-git clone https://github.com/GravityWorld/CITS3200-Project.git
+$ git clone https://github.com/GravityWorld/CITS3200-Project.git
 
-cd CITS3200-Project #Enter into cloned repository
+$ cd CITS3200-Project #Enter into cloned repository
 ```
 
 2. **Start up Docker**
@@ -42,13 +42,13 @@ Before continuing make sure the docker desktop you've downloaded is running, run
 If you are using WSL on windows, activate WSL by doing in terminal
 
 ```bash
-wsl
+$ wsl
 ```
 
 Then
 
 ```bash
-docker-compose up --build
+$ docker-compose up --build
 ```
 
 3. **Connect to db**
@@ -58,15 +58,15 @@ docker-compose up --build
 Open your docker desktop, click into `CITS3200-Project`, then click into `postgres:13`, then click `Exec`
 
 ```bash
-psql -U user -d mydb
+$ psql -U user -d mydb
 ```
 
 OR alternatively, open a Terminal and do
 
 ```
-docker exec -it cits3200-project-db-1 bash
+$ docker exec -it cits3200-project-db-1 bash
 
-psql -U user -d mydb
+$ psql -U user -d mydb
 ```
 
 
@@ -80,9 +80,21 @@ The application will be available at `http://127.0.0.1:8000/`
 
 A Web server has been made available.
 
+To host it on your own Virtual Machine (Assuming you are currently in your virtual machine)
+
+You can start it by doing
+
+```bash
+$ sudo docker-compose up --build
+```
+
+and the application should be available at `http://<your_server_ip>:8000`
+
+Our server is hosted on these credentials
+
 - IP : 20.213.23.98
 - Ports available : [8000, 5001]
 
 Sample request you can make to interact with webserver
 
-```http://20.213.23.98/8000```
+```http://20.213.23.98:8000```
