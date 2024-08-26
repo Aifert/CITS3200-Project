@@ -17,10 +17,12 @@ Quick-access hyperlinks:
 
 ## Getting Started / Installation Guide
 
-### Prerequisites
-- Python 3.8+
-- pip
+### Prerequisites (for your local machine)
 - Docker
+
+For hosting on your own web server
+- Virtual Machine
+- Nginx on your Virtual Machine
 
 1. **Clone the Respository**:
 ```bash
@@ -51,7 +53,7 @@ Then
 $ docker-compose up --build
 ```
 
-3. **Connect to db**
+3. **Connect to db (not needed in setup)**
 
 **Default credentials for db is user: user, password: password, to connect**
 
@@ -82,7 +84,58 @@ A Web server has been made available.
 
 To host it on your own Virtual Machine (Assuming you are currently in your virtual machine)
 
-You can start it by doing
+Install Nginx if you haven't already by doing
+```bash
+sudo apt update
+sudo apt install nginx
+
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+cd /etc/nginx/sites-available/
+
+sudo nano cits3200_project
+```
+
+Write this in your cits3200_project Nano and save it
+```bash
+server {
+    listen 80;
+    server_name <your_server_ip>;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;  # Assuming your Flask app is running on port 8000
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /sdr {
+        proxy_pass http://127.0.0.1:5001;  # Assuming your SDR service is running on port 5001
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Then again run
+```
+sudo ln -s /etc/nginx/sites-available/cits3200_project /etc/nginx/sites-enabled/
+sudo systemctl reload nginx
+```
+
+Install docker by doing
+```bash
+sudo apt install docker.io
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+
+You can start web server by doing (Make sure you are in the clone project directory)
 
 ```bash
 $ sudo docker-compose up --build
