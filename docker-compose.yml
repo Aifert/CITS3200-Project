@@ -5,12 +5,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - .:/src
     environment:
-      - FLASK_ENV=development
-      - FLASK_APP=src/app.py
-      - FLASK_RUN_HOST=0.0.0.0
-      - FLASK_RUN_PORT=8000
+      - NODE_ENV=development
+    command: nodemon src/server.js
 
   sdr:
     build:
@@ -19,9 +17,10 @@ services:
     ports:
       - "5001:5001"
     environment:
-      - FLASK_ENV=development
-      - FLASK_RUN_HOST=0.0.0.0
-      - FLASK_RUN_PORT=5001
+      - NODE_ENV=development
+    volumes:
+      - .:/src
+    command: nodemon src/sdr_simulation.js
 
   db:
     image: postgres:13
@@ -29,3 +28,5 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
