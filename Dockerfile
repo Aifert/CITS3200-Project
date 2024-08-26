@@ -10,7 +10,7 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 3001
+EXPOSE 8000
 
 ENTRYPOINT [ "nodemon","backend/server.js" ]
 CMD ["npm", "run", "dev"]
