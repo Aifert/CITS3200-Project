@@ -1,6 +1,7 @@
+
 FROM node:18-alpine
 
-WORKDIR /src
+WORKDIR /app
 
 COPY package*.json ./
 
@@ -13,4 +14,3 @@ COPY . .
 EXPOSE 5001
 
 ENTRYPOINT [ "nodemon","backend/sdr_simulation.js" ]
-CMD ["npm", "run", "dev"]

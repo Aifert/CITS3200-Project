@@ -1,6 +1,6 @@
 FROM node:18-alpine
 
-WORKDIR /src
+WORKDIR /app
 
 COPY package*.json ./
 
@@ -13,4 +13,3 @@ COPY . .
 EXPOSE 8000
 
 ENTRYPOINT [ "nodemon","backend/server.js" ]
-CMD ["npm", "run", "dev"]
