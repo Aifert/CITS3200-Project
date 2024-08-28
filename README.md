@@ -18,7 +18,7 @@ Quick-access hyperlinks:
 ### Scope
 The Remote Radio Monitoring Solution (RRMS) is for DFES to access radio streams and analytics from a web browser.
 ### Architecture Overview
-![RRMS Data Flow Diagram](rrms.jpg)
+![RRMS Data Flow Diagram](RRMS.jpg)
 
 ## Getting Started / Installation Guide
 
