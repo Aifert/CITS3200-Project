@@ -1,6 +1,7 @@
 # RRMS API ‒ Web Page ↔ WebServer
 
-All data is HTTP Web Page→WebServer, unless otherwise specified. All requests should be authenticated
+>All data is HTTP Web Page→WebServer, unless otherwise specified. All requests should be authenticated
+>This document only includes the data flow as an API, not the page-loading HTTP endpoints
 
 ## HTTP from Front-end → WebServer Initialisation
 
@@ -58,14 +59,14 @@ None
 
 	{  
 		"code": 200,  
-		"alive": \[{  
+		"alive": [{  
 			"name": "224 Kalbarri",  
 			"frequency": 162.475  
-		}\]  
-		"offline": \[{  
+		}]  
+		"offline": [{  
 			"name": "225 Kalbarri",  
 			"frequency": 162.825  
-		}\]  
+		}]  
 	}
 
 #### When to Use
@@ -214,7 +215,7 @@ When requiring data \- either when initially requesting or when asking for perio
 #### Parameters Example
 
 	{  
-		"black-list": \[162.475\],  
+		"black-list": [162.475],  
 		"start-time": 86400   
 	}
 
@@ -285,7 +286,7 @@ None
 
 	{  
 		"code": 200,  
-		"file: \_\_\_  
+		"file: ___  
 	}
 
 #### When to Use
