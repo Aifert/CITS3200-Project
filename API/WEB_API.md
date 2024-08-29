@@ -73,7 +73,7 @@ None
 
 When first loading/reloading/opening, get a list of channels to request streaming from, and a list of channels you can get analytics from
 
-## HTTP from Front-end→ WebServer Streaming
+## HTTP from Front-end → WebServer Streaming
 
 ### GET /stream/start
 
@@ -82,13 +82,14 @@ When first loading/reloading/opening, get a list of channels to request streamin
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
 | session-id | Required | String | Unique integer identifying the session |
-| frequency | Required | Float | Radio frequency to listen in to |
+| channel | Optional | String | Radio channel name to listen in to (preferred over frequency) |
+| frequency | Optional | Float | Radio frequency to listen in to |
 
 #### Parameters Example
 
 	{  
 		"session-id": 10437528,  
-		"frequency": 162.475  
+		"channel": "224 Kalbarri"  
 	}
 
 #### Responses Parameters
@@ -117,6 +118,7 @@ When requesting to connect to a stream, the web server will generate an http end
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
 | session-id | Required | String | Unique integer identifying the session |
+| channel | Optional | String | Radio channel name to listen in to (preferred over frequency) |
 | frequency | Optional | Float | Radio frequency to stop listening to |
 | endpoint | Optional | Integer | Web Server end point to stop listening to |
 
@@ -124,7 +126,7 @@ When requesting to connect to a stream, the web server will generate an http end
 
 	{  
 		"session-id": 10437528,  
-		"frequency": 162.475  
+		"channel": "224 Kalbarri"  
 	}
 
 #### Responses Parameters
@@ -158,14 +160,14 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
-| frequency | Required | Float | Radio frequency to get analytics for |
+| channel | Required | String | Radio channel to get analytics for |
 | start-time | Required | Integer | Length of time ago (in seconds) to request data for |
 | end-time | Optional | Integer | Latest raw time (in seconds) that data should be requested until. If not included, assumed at late as possible |
 
 #### Parameters Example
 
 	{  
-		"frequency": 162.475,  
+		"channel": "224 Kalbarri",  
 		"start-time": 86400   
 	}
 
@@ -184,15 +186,15 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 	{  
 		"code": 200,  
 		"data": {  
-				162.475: {  
-					1724322719: {  
-	        			"usage": 0.5,  
-						"strength": 0.3  
-					}  
-					1724322724: {  
-	        			"usage": 0.6,  
-						"strength": 0.3  
-					}  
+				"224 Kalbarri": { 
+					"strength": { 
+						1724322719: 0.3, 
+						1724322724: 0.35  
+					},
+					"utilisation": {
+						(1724322716, 1724322723),
+						(1724322725, 1724322727)
+					}
 				}  
 			}  
 	}
@@ -207,15 +209,15 @@ When requiring data \- either when initially requesting or when asking for perio
 
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
-| white-list | Optional | List\[Float\] | If used, only get data for these frequencies |
-| black-list | Optional | List\[Float\] | If used, return data for all frequencies except these ones.Only one of white or black list should be included |
+| white-list | Optional | List\[Float\] | If used, only get data for these channels |
+| black-list | Optional | List\[Float\] | If used, return data for all channels except these ones.Only one of white or black list should be included |
 | start-time | Required | Integer | Length of time ago (in seconds) to request data for |
 | end-time | Optional | Integer | Latest raw time (in seconds) that data should be requested until. If not included, assumed at late as possible |
 
 #### Parameters Example
 
 	{  
-		"black-list": [162.475],  
+		"black-list": ["224 Kalbarri"],  
 		"start-time": 86400   
 	}
 
@@ -233,27 +235,26 @@ When requiring data \- either when initially requesting or when asking for perio
 
 	{  
 		"code": 200,  
-		"data": {  
-			162.475: {  
-				1724322719: {  
-        			"usage": 0.5,  
-					"strength": 0.3  
-				}  
-				1724322724: {  
-        			"usage": 0.6,  
-					"strength": 0.3  
-				}  
+		"data": {   
+			"224 Kalbarri": { 
+				"strength": { 
+					1724322719: 0.3, 
+					1724322724: 0.35  
+				},
+				"utilisation": {
+					(1724322716, 1724322723),
+					(1724322725, 1724322727)
+				}
 			}  
-			162.475: {  
-				1724322720: {  
-    				"usage": 0.65,  
-					"strength": 0.43  
-				}  
-				1724322725: {  
-    				"usage": 0.7,  
-					"strength": 0.1  
-				}  
-			}  
+			"224 Kalbarri": { 
+				"strength": { 
+					1724322720: 0.6, 
+					1724322725: 0.65  
+				},
+				"utilisation": {
+					(1724322716, 1724322720)
+				}
+			} 
 		}
 	}
 
