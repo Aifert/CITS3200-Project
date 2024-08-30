@@ -7,14 +7,6 @@
 
 ### GET /session-id
 
-#### Parameters
-
-None
-
-#### Parameters Example
-
-None
-
 #### Responses Parameters
 
 | Name | Type | Data Type | Description |
@@ -25,9 +17,9 @@ None
 
 #### Responses Example
 
-	{  
-	"code": 200,  
-	"session-id": 10437528  
+	{
+	"code": 200,
+	"session-id": 10437528
 	}
 
 #### When to Use
@@ -35,14 +27,6 @@ None
 When first loading/reloading/opening (TBD implementation), get a unique session-id the server can later use to track request sources
 
 ### GET /active-channels
-
-#### Parameters
-
-None
-
-#### Parameters Example
-
-None
 
 #### Responses Parameters
 
@@ -57,16 +41,16 @@ None
 
 #### Responses Example
 
-	{  
-		"code": 200,  
-		"alive": [{  
-			"name": "224 Kalbarri",  
-			"frequency": 162.475  
-		}]  
-		"offline": [{  
-			"name": "225 Kalbarri",  
-			"frequency": 162.825  
-		}]  
+	{
+		"code": 200,
+		"alive": [{
+			"name": "224 Kalbarri",
+			"frequency": 162.475
+		}]
+		"offline": [{
+			"name": "225 Kalbarri",
+			"frequency": 162.825
+		}]
 	}
 
 #### When to Use
@@ -87,9 +71,9 @@ When first loading/reloading/opening, get a list of channels to request streamin
 
 #### Parameters Example
 
-	{  
-		"session-id": 10437528,  
-		"channel": "224 Kalbarri"  
+	{
+		"session-id": 10437528,
+		"channel": "224 Kalbarri"
 	}
 
 #### Responses Parameters
@@ -102,9 +86,9 @@ When first loading/reloading/opening, get a list of channels to request streamin
 
 #### Responses Example
 
-	{  
-		"code": 200,  
-		"endpoint": 642982454  
+	{
+		"code": 200,
+		"endpoint": 642982454
 	}
 
 #### When to Use
@@ -124,9 +108,9 @@ When requesting to connect to a stream, the web server will generate an http end
 
 #### Parameters Example
 
-	{  
-		"session-id": 10437528,  
-		"channel": "224 Kalbarri"  
+	{
+		"session-id": 10437528,
+		"channel": "224 Kalbarri"
 	}
 
 #### Responses Parameters
@@ -138,8 +122,8 @@ When requesting to connect to a stream, the web server will generate an http end
 
 #### Responses Example
 
-	{  
-		"code": 200  
+	{
+		"code": 200
 	}
 
 #### When to Use
@@ -166,9 +150,9 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 
 #### Parameters Example
 
-	{  
-		"channel": "224 Kalbarri",  
-		"start-time": 86400   
+	{
+		"channel": "224 Kalbarri",
+		"start-time": 86400
 	}
 
 #### Responses Parameters
@@ -183,20 +167,20 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 
 #### Responses Example
 
-	{  
-		"code": 200,  
-		"data": {  
-				"224 Kalbarri": { 
-					"strength": { 
-						1724322719: 0.3, 
-						1724322724: 0.35  
+	{
+		"code": 200,
+		"data": {
+				"224 Kalbarri": {
+					"strength": {
+						1724322719: 0.3,
+						1724322724: 0.35
 					},
 					"utilisation": {
 						(1724322716, 1724322723),
 						(1724322725, 1724322727)
 					}
-				}  
-			}  
+				}
+			}
 	}
 
 #### When to Use
@@ -216,9 +200,9 @@ When requiring data \- either when initially requesting or when asking for perio
 
 #### Parameters Example
 
-	{  
-		"black-list": ["224 Kalbarri"],  
-		"start-time": 86400   
+	{
+		"black-list": ["224 Kalbarri"],
+		"start-time": 86400
 	}
 
 #### Responses Parameters
@@ -233,45 +217,37 @@ When requiring data \- either when initially requesting or when asking for perio
 
 #### Responses Example
 
-	{  
-		"code": 200,  
-		"data": {   
-			"224 Kalbarri": { 
-				"strength": { 
-					1724322719: 0.3, 
-					1724322724: 0.35  
+	{
+		"code": 200,
+		"data": {
+			"224 Kalbarri": {
+				"strength": {
+					1724322719: 0.3,
+					1724322724: 0.35
 				},
 				"utilisation": {
 					(1724322716, 1724322723),
 					(1724322725, 1724322727)
 				}
-			}  
-			"224 Kalbarri": { 
-				"strength": { 
-					1724322720: 0.6, 
-					1724322725: 0.65  
+			}
+			"224 Kalbarri": {
+				"strength": {
+					1724322720: 0.6,
+					1724322725: 0.65
 				},
 				"utilisation": {
 					(1724322716, 1724322720)
 				}
-			} 
+			}
 		}
 	}
 
 #### When to Use
 
-When requiring data \- either when initially requesting or when asking for periodic updates \- for a specific list or for all of the channels.  
+When requiring data \- either when initially requesting or when asking for periodic updates \- for a specific list or for all of the channels.
 Black list is efficient if one set of data is already received for a single analytics page
 
 ### GET /analytics/data-dump
-
-#### Parameters
-
-None
-
-#### Parameters Example
-
-None
 
 #### Responses Parameters
 
@@ -285,11 +261,11 @@ None
 
 #### Responses Example
 
-	{  
-		"code": 200,  
-		"file: ___  
+	{
+		"code": 200,
+		"file: ___
 	}
 
 #### When to Use
 
-When a user requests the data dump file \- it is to be created on the web server and passed to the web interface by this request.  
+When a user requests the data dump file \- it is to be created on the web server and passed to the web interface by this request.
