@@ -44,11 +44,11 @@ When first loading/reloading/opening (TBD implementation), get a unique session-
 	{
 		"code": 200,
 		"alive": [{
-			"name": "224 Kalbarri",
+			"channel-id": 21892,
 			"frequency": 162.475
 		}]
 		"offline": [{
-			"name": "225 Kalbarri",
+			"channel-id": 192838,
 			"frequency": 162.825
 		}]
 	}
@@ -66,14 +66,14 @@ When first loading/reloading/opening, get a list of channels to request streamin
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
 | session-id | Required | String | Unique integer identifying the session |
-| channel | Optional | String | Radio channel name to listen in to (preferred over frequency) |
+| channel-id | Optional | Integer | Radio channel name to listen in to (preferred over frequency) |
 | frequency | Optional | Float | Radio frequency to listen in to |
 
 #### Parameters Example
 
 	{
 		"session-id": 10437528,
-		"channel": "224 Kalbarri"
+		"channel-id": 21892
 	}
 
 #### Responses Parameters
@@ -95,14 +95,14 @@ When first loading/reloading/opening, get a list of channels to request streamin
 
 When requesting to connect to a stream, the web server will generate an http endpoint to connect to and provide it here.
 
-### GET /stream/start
+### GET /stream/stop
 
 #### Parameters
 
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
 | session-id | Required | String | Unique integer identifying the session |
-| channel | Optional | String | Radio channel name to listen in to (preferred over frequency) |
+| channelid | Optional | Integer | Radio channel name to listen in to (preferred over frequency) |
 | frequency | Optional | Float | Radio frequency to stop listening to |
 | endpoint | Optional | Integer | Web Server end point to stop listening to |
 
@@ -110,7 +110,7 @@ When requesting to connect to a stream, the web server will generate an http end
 
 	{
 		"session-id": 10437528,
-		"channel": "224 Kalbarri"
+		"channel-id": 21892
 	}
 
 #### Responses Parameters
@@ -138,20 +138,21 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 
 ## HTTP from Front-end → WebServer Analytics
 
-### GET /analytics/single
+### GET /analytics/data
 
 #### Parameters
 
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
-| channel | Required | String | Radio channel to get analytics for |
+| white-list | Optional | List\[Integer\] | If used, only get data for these channels |
+| black-list | Optional | List\[Integer\] | If used, return data for all channels except these ones.Only one of white or black list should be included |
 | start-time | Required | Integer | Length of time ago (in seconds) to request data for |
 | end-time | Optional | Integer | Latest raw time (in seconds) that data should be requested until. If not included, assumed at late as possible |
 
 #### Parameters Example
 
 	{
-		"channel": "224 Kalbarri",
+		"black-list": [21892],
 		"start-time": 86400
 	}
 
@@ -170,57 +171,7 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 	{
 		"code": 200,
 		"data": {
-				"224 Kalbarri": {
-					"strength": {
-						1724322719: 0.3,
-						1724322724: 0.35
-					},
-					"utilisation": {
-						(1724322716, 1724322723),
-						(1724322725, 1724322727)
-					}
-				}
-			}
-	}
-
-#### When to Use
-
-When requiring data \- either when initially requesting or when asking for periodic updates \- for a single frequency.
-
-### GET /analytics/bulk
-
-#### Parameters
-
-| Name | Type | Data Type | Description |
-| :---- | :---- | :---- | :---- |
-| white-list | Optional | List\[Float\] | If used, only get data for these channels |
-| black-list | Optional | List\[Float\] | If used, return data for all channels except these ones.Only one of white or black list should be included |
-| start-time | Required | Integer | Length of time ago (in seconds) to request data for |
-| end-time | Optional | Integer | Latest raw time (in seconds) that data should be requested until. If not included, assumed at late as possible |
-
-#### Parameters Example
-
-	{
-		"black-list": ["224 Kalbarri"],
-		"start-time": 86400
-	}
-
-#### Responses Parameters
-
-| Name | Type | Data Type | Description |
-| :---- | :---- | :---- | :---- |
-| code | Required | Integer | HTTP response code |
-| errors | Optional | List\[String\] | If response is not 2xx, error messages are here |
-| data | Optional | Object\[Object\]\* | Analytics data for a single frequency |
-
-\*See below for example structure
-
-#### Responses Example
-
-	{
-		"code": 200,
-		"data": {
-			"224 Kalbarri": {
+			21892: {
 				"strength": {
 					1724322719: 0.3,
 					1724322724: 0.35
@@ -230,7 +181,7 @@ When requiring data \- either when initially requesting or when asking for perio
 					(1724322725, 1724322727)
 				}
 			}
-			"224 Kalbarri": {
+			192838: {
 				"strength": {
 					1724322720: 0.6,
 					1724322725: 0.65
@@ -246,6 +197,7 @@ When requiring data \- either when initially requesting or when asking for perio
 
 When requiring data \- either when initially requesting or when asking for periodic updates \- for a specific list or for all of the channels.
 Black list is efficient if one set of data is already received for a single analytics page
+While list is efficient if just one is wanted
 
 ### GET /analytics/data-dump
 
