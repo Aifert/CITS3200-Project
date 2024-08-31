@@ -98,8 +98,7 @@ CITS3200-Project/
 │       │   │   ├── login/
 │       │   │   │   └── page.js           # Login page (renders at `/login`)
 │       │   ├── components/               # Reusable UI components
-│       │   │   ├── Header.js             # Header component
-│       │   │   ├── Footer.js             # Footer component
+│       │   │   ├── Navbar.js             # Navigation bar component
 │       │   ├── styles/                   # Global and component-specific styles
 │       ├── public/                       # Static assets (images, fonts, etc.)
 │       ├── .env.local                    # Environment variables for local development
