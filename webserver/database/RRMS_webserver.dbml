@@ -1,0 +1,49 @@
+Project RRMS {
+  database_type: 'PostgreSQL'
+}
+
+Table Devices {
+  d_id integer [primary key, note: "Not incremental"]
+  d_address inet [not null]
+  d_port integer [not null]
+}
+
+Table Channels {
+  c_id integer [primary key, increment]
+  d_id integer [not null]
+  c_name varchar2 [not null]
+  c_freq integer  [not null]
+  c_endpoint integer
+}
+
+Table Utilisation {
+  a_id integer [primary key, increment]
+  c_id integer [not null]
+  a_start_time integer [not null]
+  a_end_time integer
+  duration integer
+  is_active bool [default: false]
+}
+
+Table Strength {
+  s_id integer [primary key, increment]
+  c_id integer [not null]
+  s_sample_time integer [not null]
+  s_strength float  [not null]
+}
+
+Table Sessions {
+  session_id integer [primary key, increment]
+  auth_token varchar2 [not null]
+}
+
+Table Session_Listeners {
+  session_id integer [primary key]
+  c_id integer [primary key]
+}
+
+Ref: Devices.d_id < Channels.d_id
+Ref: Channels.c_id < Utilisation.c_id
+Ref: Channels.c_id < Strength.c_id
+Ref: Sessions.session_id < Session_Listeners.session_id
+Ref: Session_Listeners.c_id > Channels.c_id
