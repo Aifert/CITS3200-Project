@@ -1,13 +1,10 @@
-'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
-import { useState } from 'react';
+import React from "react";
+import Link from "next/link";  // Import Link from next/link for client-side navigation
+import { usePathname } from "next/navigation";  // Import usePathname to determine the current route
+import { signOut } from "next-auth/react";  // Import signOut for handling logout
 
 const Navbar = () => {
-  const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();  // Get the current path for active link highlighting
 
   const handleLogout = () => {
     signOut({
@@ -22,34 +19,37 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
-        <div className="navbar-left">
-          <Link href="/" className="navbar-logo">YourApp</Link>
-          <div className="navbar-links">
-            <Link href="/" className={pathname === '/' ? 'navbar-link active' : 'navbar-link'}>Home</Link>
-            <Link href="/dashboard" className={pathname === '/dashboard' ? 'navbar-link active' : 'navbar-link'}>Dashboard</Link>
-            <Link href="/profile" className={pathname === '/profile' ? 'navbar-link active' : 'navbar-link'}>Profile</Link>
-            <Link href="/settings" className={pathname === '/settings' ? 'navbar-link active' : 'navbar-link'}>Settings</Link>
+    <div className="w-full h-20 bg-emerald-800 sticky top-0">
+      <div className="container mx-auto px-4 h-full">
+        <div className="flex justify-between items-center h-full">
+          
+          {/* Left Side Links */}
+          <div className="flex gap-x-6 text-white">
+            <Link href="/channel-listening">
+              <p className={pathname === '/channel-listening' ? 'font-bold' : ''}>
+                Channel Listening
+              </p>
+            </Link>
+            <Link href="/analytics">
+              <p className={pathname === '/analytics' ? 'font-bold' : ''}>
+                Analytics
+              </p>
+            </Link>
           </div>
-        </div>
-        <div className="navbar-right">
-          <button onClick={() => alert('Notifications')} className="navbar-bell">🔔</button>
-          <button onClick={handleLogout} className="navbar-logout">Logout</button>
-          <button className="navbar-toggle" onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? 'Close' : 'Menu'}
-          </button>
+
+          {/* Right Side Buttons */}
+          <div className="flex items-center gap-x-4">
+            <button onClick={() => alert('Notifications clicked')} className="text-white">
+              🔔
+            </button>
+            <button onClick={handleLogout} className="text-white">
+              Logout
+            </button>
+          </div>
+
         </div>
       </div>
-      {isOpen && (
-        <div className="navbar-mobile">
-          <Link href="/" className={pathname === '/' ? 'navbar-link active' : 'navbar-link'}>Home</Link>
-          <Link href="/dashboard" className={pathname === '/dashboard' ? 'navbar-link active' : 'navbar-link'}>Dashboard</Link>
-          <Link href="/profile" className={pathname === '/profile' ? 'navbar-link active' : 'navbar-link'}>Profile</Link>
-          <Link href="/settings" className={pathname === '/settings' ? 'navbar-link active' : 'navbar-link'}>Settings</Link>
-        </div>
-      )}
-    </nav>
+    </div>
   );
 };
 
