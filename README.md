@@ -14,6 +14,11 @@ Quick-access hyperlinks:
 |23334811|Joseph Newman |RedBlueCarrots |
 |23165388|Sigmund Howe  |SigHowe        |
 
+## Project Overview
+### Scope
+The Remote Radio Monitoring Solution (RRMS) is for DFES to access radio streams and analytics from a web browser.
+### Architecture Overview
+![RRMS Data Flow Diagram](RRMS.jpg)
 
 ## Getting Started / Installation Guide
 
