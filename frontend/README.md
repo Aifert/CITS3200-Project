@@ -11,45 +11,52 @@ Before you start, ensure you have the following installed:
 
 0. Installation of Node.js
 
-- sudo apt update
-- curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-- sudo apt install -y nodejs
+```bash
+$ sudo apt update
 
-- node -v (Should return v20.16.0)
-- npm -v (Should return 10.8.1)
+$ curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 
-1. Navigate to the Project Directory  
-   After cloning the repository from GitHub, you need to navigate into the project directory:
+$ sudo apt install -y nodejs
+```
 
-- cd YourRepository/frontend/cits3200-next-app
+1. Navigate to the Project Directory
 
-Replace `YourRepository` with the name of your cloned repository.
+```bash
+cd CITS3200-Project
+```
 
-2. Installing Dependencies  
-   Run the following command to install all the necessary dependencies:
 
-- npm install
-
-3. Running the Development Server  
+2. Running the Development Server
    To start the development server and view the application in your browser:
 
-- npm run dev
+```bash
+$ npm install
 
-This command will start the development server, and you can view your app at http://localhost:3000 (or something similar).
+$ npm run dev
+```
 
-4. Building for Production  
-   To create an optimized production build:
+3. Build production (Not needed for development)
 
-- npm run build
+```bash
+$ npm run build
 
-This command will generate a `.next/` directory containing your optimized application. The build is minified, and the filenames include the hashes, making it ready for deployment.
-
-5. Running in Production Mode  
-   After building the app, you can start the production server with:
-
-- npm start
+$ npm run start
+```
 
 The application will now run in production mode on http://localhost:3000 (or something similar).
+
+## Setting Up Environment Variables
+1. Create an .env.local file in the root directory of your project.
+2. Add the required variables with their corresponding values, following the format below:
+
+```plaintext
+AZURE_AD_CLIENT_ID=your-client-id
+AZURE_AD_CLIENT_SECRET=your-client-secret
+AZURE_AD_TENANT_ID=your-tenant-id
+NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=http://localhost:3000
+```
+
 
 ---
 
@@ -69,25 +76,24 @@ Here's a brief overview of the project's structure:
 ```plaintext
 CITS3200-Project/
 ├── frontend/
-│   └── cits3200-next-app/
-│       ├── pages/
-│       │   ├── api/
-│       │   │   └── auth/
-│       │   │       └── [...nextauth].js  # NextAuth.js API route for authentication
-│       ├── src/
-│       │   ├── app/
-│       │   │   ├── layout.js             # Global layout for the application
-│       │   │   ├── page.js               # Root page (renders at `/`)
-│       │   │   ├── login/
-│       │   │   │   └── page.js           # Login page (renders at `/login`)
-│       │   ├── components/               # Reusable UI components
-│       │   │   ├── Navbar.js             # Navigation bar component
-│       │   ├── styles/                   # Global and component-specific styles
-│       ├── public/                       # Static assets (images, fonts, etc.)
-│       ├── .env.local                    # Environment variables for local development
-│       ├── next.config.js                # Next.js configuration file
-│       ├── package.json                  # Dependencies and scripts
-└──     └── README.md                     # Project documentation (this file)
+│     ├── pages/
+│     │   ├── api/
+│     │   │   └── auth/
+│     │   │       └── [...nextauth].js  # NextAuth.js API route for authentication
+│     ├── src/
+│     │   ├── app/
+│     │   │   ├── layout.js             # Global layout for the application
+│     │   │   ├── page.js               # Root page (renders at `/`)
+│     │   │   ├── login/
+│     │   │   │   └── page.js           # Login page (renders at `/login`)
+│     │   ├── components/               # Reusable UI components
+│     │   │   ├── Navbar.js             # Navigation bar component
+│     │   ├── styles/                   # Global and component-specific styles
+│     ├── public/                       # Static assets (images, fonts, etc.)
+│     ├── .env.local                    # Environment variables for local development
+│     ├── next.config.js                # Next.js configuration file
+│     ├── package.json                  # Dependencies and scripts
+└──    └── README.md                     # Project documentation (this file)
 ```
 
 ## Warning: Directory Structure
@@ -109,14 +115,3 @@ AZURE_AD_TENANT_ID: The Tenant ID for your Azure AD instance.
 NEXTAUTH_SECRET: A secret used by NextAuth.js to encrypt session data.
 NEXTAUTH_URL: The URL where your application is hosted (e.g., http://localhost:3000 during development).
 
-## Setting Up Environment Variables
-1. Create an .env.local file in the root directory of your project.
-2. Add the required variables with their corresponding values, following the format below:
-
-```plaintext
-AZURE_AD_CLIENT_ID=your-client-id
-AZURE_AD_CLIENT_SECRET=your-client-secret
-AZURE_AD_TENANT_ID=your-tenant-id
-NEXTAUTH_SECRET=your-nextauth-secret
-NEXTAUTH_URL=http://localhost:3000
-```

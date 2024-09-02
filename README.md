@@ -173,3 +173,6 @@ Our server is hosted on these credentials
 Sample request you can make to interact with webserver
 
 ```http://20.213.23.98:8000```
+
+
+## Instructions to start frontend is available in `frontend/README.md`
