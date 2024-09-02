@@ -7,8 +7,8 @@ services:
     volumes:
       - .:/src
     environment:
-      - NODE_ENV=development
-    command: nodemon src/server.js
+      - NODE_ENV=production
+    command: node src/server.js
 
   sdr:
     build:
@@ -17,16 +17,28 @@ services:
     ports:
       - "5001:5001"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
     volumes:
       - .:/src
-    command: nodemon src/sdr_simulation.js
+    command: node src/sdr_simulation.js
 
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mydb
+  # db:
+  #   image: postgres:13
+  #   environment:
+  #     POSTGRES_USER: user
+  #     POSTGRES_PASSWORD: password
+  #     POSTGRES_DB: mydb
+  #   ports:
+  #     - "5432:5432"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
     ports:
-      - "5432:5432"
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - .:/src
+    command: npm start
