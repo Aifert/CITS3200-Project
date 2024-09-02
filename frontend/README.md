@@ -48,8 +48,11 @@ The application will now run in production mode on http://localhost:3000 (or som
 ## Setting Up Environment Variables
 1. Create an .env.local file in the root directory of your project.
 2. Add the required variables with their corresponding values, following the format below:
+3. APPEND TO EXISTING ONES
 
 ```plaintext
+//Existing ones leave as it is
+
 AZURE_AD_CLIENT_ID=your-client-id
 AZURE_AD_CLIENT_SECRET=your-client-secret
 AZURE_AD_TENANT_ID=your-tenant-id
