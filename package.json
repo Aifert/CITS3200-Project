@@ -1,4 +1,7 @@
 {
+  "name": "cits3200-next-app",
+  "version": "0.1.0",
+  "private": true,
   "dependencies": {
     "axios": "^1.7.5",
     "child_process": "^1.0.2",
@@ -6,7 +9,24 @@
     "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "nodemon": "^3.1.4"
+    "next": "14.2.5",
+    "next-auth": "^4.24.7",
+    "nodemon": "^3.1.4",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.5",
+    "postcss": "^8.4.44",
+    "tailwindcss": "^3.4.10"
+  },
+  "scripts": {
+    "dev": "cd frontend && next dev",
+    "build": "cd frontend && next build",
+    "start": "cd frontend && next start",
+    "lint": "cd frontend && next lint "
   },
   "type": "module"
 }
