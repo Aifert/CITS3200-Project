@@ -1,0 +1,16 @@
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install -g nodemon
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 5001
+
+ENTRYPOINT [ "nodemon", "--legacy-watch", "backend/sdr_simulation.js" ]
