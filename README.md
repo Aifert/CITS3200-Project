@@ -160,7 +160,7 @@ GITHUB_REPO="<user>/<github_repo_name>"
 ```
 
 ```bash
-$ sudo docker-compose up --build
+$ DOCKER_BUILDKIT=1 sudo docker-compose up --build
 ```
 
 and the application should be available at `http://<your_server_ip>:8000`
@@ -173,6 +173,8 @@ Our server is hosted on these credentials
 Sample request you can make to interact with webserver
 
 ```http://20.213.23.98:8000```
+
+```http://20.213.23.98:3000/login```
 
 
 ## Instructions to start frontend is available in `frontend/README.md`
