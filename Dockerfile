@@ -14,4 +14,4 @@ COPY . .
 
 EXPOSE 8000
 
-ENTRYPOINT [ "nodemon", "--legacy-watch", "backend/server.js" ]
+ENTRYPOINT [ "nodemon", "backend/server.js" ]

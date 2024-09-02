@@ -30,3 +30,15 @@ services:
       POSTGRES_DB: mydb
     ports:
       - "5432:5432"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - .:/src
+    command: npm run dev
