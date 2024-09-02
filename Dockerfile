@@ -8,8 +8,6 @@ COPY package*.json ./
 
 RUN npm install -g nodemon
 
-RUN npm install
-
 COPY . .
 
 EXPOSE 8000
