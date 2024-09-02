@@ -37,11 +37,11 @@ function verifySignature(req, res, buf) {
     }
 }
 
-app.get('/api', (req, res) => {
+app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.post('/api/webhook_handler', (req, res) => {
+app.post('/webhook_handler', (req, res) => {
     verifySignature(req, res, req.rawBody);
 
     const payload = req.body;
