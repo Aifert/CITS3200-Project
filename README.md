@@ -16,14 +16,6 @@ Quick-access hyperlinks:
 
 ---
 
-## Cits3200 Next App Technologies
-
-- Next.js: React framework for server-side rendering and static site generation.
-- React: JavaScript library for building user interfaces.
-- Node.js: JavaScript runtime environment for executing JavaScript on the server.
-- npm: Package managers to install dependencies.
-
-## Project Overview
 ### Scope
 The Remote Radio Monitoring Solution (RRMS) is for DFES to access radio streams and analytics from a web browser.
 ### Architecture Overview
