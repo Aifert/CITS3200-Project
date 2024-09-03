@@ -63,8 +63,14 @@ $ wsl
 
 Then
 
+(For Production)
 ```bash
 $ docker-compose up --build
+```
+
+(For development)
+```bash
+$ docker-compose -f docker-compose.dev.yml up --build
 ```
 
 3. **Connect to db (not needed in setup)**
@@ -90,7 +96,7 @@ This will launch the web application. You should be able to see status of applic
 
 Changes made will be automatically updated, so you do not have to keep restarting docker.
 
-The application will be available at `http://127.0.0.1:8000/`
+The application will be available at `http://127.0.0.1:8001/`
 
 ### Web Server configuration
 
@@ -113,20 +119,42 @@ sudo nano cits3200_project
 
 Write this in your cits3200_project Nano and save it
 ```bash
+
+# Configuration for port 5000 (sdr service)
 server {
-    listen 80;
-    server_name <your_server_ip>;
+    listen 5000;
+    server_name 20.213.23.98;
 
     location / {
-        proxy_pass http://127.0.0.1:8000;  # Assuming your app is running on port 8000
+        proxy_pass http://127.0.0.1:5001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
+}
 
-    location /sdr {
-        proxy_pass http://127.0.0.1:5001;  # Assuming your SDR service is running on port 5001
+# Configuration for port 3000 (Frontend service)
+server {
+    listen 3000;
+    server_name 20.213.23.98;
+
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# Configuration for port 9000 (backend service)
+server {
+    listen 9000;
+    server_name 20.213.23.98;
+
+    location / {
+        proxy_pass http://127.0.0.1:9001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -163,7 +191,7 @@ GITHUB_REPO="<user>/<github_repo_name>"
 $ DOCKER_BUILDKIT=1 sudo docker-compose up --build
 ```
 
-and the application should be available at `http://<your_server_ip>:8000`
+and the application should be available at `http://<your_server_ip>:8001`
 
 Our server is hosted on these credentials
 
