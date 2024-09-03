@@ -49,7 +49,7 @@ app.post('/webhook_handler', (req, res) => {
 
     if (payload.ref === 'refs/heads/main') {
         const commands = `
-            sudo docker-compose down &&
+            docker-compose down &&
             git pull ${url} &&
             DOCKER_BUILDKIT=1 sudo docker-compose up --build -d
         `;
