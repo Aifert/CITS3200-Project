@@ -7,8 +7,8 @@ services:
     volumes:
       - .:/src
     environment:
-      - NODE_ENV=development
-    command: nodemon src/server.js
+      - NODE_ENV=production
+    command: node src/server.js
 
   sdr:
     build:
@@ -17,10 +17,10 @@ services:
     ports:
       - "5001:5001"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
     volumes:
       - .:/src
-    command: nodemon src/sdr_simulation.js
+    command: node src/sdr_simulation.js
 
   db:
     image: postgres:13
@@ -32,3 +32,15 @@ services:
       - "5432:5432"
     volumes:
       - ./webserver/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - .:/src
+    command: npm start
