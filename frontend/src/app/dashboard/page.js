@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import Navbar from '../../components/Navbar';
-
 
 const DashboardPage = () => {
   const { data: session, status } = useSession();
@@ -18,12 +16,11 @@ const DashboardPage = () => {
   }, [status]);
 
   if (isLoading) {
-    return <p>Loading...</p>;  // Show a loading message or spinner while checking authentication
+    return <p>Loading...</p>;
   }
 
   return (
     <div>
-      <Navbar />
       <div className="dashboard-content">
         <h1>Welcome to Your Dashboard</h1>
         <p>This is your post-login dashboard where you can manage your account, view data, etc.</p>
