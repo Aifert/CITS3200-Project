@@ -1,7 +1,9 @@
 version: '3.8'
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.web
     ports:
       - "9001:9000"
     volumes:
