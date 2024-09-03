@@ -12,6 +12,6 @@ RUN npm ci --only=production
 
 COPY . .
 
-EXPOSE 6000
+EXPOSE 9000
 
 ENTRYPOINT [ "node", "backend/server.js" ]

@@ -7,7 +7,7 @@ import crypto from 'crypto';
 import { exec } from 'child_process';
 
 const app = express();
-const PORT = process.env.PORT || 6001;
+const PORT = process.env.PORT || 9000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
