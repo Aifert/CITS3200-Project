@@ -68,17 +68,23 @@ app.post('/webhook_handler', (req, res) => {
     verifySignature(req, res, req.rawBody);
 
     const payload = req.body;
-    const url = `https://${process.env.GITHUB_USERNAME}:${process.env.GITHUB_API_KEY}@github.com/${process.env.GITHUB_REPO}.git`
+    const url = `https://${process.env.GITHUB_USERNAME}:${process.env.GITHUB_API_KEY}@github.com/${process.env.GITHUB_REPO}.git`;
 
     if (payload.ref === 'refs/heads/main') {
-        exec(`git pull ${url}`, { cwd: '/app', shell: '/bin/bash' }, (err, stdout, stderr) => {
+        const commands = `
+            sudo docker-compose down &&
+            git pull ${url} &&
+            DOCKER_BUILDKIT=1 sudo docker-compose up --build -d
+        `;
+
+        exec(commands, { cwd: '/app', shell: '/bin/bash' }, (err, stdout, stderr) => {
             if (err) {
-                console.error(`Error pulling latest changes: ${err.message}`);
-                return res.status(500).send('Failed to update repository.');
+                console.error(`Error during deployment: ${err.message}`);
+                return res.status(500).send('Failed to update and deploy repository.');
             }
             console.log(stdout);
             if (stderr) {
-                console.error(`Git Pull Errors: ${stderr}`);
+                console.error(`Deployment Errors: ${stderr}`);
             }
             return res.status(200).send('Deployment successful.');
         });
