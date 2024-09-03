@@ -7,7 +7,7 @@ import crypto from 'crypto';
 import { exec } from 'child_process';
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 6000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,9 +49,12 @@ app.post('/webhook_handler', (req, res) => {
 
     if (payload.ref === 'refs/heads/main') {
         const commands = `
-            docker-compose down &&
-            git pull ${url} &&
-            DOCKER_BUILDKIT=1 sudo docker-compose up --build -d
+            ssh -i ./.secret.pem azureuser@20.213.23.98 <<EOF
+            cd .
+            git pull origin main
+            DOCKER_BUILDKIT=1 docker-compose down
+            DOCKER_BUILDKIT=1 docker-compose up --build -d
+            EOF
         `;
 
         exec(commands, { cwd: '/app', shell: '/bin/bash' }, (err, stdout, stderr) => {
