@@ -3,7 +3,7 @@ services:
   web:
     build: .
     ports:
-      - "6001:6000"
+      - "9001:9000"
     volumes:
       - .:/src
     environment:
