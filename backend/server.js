@@ -30,7 +30,7 @@ client.connect().then(() => {
 
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 9000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,35 +62,6 @@ function verifySignature(req, res, buf) {
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.post('/webhook_handler', (req, res) => {
-    verifySignature(req, res, req.rawBody);
-
-    const payload = req.body;
-    const url = `https://${process.env.GITHUB_USERNAME}:${process.env.GITHUB_API_KEY}@github.com/${process.env.GITHUB_REPO}.git`;
-
-    if (payload.ref === 'refs/heads/main') {
-        const commands = `
-            sudo docker-compose down &&
-            git pull ${url} &&
-            DOCKER_BUILDKIT=1 sudo docker-compose up --build -d
-        `;
-
-        exec(commands, { cwd: '/app', shell: '/bin/bash' }, (err, stdout, stderr) => {
-            if (err) {
-                console.error(`Error during deployment: ${err.message}`);
-                return res.status(500).send('Failed to update and deploy repository.');
-            }
-            console.log(stdout);
-            if (stderr) {
-                console.error(`Deployment Errors: ${stderr}`);
-            }
-            return res.status(200).send('Deployment successful.');
-        });
-    } else {
-        return res.status(200).send('Not main branch, no deployment required.');
-    }
 });
 
 app.listen(PORT, () => {
