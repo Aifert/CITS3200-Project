@@ -6,6 +6,29 @@ import dotenv from 'dotenv';
 import crypto from 'crypto';
 import { exec } from 'child_process';
 
+import pg from 'pg' //pg is PostgreSQL
+
+
+const { Client } = pg
+
+const client = new Client({
+  user: 'user',
+  host: 'localhost',
+  database: 'mydb',
+  password: 'password',
+  port: 5432,
+});
+
+//Simple demo of SQL query, will delete
+client.connect().then(() => {
+  client.query('SELECT * FROM "Devices"', (err, res) => {
+    console.log(res.rows)
+    client.end()
+  });
+});
+
+
+
 const app = express();
 const PORT = process.env.PORT || 8000;
 
