@@ -3,38 +3,38 @@ Project RRMS {
 }
 
 Table Devices {
-  d_id integer [primary key, note: "Not incremental"]
-  d_address inet [not null]
-  d_port integer [not null]
+  d_id integer [primary key, note: "Unique preallocated random id identifying a specific raspberry pi"]
+  d_address inet [not null, note: "Current Public IP address for this raspberry pi"]
+  d_port integer [not null, note: "Current Port for accessing this raspberry pi"]
 }
 
 Table Channels {
-  c_id integer [primary key, increment]
+  c_id integer [primary key, increment, note: "unique channel ID (combines name and frequency)"]
   d_id integer [not null]
-  c_name varchar2 [not null]
-  c_freq integer  [not null]
-  c_endpoint integer
+  c_name varchar2 [not null, note: "DFES Channel name"]
+  c_freq integer  [not null, note: "DFES Channel frequency"]
+  c_endpoint integer [note: "Unique random integer, which acts as the HTTP endpoint for streaming"]
 }
 
 Table Utilisation {
-  a_id integer [primary key, increment]
+  u_id integer [primary key, increment]
   c_id integer [not null]
-  a_start_time integer [not null]
-  a_end_time integer
-  duration integer
-  is_active bool [default: false]
+  a_start_time integer [not null, note: "Start time for a period where channel was used/was being monitored"]
+  a_end_time integer [note: "End time for a period where channel was used, if null assume ongoing"]
+  duration integer [note: "For ease of use, =end_time-start_time"]
+  is_active bool [default: false, note: "True=no data because channel was being monitored"]
 }
 
 Table Strength {
   s_id integer [primary key, increment]
   c_id integer [not null]
-  s_sample_time integer [not null]
-  s_strength float  [not null]
+  s_sample_time integer [not null, note: "Epoch time (seconds) this strength sample was taken"]
+  s_strength float  [not null, note: "Measured in Dbm"]
 }
 
 Table Sessions {
-  session_id integer [primary key, increment]
-  auth_token varchar2 [not null]
+  session_id integer [primary key, increment, note: "identifies a client session to track ongoing monitoring"]
+  auth_token varchar2 [not null, note: "Entra-ID token for verification - Not sure if necessary"]
 }
 
 Table Session_Listeners {
