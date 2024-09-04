@@ -22,6 +22,17 @@ services:
       - NODE_ENV=development
     command: nodemon backend/sdr_simulation.js
 
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./webserver/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
   frontend:
     build: .
     ports:
