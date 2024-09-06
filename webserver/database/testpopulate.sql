@@ -1,17 +1,17 @@
 INSERT INTO "Devices" (d_id, d_address, d_port)
-VALUES (1, "8.8.8.8", 80);
+VALUES (1, '8.8.8.8', 80);
 
 INSERT INTO "Devices" (d_id, d_address, d_port)
-VALUES (2, "8.9.10.111", 922);
+VALUES (2, '8.9.10.111', 922);
 
 INSERT INTO "Channels" (c_id, d_id, c_name, c_freq, c_endpoint)
-VALUES (1, 1, "Test Channel 1", 467687500, 27832634);
+VALUES (1, 1, 'Test Channel 1', 467687500, 27832634);
 INSERT INTO "Channels" (c_id, d_id, c_name, c_freq, c_endpoint)
-VALUES (2, 1, "Test Channel 2", 457712500, NULL);
+VALUES (2, 1, 'Test Channel 2', 457712500, NULL);
 INSERT INTO "Channels" (c_id, d_id, c_name, c_freq, c_endpoint)
-VALUES (3, 1, "Test Channel 3", 457575000, NULL);
+VALUES (3, 1, 'Test Channel 3', 457575000, NULL);
 INSERT INTO "Channels" (c_id, d_id, c_name, c_freq, c_endpoint)
-VALUES (4, 1, "Test Channel 4", 163250000, NULL);
+VALUES (4, 1, 'Test Channel 4', 163250000, NULL);
 
 INSERT INTO "Sessions" (session_id, auth_token)
 VALUES (1, 32345978623457985);
@@ -88,46 +88,46 @@ VALUES (29, 4, 1725547182, -79.79955241872723);
 INSERT INTO "Strength" (s_id, c_id, s_sample_time, s_strength)
 VALUES (30, 4, 1725547187, -95.73695105828416);
 
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (1, 4, 1725547142, 1725547154, 12, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (2, 4, 1725547163, 1725547164, 1, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (3, 4, 1725547166, 1725547177, 11, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (4, 4, 1725547187, 1725547194, 7, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (5, 4, 1725547209, 1725547218, 9, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (6, 4, 1725547236, 1725547244, 8, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (7, 4, 1725547249, 1725547260, 11, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (8, 4, 1725547270, 1725547272, 2, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (9, 4, 1725547281, 1725547293, 12, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (10, 4, 1725547309, NULL, NULL, FALSE);
 
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (11, 1, 1725547142, 1725547152, 10, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (12, 1, 1725547156, 1725547166, 10, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (13, 1, 1725547180, 1725547187, 7, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (14, 1, 1725547208, 1725547213, 5, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (15, 1, 1725547227, 1725547237, 10, TRUE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (16, 1, 1725547246, 1725547257, 11, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (17, 1, 1725547270, 1725547271, 1, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (18, 1, 1725547282, 1725547284, 2, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (19, 1, 1725547285, 1725547293, 8, FALSE);
-INSERT INTO "Utilisation" (a_id, c_id, a_start_time, a_end_time, duration, is_active)
+INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (20, 1, 1725547312, NULL, NULL, TRUE);
 
 COMMIT;
