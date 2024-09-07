@@ -1,28 +1,26 @@
 version: '3.8'
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
+    build: .
     ports:
       - "9001:9000"
     volumes:
-      - .:/src
+      - .:/app
+      - /app/node_modules
     environment:
-      - NODE_ENV=production
-    command: node src/server.js
+      - NODE_ENV=development
+    command: nodemon backend/server.js
 
   sdr:
-    build:
-      context: .
-      dockerfile: Dockerfile.sdr
+    build: .
     ports:
       - "5001:5000"
-    environment:
-      - NODE_ENV=production
     volumes:
-      - .:/src
-    command: node src/sdr_simulation.js
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: nodemon backend/sdr_simulation.js
 
   db:
     image: postgres:13
@@ -36,13 +34,12 @@ services:
       - ./webserver/database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
+    build: .
     ports:
       - "3001:3000"
-    environment:
-      - NODE_ENV=production
     volumes:
-      - .:/src
-    command: npm start
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
