@@ -1,17 +1,25 @@
 FROM node:18-alpine
 
-RUN apk add --no-cache bash git
-
 WORKDIR /app
 
 COPY package*.json ./
 
-# RUN npm install -g nodemon
+# Install dependencies
+RUN npm install
 
-RUN npm ci --only=production
+RUN npm install -g nodemon
 
+# Copy all the source files
 COPY . .
 
-EXPOSE 8000
+# Expose necessary ports
+EXPOSE 9000
+EXPOSE 5000
+EXPOSE 3000
 
-ENTRYPOINT [ "node", "backend/server.js" ]
+# Default to production if NODE_ENV is not set
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+
+# Use nodemon in development
+CMD ["sh", "-c", "if [ '$NODE_ENV' = 'development' ]; then nodemon backend/server.js; else node backend/server.js; fi"]

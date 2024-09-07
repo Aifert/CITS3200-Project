@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "9001:9000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: nodemon backend/server.js
+
+  sdr:
+    build: .
+    ports:
+      - "5001:5000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: nodemon backend/sdr_simulation.js
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./webserver/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  frontend:
+    build: .
+    ports:
+      - "3001:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
