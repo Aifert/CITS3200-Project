@@ -1,5 +1,8 @@
 import pg from 'pg' //pg is PostgreSQL
 const { Client } = pg;
+
+const ALIVETIME = 15;
+
 let isConnecting = false;
 let isConnected = false;
 
@@ -53,7 +56,6 @@ async function recheckConnection() {
 
 async function getAliveChannels() {
   await recheckConnection();
-  const ALIVETIME = 15;
   //Might determine a better method in future but
   //Currently "alive" channels are any channels which have recieved data in the last 15 seconds
   //(From Strength Table because that should constantly be pinged)
@@ -71,7 +73,6 @@ async function getAliveChannels() {
 
 async function getBusyChannels() {
   await recheckConnection();
-  const ALIVETIME = 15;
   //Might determine a better method in future but
   //Currently "busy" channels are any channels which have recieved data in the last 15 seconds
   //(From Strength Table because that should constantly be pinged)
@@ -88,10 +89,21 @@ async function getBusyChannels() {
 }
 
 async function getOfflineChannels() {
-
+  await recheckConnection();
+  //Might determine a better method in future but
+  //Currently "offline" channels are any channels which have not recieved data in the last 15 seconds
+  const query = `SELECT DISTINCT c_id FROM "Channels" 
+                WHERE c_id NOT IN (SELECT c_id FROM "Strength" 
+                WHERE st.s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME})`;
+  
+  let res = await client.query(query);
+  res.rows = res.rows.map((elem) => elem["c_id"]);
+  return res.rows;
 }
 
-/*
+
 module.exports = {
-  getAliveChannels: getAliveChannels
-}*/
+  getAliveChannels: getAliveChannels,
+  getBusyChannels: getBusyChannels,
+  getOfflineChannels: getOfflineChannels
+}
