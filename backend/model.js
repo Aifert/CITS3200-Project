@@ -95,6 +95,3 @@ async function getOfflineChannels() {
 module.exports = {
   getAliveChannels: getAliveChannels
 }*/
-
-console.log(await getAliveChannels());
-console.log(await getBusyChannels());
