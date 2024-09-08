@@ -10,6 +10,8 @@ services:
     environment:
       - NODE_ENV=development
     command: nodemon backend/server.js
+    depends_on:
+      - db
 
   sdr:
     build: .
@@ -21,13 +23,15 @@ services:
     environment:
       - NODE_ENV=development
     command: nodemon backend/sdr_simulation.js
+    depends_on:
+      - db
 
   db:
     image: postgres:13
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_MULTIPLE_DATABASES: mydb, testdb
+      POSTGRES_MULTIPLE_DATABASES: mydb:testdb
     ports:
       - "5432:5432"
     volumes:
@@ -45,3 +49,5 @@ services:
     environment:
       - NODE_ENV=development
     command: npm run dev
+    depends_on:
+      - web
