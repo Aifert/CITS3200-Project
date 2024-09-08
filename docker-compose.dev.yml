@@ -31,13 +31,11 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_MULTIPLE_DATABASES: mydb:testdb
+      POSTGRES_DB: mydb
     ports:
       - "5432:5432"
     volumes:
-      - ./webserver/database/docker-postgresql-multiple-databases.sh:/docker-entrypoint-initdb.d/docker-postgresql-multiple-databases.sh
-      - ./webserver/database/init.sql:/docker-entrypoint-populatedb.d/init.sql
-      - ./webserver/database/testpopulate.sql:/docker-entrypoint-populatedb.d/testpopulate.sql
+      - ./webserver/database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   frontend:
     build: .
