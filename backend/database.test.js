@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const initclient = new Client({
   user: 'user',
-  host: 'localhost',
+  host: 'db',
   database: 'mydb',
   password: 'password',
   port: 5432,
