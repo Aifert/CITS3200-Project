@@ -30,12 +30,21 @@ app.get('/', (req, res) => {
 });
 
 app.get('/active-channels', async (req, res) => {
+try{
   let returnVal = {}
-  returnVal["code"] = 200
   returnVal["active"] = await getAliveChannels();
   returnVal["busy"] = await getBusyChannels();
   returnVal["offline"] = await getOfflineChannels();
   res.send(returnVal)
+}
+catch(error){
+  res.status(500).send({
+    code: 500,
+    message: "Error occurred while getting channels",
+    error: error.message,
+    }
+});
+
 });
 
 app.listen(PORT, () => {
