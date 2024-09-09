@@ -96,7 +96,7 @@ async function getBusyChannels() {
 
 async function getOfflineChannels() {
   await recheckConnection();
-  // "offline" channels are any channels which have not recieved data in the last 15 seconds
+  // Get channels which have not received any data in last 15 seconds
   const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name FROM "Channels" AS ch 
                 WHERE ch.c_id NOT IN (SELECT c_id FROM "Strength" 
                 WHERE s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME})`;
