@@ -11,7 +11,7 @@ VALUES (2, 1, 'Test Channel 2', 457712500, NULL);
 INSERT INTO "Channels" (c_id, d_id, c_name, c_freq, c_endpoint)
 VALUES (3, 1, 'Test Channel 3', 457575000, NULL);
 INSERT INTO "Channels" (c_id, d_id, c_name, c_freq, c_endpoint)
-VALUES (4, 1, 'Test Channel 4', 163250000, NULL);
+VALUES (4, 2, 'Test Channel 4', 163250000, NULL);
 
 INSERT INTO "Sessions" (session_id, auth_token)
 VALUES (1, 32345978623457985);
@@ -129,5 +129,3 @@ INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_ac
 VALUES (19, 1, 1725547285, 1725547293, 8, FALSE);
 INSERT INTO "Utilisation" (u_id, c_id, a_start_time, a_end_time, duration, is_active)
 VALUES (20, 1, 1725547312, NULL, NULL, TRUE);
-
-COMMIT;
