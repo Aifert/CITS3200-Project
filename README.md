@@ -198,3 +198,13 @@ Sample request you can make to interact with webserver
 
 
 ## Instructions to start frontend is available in `frontend/README.md`
+
+### NodeJS Unit Tetsing
+
+Unit testing has been set up in NodeJS using jest
+
+Unit tests can be run simply with
+
+```bash
+npm test
+```
