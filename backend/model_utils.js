@@ -68,11 +68,9 @@ function convertToAPIForm(arr) {
 
 async function getAliveChannels() {
   await recheckConnection();
-  //Might determine a better method in future but
-  //Currently "alive" channels are any channels which have recieved data in the last 15 seconds
-  //(From Strength Table because that should constantly be pinged)
-  //AND they are not on a device where streaming is currently happening
-  //(Unless they are the channel being streamed)
+  // Get channels which have received data in last 15 seconds from strength table 
+  // On a currently non-streaming device
+  // unless the channel itself is being streamed
   const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name FROM "Strength" AS st INNER JOIN "Channels" AS ch ON st.c_id = ch.c_id 
                 WHERE st.s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME} AND 
                 ((d_id NOT IN (SELECT d_id FROM "Channels" AS c INNER JOIN "Session_Listeners" AS sl ON c.c_id = sl.c_id)) 
@@ -84,11 +82,9 @@ async function getAliveChannels() {
 
 async function getBusyChannels() {
   await recheckConnection();
-  //Might determine a better method in future but
-  //Currently "busy" channels are any channels which have recieved data in the last 15 seconds
-  //(From Strength Table because that should constantly be pinged)
-  //AND they are on a device where streaming is currently happening
-  //(and they are not the channel being streamed)
+  // Get channels which have received data in last 15 seconds from strength table 
+  // On a currently streaming device
+  // but not the channel being streamed
   const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name FROM "Strength" AS st INNER JOIN "Channels" AS ch ON st.c_id = ch.c_id 
                 WHERE st.s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME} AND 
                 ((d_id IN (SELECT d_id FROM "Channels" AS c INNER JOIN "Session_Listeners" AS sl ON c.c_id = sl.c_id)) 
@@ -100,8 +96,7 @@ async function getBusyChannels() {
 
 async function getOfflineChannels() {
   await recheckConnection();
-  //Might determine a better method in future but
-  //Currently "offline" channels are any channels which have not recieved data in the last 15 seconds
+  // "offline" channels are any channels which have not recieved data in the last 15 seconds
   const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name FROM "Channels" AS ch 
                 WHERE ch.c_id NOT IN (SELECT c_id FROM "Strength" 
                 WHERE s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME})`;
