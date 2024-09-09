@@ -12,7 +12,7 @@ const initclient = new Client({
 
 const testclient = new Client({
   user: 'user',
-  host: 'localhost',
+  host: 'db',
   database: 'testdb',
   password: 'password',
   port: 5432,
