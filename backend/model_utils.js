@@ -8,7 +8,7 @@ let isConnected = false;
 
 let client = new Client({
         user: process.env.DB_USER || 'user',
-        host: process.env.DB_HOST || 'db',
+        host: process.env.DB_HOST || 'localhost',
         database: process.env.DB_NAME || 'testdb',
         password: process.env.DB_PASSWORD || 'password',
         port: process.env.DB_PORT || 5432,
@@ -24,7 +24,7 @@ async function connectToDatabase() {
     try {
       client = new Client({
         user: process.env.DB_USER || 'user',
-        host: process.env.DB_HOST || 'db',
+        host: process.env.DB_HOST || 'localhost',
         database: process.env.DB_NAME || 'testdb',
         password: process.env.DB_PASSWORD || 'password',
         port: process.env.DB_PORT || 5432,
@@ -106,17 +106,35 @@ async function getOfflineChannels() {
 }
 
 async function getChannelStrength(requestObj) {
+  await recheckConnection();
   let cond = "";
+  //whitelist has precedence over blacklist
   if ("whitelist" in requestObj) {
-    cond = `IN ${requestObj.whitelist.toString().replace("[", "(").replace("[", "(")}`
+    if (requestObj.whitelist.length === 0) {
+      return {}
+    }
+    cond = `IN ${"(" + requestObj.whitelist.toString() + ")"}`
   } else if ("blacklist" in requestObj) {
-    cond = `NOT IN ${requestObj.blacklist.toString().replace("[", "(").replace("[", "(")}`
+    if (requestObj.blacklist.length === 0) {
+      cond = "=1 OR 1=1"
+    } else {
+      cond = `NOT IN ${"(" + requestObj.blacklist.toString() + ")"}`
+    }
   } else {
-    //error
+    throw new Error("Neither blacklist nor whitelist has been specified")
   }
   let query = `SELECT c_id, s_strength, s_sample_time FROM "Strength"
               WHERE c_id ${cond}
               ORDER BY c_id, s_sample_time`;
+  let res = await client.query(query);
+  let output = {};
+  for (const row of res.rows) {
+    if (!(row.c_id in output)) {
+      output[row.c_id] = {}
+    }
+      output[row.c_id][row.s_sample_time] = row.s_strength;
+  }
+  return output;
 }
 
-export{ getAliveChannels, getOfflineChannels, getBusyChannels};
+export{ getAliveChannels, getOfflineChanneels, getBusyChannels, getChannelStrength};
