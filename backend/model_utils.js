@@ -105,4 +105,18 @@ async function getOfflineChannels() {
   return convertToAPIForm(res.rows);
 }
 
+async function getChannelStrength(requestObj) {
+  let cond = "";
+  if ("whitelist" in requestObj) {
+    cond = `IN ${requestObj.whitelist.toString().replace("[", "(").replace("[", "(")}`
+  } else if ("blacklist" in requestObj) {
+    cond = `NOT IN ${requestObj.blacklist.toString().replace("[", "(").replace("[", "(")}`
+  } else {
+    //error
+  }
+  let query = `SELECT c_id, s_strength, s_sample_time FROM "Strength"
+              WHERE c_id ${cond}
+              ORDER BY c_id, s_sample_time`;
+}
+
 export{ getAliveChannels, getOfflineChannels, getBusyChannels};
