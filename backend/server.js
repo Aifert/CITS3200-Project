@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import pg from 'pg'; // PostgreSQL client
-import { getAliveChannels, getOfflineChannels, getBusyChannels} from "./model.js";
+import { getAliveChannels, getOfflineChannels, getBusyChannels} from "./model_utils.js";
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -42,10 +42,8 @@ catch(error){
     code: 500,
     message: "Error occurred while getting channels",
     error: error.message,
-    }
-});
-
-});
+  })
+}});
 
 app.listen(PORT, () => {
   console.log(`Server successfully started on port ${PORT}`);
