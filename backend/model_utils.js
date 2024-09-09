@@ -8,7 +8,7 @@ let isConnected = false;
 
 let client = new Client({
         user: process.env.DB_USER || 'user',
-        host: process.env.DB_HOST || 'localhost',
+        host: process.env.DB_HOST || 'db',
         database: process.env.DB_NAME || 'testdb',
         password: process.env.DB_PASSWORD || 'password',
         port: process.env.DB_PORT || 5432,
@@ -24,7 +24,7 @@ async function connectToDatabase() {
     try {
       client = new Client({
         user: process.env.DB_USER || 'user',
-        host: process.env.DB_HOST || 'localhost',
+        host: process.env.DB_HOST || 'db',
         database: process.env.DB_NAME || 'testdb',
         password: process.env.DB_PASSWORD || 'password',
         port: process.env.DB_PORT || 5432,
@@ -105,8 +105,7 @@ async function getOfflineChannels() {
   return convertToAPIForm(res.rows);
 }
 
-async function getChannelStrength(requestObj) {
-  await recheckConnection();
+function getCondFromWhiteBlackList(requestObj) {
   let cond = "";
   //whitelist has precedence over blacklist
   if ("whitelist" in requestObj) {
@@ -123,6 +122,24 @@ async function getChannelStrength(requestObj) {
   } else {
     throw new Error("Neither blacklist nor whitelist has been specified")
   }
+  return cond;
+}
+
+function getCondStartEndTimes(requestObj) {
+  let cond = "";
+  if ("start-time" in requestObj) {
+    cond += `AND s_sample_time >= ${requestObj["start-time"]}`
+  }
+  if ("end-time" in requestObj) {
+    cond += `AND s_sample_time <= ${requestObj["end-time"]}`
+  }
+  return cond;
+}
+
+async function getChannelStrength(requestObj) {
+  await recheckConnection();
+  let cond = getCondFromWhiteBlackList(requestObj)+getCondStartEndTimes(requestObj);
+
   let query = `SELECT c_id, s_strength, s_sample_time FROM "Strength"
               WHERE c_id ${cond}
               ORDER BY c_id, s_sample_time`;
@@ -137,4 +154,28 @@ async function getChannelStrength(requestObj) {
   return output;
 }
 
-export{ getAliveChannels, getOfflineChanneels, getBusyChannels, getChannelStrength};
+async function getChannelUtilisation(requestObj) {
+  await recheckConnection();
+  let cond = getCondFromWhiteBlackList(requestObj);
+  if ("start-time" in requestObj) {
+    cond += `AND (a_end_time IS NULL OR a_end_time >= ${requestObj["start-time"]})`
+  }
+  if ("end-time" in requestObj) {
+    cond += `AND a_start_time <= ${requestObj["end-time"]}`
+  }
+
+  let query = `SELECT c_id, a_start_time, a_end_time FROM "Utilisation"
+              WHERE c_id ${cond}
+              ORDER BY c_id, a_start_time`;
+  let res = await client.query(query);
+  let output = {};
+  for (const row of res.rows) {
+    if (!(row.c_id in output)) {
+      output[row.c_id] = []
+    }
+      output[row.c_id].push([row.a_start_time, row.a_end_time]);
+  }
+  return output;
+}
+
+export{ getAliveChannels, getOfflineChannels, getBusyChannels, getChannelStrength, getChannelUtilisation};
