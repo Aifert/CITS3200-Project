@@ -17,7 +17,7 @@
 | **Name**    | **Type** | **Data Type**     | **Description**                                                                                  |
 | soc-id      | Required | String            | An ID used to uniquely identify a SoC (Predetermined)      |
 | address | Optional | String | IP address and Port to be used by Web Server to talk back to SoC later |
-| data  | Required | Object[Object]\* | An Object, with frequencies as indexes, then frequencies as indexes, then usage and strength data |
+| data  | Required | Object[Object]\* | An Object, with frequencies as indexes, then usage and strength data |
 
 \*See example for structure
 
