@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Radio Monitoring Demo</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Radio Monitoring Demo</h1>
+
+	<!-- Selector for changing listening frequencies -->
+    <form id="frequencyForm">
+        <label for="frequency">Select Frequency: </label>
+        <select id="frequency">
+            <option value="test-wow">test-wow</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Change Frequency</button>
+    </form>
+
+    <audio id="audioPlayer" controls>
+    	<!-- Replace localhost in audioSource with the server IP -->
+        <source id="audioSource" src="http://localhost:5002/94500000" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+    	// Form for changing frequencies.
+        $(document).ready(function(){
+            $('#frequencyForm').submit(function(event){
+                event.preventDefault();
+
+                var selectedFrequency = $('#frequency').val();
+                console.log('Selected Frequency:', selectedFrequency);
+
+                // First, send a stop request to the Java server. The SDR can only listen to one channel at a time.
+                $.ajax({
+                    type: 'GET',
+                    url: 'http://localhost:5001/stop',
+                    success: function(response) {
+                        console.log('Stream stopped successfully.');
+
+                        // Change stream source to new frequency.
+                        var newSourceUrl = 'http://localhost:5001/monitor/' + selectedFrequency;
+                        console.log('New Source URL:', newSourceUrl);
+
+                        // Set the src attribute directly on the audio element
+                        var audioPlayer = $('#audioPlayer')[0];
+                        audioPlayer.pause();
+                        audioPlayer.src = newSourceUrl;
+                        audioPlayer.load();       // Reload the player
+						//Avoid a race condition . (Stream takes about 7 seconds to become availible anyway)
+						setTimeout(function() {
+							audioPlayer.load(); // Yes, Loading the player twice is neccessary for now.
+							audioPlayer.play();
+						}, 5000);
+					},
+
+                    error: function(error) {
+                        console.error('Failed to stop the stream.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
