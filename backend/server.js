@@ -2,8 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
-import pg from 'pg';
-
 
 import { fileURLToPath } from 'url';
 import { getAliveChannels, getOfflineChannels, getBusyChannels} from "./model_utils.js";
@@ -36,6 +34,8 @@ app.use(express.static(path.join(__dirname, 'public')));
  * Base API for monitor channels
  *
  * /monitor-channels endpoint
+ *
+ * <NOT NEED FOR END PRODUCT USED FOR TESTING ONLY>
  */
 app.get('/monitor-channels', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'monitor.html'))
