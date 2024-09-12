@@ -35,10 +35,23 @@ app.get('/stop', async (req, res) => {
 app.get('/monitor/:frequency', async (req, res) => {
     const frequency = req.params.frequency;
 
-    axios.get(`${SDR_URL}:5002/${frequency}`, { insecureHTTPParser: true }).then((response) => {
-        res.send(response.data);
-    })
-})
+    // Fetch the stream from the SDR server
+    try {
+        const sdrResponse = await axios({
+            method: 'get',
+            url: `${SDR_URL}:5002/${frequency}`,
+            responseType: 'stream',  // Important: Stream the response
+            insecureHTTPParser: true // Needed based on your config
+        });
+
+        res.setHeader('Content-Type', 'audio/mpeg');
+
+        sdrResponse.data.pipe(res);
+    } catch (error) {
+        console.error('Error fetching SDR stream:', error);
+        res.status(500).send('Error fetching the stream.');
+    }
+});
 
 app.get('/', async (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'sdr_index.html'));
