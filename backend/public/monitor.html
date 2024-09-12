@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Audio Stream Player</title>
     <script>
-        async function changeStream() {
+        async function submitFrequency(event) {
+            event.preventDefault();
+
             try {
                 await fetch('http://localhost:9000/monitor-channels/stop');
                 console.log('Stopped current stream');
@@ -13,7 +15,7 @@
                 console.error('Error stopping the current stream:', error);
             }
 
-            const frequency = document.getElementById('frequencySelector').value;
+            const frequency = document.getElementById('frequencyInput').value;
 
             const audioElement = document.getElementById('audioPlayer');
             const sourceElement = document.getElementById('audioSource');
@@ -34,18 +36,27 @@
             justify-content: center;
             padding: 100px;
         }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        label, input, button {
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
     <h1>Audio Stream Player</h1>
 
     <div class="main-container">
-        <label for="frequencySelector">Select a stream:</label>
-        <select id="frequencySelector" onchange="changeStream()">
-            <option value="test-1">Test 1</option>
-            <option value="test-2">Test 2</option>
-            <option value="test-3">Test 3</option>
-        </select>
+        <form onsubmit="submitFrequency(event)">
+            <label for="frequencyInput">Enter a frequency:</label>
+            <input type="text" id="frequencyInput" name="frequency" required>
+            <button type="submit">Submit</button>
+        </form>
 
         <!-- Audio Player -->
         <div class="sub-container">
