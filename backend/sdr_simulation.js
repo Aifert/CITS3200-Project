@@ -37,11 +37,9 @@ app.get('/monitor/:frequency', async (req, res) => {
 
     // Fetch the stream from the SDR server
     try {
-        const sdrResponse = await axios({
-            method: 'get',
-            url: `${SDR_URL}:5002/${frequency}`,
-            responseType: 'stream',  // Important: Stream the response
-            insecureHTTPParser: true // Needed based on your config
+        const sdrResponse = await axios.get(`${SDR_URL}:5002/${frequency}`,{
+            responseType: 'stream',
+            insecureHTTPParser: true
         });
 
         res.setHeader('Content-Type', 'audio/mpeg');
