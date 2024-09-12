@@ -21,29 +21,17 @@ app.post("/sdr", (req, res) => {
 })
 
 app.get('/stop', async (req, res) => {
-    try{
-        console.log(`${SDR_URL}:5002/stop`);
-        const response = await axios.get(`${SDR_URL}:5002/stop`, {
-            responseType: 'text',
-            headers: {
-                'Accept': 'text/plain'
-            }
-        });
-
-
-        console.log(response)
-    }
-    catch(error){
-        console.log(error);
-    }
+    axios.get(`${SDR_URL}:5002/stop`, { insecureHTTPParser: true }).then((response) => {
+        res.send(response.data);
+    })
 })
 
-app.get('/monitor/:id', async (req, res) => {
-    const frequencyId = req.params.id;
+app.get('/monitor/:frequency', async (req, res) => {
+    const frequency = req.params.frequency;
 
-    console.log(frequencyId);
-
-    res.send("hi bozo");
+    axios.get(`${SDR_URL}:5002/${frequency}`, { insecureHTTPParser: true }).then((response) => {
+        res.send(response.data);
+    })
 })
 
 app.listen(PORT, () => {
