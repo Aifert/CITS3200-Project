@@ -6,7 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const app = express();
-const PORT = process.env.SDR_PORT || 5000;
+const PORT = process.env.SDR_PORT || 4000;
 const SDR_URL = "http://host.docker.internal"
 
 app.use(express.json());
