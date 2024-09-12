@@ -2,66 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Radio Monitoring Demo</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Stream Player</title>
+    <script>
+        async function changeStream() {
+            try {
+                await fetch('http://localhost:9000/monitor-channels/stop');
+                console.log('Stopped current stream');
+            } catch (error) {
+                console.error('Error stopping the current stream:', error);
+            }
+
+            const frequency = document.getElementById('frequencySelector').value;
+
+            const audioElement = document.getElementById('audioPlayer');
+            const sourceElement = document.getElementById('audioSource');
+
+            sourceElement.src = `http://localhost:9000/monitor-channels/${frequency}`;
+            audioElement.load();
+            audioElement.play();
+        }
+    </script>
+    <style>
+        .main-container{
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sub-container{
+            display: flex;
+            justify-content: center;
+            padding: 100px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Radio Monitoring Demo</h1>
+    <h1>Audio Stream Player</h1>
 
-	<!-- Selector for changing listening frequencies -->
-    <form id="frequencyForm">
-        <label for="frequency">Select Frequency: </label>
-        <select id="frequency">
-            <option value="test-wow">test-wow</option>
-            {% endfor %}
+    <div class="main-container">
+        <label for="frequencySelector">Select a stream:</label>
+        <select id="frequencySelector" onchange="changeStream()">
+            <option value="test-1">Test 1</option>
+            <option value="test-2">Test 2</option>
+            <option value="test-3">Test 3</option>
         </select>
-        <button type="submit">Change Frequency</button>
-    </form>
 
-    <audio id="audioPlayer" controls>
-    	<!-- Replace localhost in audioSource with the server IP -->
-        <source id="audioSource" src="http://localhost:9000/monitor-channels/94500000" type="audio/mpeg">
-        Your browser does not support the audio element.
-    </audio>
-
-    <script>
-    	// Form for changing frequencies.
-        $(document).ready(function(){
-            $('#frequencyForm').submit(function(event){
-                event.preventDefault();
-
-                var selectedFrequency = $('#frequency').val();
-                console.log('Selected Frequency:', selectedFrequency);
-
-                // First, send a stop request to the Java server. The SDR can only listen to one channel at a time.
-                $.ajax({
-                    type: 'GET',
-                    url: 'http://localhost:9000/monitor-channels/stop',
-                    success: function(response) {
-                        console.log('Stream stopped successfully.');
-
-                        // Change stream source to new frequency.
-                        var newSourceUrl = 'http://localhost:9000/monitor-channels/' + selectedFrequency;
-                        console.log('New Source URL:', newSourceUrl);
-
-                        // Set the src attribute directly on the audio element
-                        var audioPlayer = $('#audioPlayer')[0];
-                        audioPlayer.pause();
-                        audioPlayer.src = newSourceUrl;
-                        audioPlayer.load();       // Reload the player
-						//Avoid a race condition . (Stream takes about 7 seconds to become availible anyway)
-						setTimeout(function() {
-							audioPlayer.load(); // Yes, Loading the player twice is neccessary for now.
-							audioPlayer.play();
-						}, 5000);
-					},
-
-                    error: function(error) {
-                        console.error('Failed to stop the stream.');
-                    }
-                });
-            });
-        });
-    </script>
+        <!-- Audio Player -->
+        <div class="sub-container">
+            <audio id="audioPlayer" controls>
+                <source id="audioSource" src="http://localhost:9000/monitor-channels/test-1" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+    </div>
 </body>
 </html>

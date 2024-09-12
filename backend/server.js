@@ -49,19 +49,22 @@ app.get('/monitor-channels', async (req, res) => {
 app.get('/monitor-channels/:frequency', async (req, res) => {
   const frequency = req.params.frequency;
 
-  try{
-    const response = await startMonitor(SDR_URL, SDR_PORT, frequency);
+  try {
+    const responseStream = await startMonitor(SDR_URL, SDR_PORT, frequency);
 
-    res.send(response);
-  }
-  catch(error){
+    res.setHeader('Content-Type', 'audio/mpeg');
+
+    responseStream.pipe(res);
+  } catch (error) {
+    console.error('Error occurred while getting channel:', error);
     res.status(500).send({
       code: 500,
-      message: "Error occurred while getting channel",
+      message: 'Error occurred while getting channel',
       error: error.message,
-    })
+    });
   }
-})
+});
+
 
 /**
  * API for stop monitor channels
