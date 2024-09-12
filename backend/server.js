@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 9000;
 const FRONTEND_URL = "http://frontend"
 const FRONTEND_PORT = 3000;
 const SDR_URL = "http://sdr"
-const SDR_PORT = 5000;
+const SDR_PORT = 4000;
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -77,7 +77,7 @@ app.get('/monitor-channels/stop', async (req, res) => {
   catch(error){
     res.status(500).send({
       code: 500,
-      message: "Error occurred while getting channel",
+      message: "Error occurred stopping channel",
       error: error.message,
     })
   }
