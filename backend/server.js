@@ -3,7 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import dotenv from 'dotenv';
 import pg from 'pg';
-import axios from 'axios'
+
 
 import { fileURLToPath } from 'url';
 import { getAliveChannels, getOfflineChannels, getBusyChannels} from "./model_utils.js";
@@ -50,7 +50,7 @@ app.get('/monitor-channels/:frequency', async (req, res) => {
   const frequency = req.params.frequency;
 
   try{
-    const response = await getChannel(SDR_URL, SDR_PORT, frequency);
+    const response = await startMonitor(SDR_URL, SDR_PORT, frequency);
 
     res.send(response);
   }
@@ -70,7 +70,7 @@ app.get('/monitor-channels/:frequency', async (req, res) => {
  */
 app.get('/monitor-channels/stop', async (req, res) => {
   try{
-    const response = await stopChannel(SDR_URL, SDR_PORT);
+    const response = await stopMonitor(SDR_URL, SDR_PORT);
 
     res.send(response);
   }
