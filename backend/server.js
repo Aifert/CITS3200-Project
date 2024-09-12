@@ -7,12 +7,16 @@ import axios from 'axios'
 
 import { fileURLToPath } from 'url';
 import { getAliveChannels, getOfflineChannels, getBusyChannels} from "./model_utils.js";
+import { startMonitor, stopMonitor } from './monitor_server.js';
 
-const SDR_URL = "http://host.docker.internal"
-// const SDR_URL = "http://0.0.0.0"
+const PORT = process.env.PORT || 9000;
+
+const FRONTEND_URL = "http://frontend"
+const FRONTEND_PORT = 3000;
+const SDR_URL = "http://sdr"
+const SDR_PORT = 5000;
 
 const app = express();
-const PORT = process.env.PORT || 9000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -28,14 +32,55 @@ app.use(express.json({
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/test', async (req, res) => {
-  axios.get(`${SDR_URL}:5002/stop`, { insecureHTTPParser: true }).then((response) => {
-    res.send(response.data);
-  })
-});
-
+/**
+ * Base API for monitor channels
+ *
+ * /monitor-channels endpoint
+ */
 app.get('/monitor-channels', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'monitor.html'))
+})
+
+/**
+ * API for starting monitor channels
+ *
+ * /monitor-channels/{frequency}
+ */
+app.get('/monitor-channels/:frequency', async (req, res) => {
+  const frequency = req.params.frequency;
+
+  try{
+    const response = await getChannel(SDR_URL, SDR_PORT, frequency);
+
+    res.send(response);
+  }
+  catch(error){
+    res.status(500).send({
+      code: 500,
+      message: "Error occurred while getting channel",
+      error: error.message,
+    })
+  }
+})
+
+/**
+ * API for stop monitor channels
+ *
+ * /monitor-channels/stop
+ */
+app.get('/monitor-channels/stop', async (req, res) => {
+  try{
+    const response = await stopChannel(SDR_URL, SDR_PORT);
+
+    res.send(response);
+  }
+  catch(error){
+    res.status(500).send({
+      code: 500,
+      message: "Error occurred while getting channel",
+      error: error.message,
+    })
+  }
 })
 
 app.get('/active-channels', async (req, res) => {
