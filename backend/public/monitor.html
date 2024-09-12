@@ -20,7 +20,7 @@
 
     <audio id="audioPlayer" controls>
     	<!-- Replace localhost in audioSource with the server IP -->
-        <source id="audioSource" src="http://localhost:5002/94500000" type="audio/mpeg">
+        <source id="audioSource" src="http://localhost:9000/monitor-channels/94500000" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 
@@ -36,12 +36,12 @@
                 // First, send a stop request to the Java server. The SDR can only listen to one channel at a time.
                 $.ajax({
                     type: 'GET',
-                    url: 'http://localhost:5001/stop',
+                    url: 'http://localhost:9000/monitor-channels/stop',
                     success: function(response) {
                         console.log('Stream stopped successfully.');
 
                         // Change stream source to new frequency.
-                        var newSourceUrl = 'http://localhost:5001/monitor/' + selectedFrequency;
+                        var newSourceUrl = 'http://localhost:9000/monitor-channels/' + selectedFrequency;
                         console.log('New Source URL:', newSourceUrl);
 
                         // Set the src attribute directly on the audio element
