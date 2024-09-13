@@ -50,6 +50,7 @@ app.get('/monitor-channels/:frequency', async (req, res) => {
   const frequency = req.params.frequency;
 
   try {
+    const stopStream = await stopMonitor(SDR_URL, SDR_PORT);
     const responseStream = await startMonitor(SDR_URL, SDR_PORT, frequency);
 
     res.setHeader('Content-Type', 'audio/mpeg');
