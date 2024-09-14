@@ -183,7 +183,7 @@ GITHUB_REPO="<user>/<github_repo_name>"
 DOCKER_BUILDKIT=1 sudo docker-compose up --build
 ```
 
-and the application should be available at `http://<your_server_ip>:900`
+and the application should be available at `http://<your_server_ip>:9000`
 
 Our server is hosted on these credentials
 
