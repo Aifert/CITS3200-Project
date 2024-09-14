@@ -46,3 +46,6 @@ frontend/.next
 .secret
 
 .secret.pem
+
+# SES Channel List
+**/SESChannelList.csv
