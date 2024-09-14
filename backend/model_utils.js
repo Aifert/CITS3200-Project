@@ -15,7 +15,7 @@ let client = new Client({
       });
 
 
-async function connectToDatabase(dbName) {
+async function connectToDatabase(dbName = "testdbmu") {
   const maxRetries = 10;
   let retries = 0;
   isConnecting = true;
@@ -25,7 +25,7 @@ async function connectToDatabase(dbName) {
       client = new Client({
         user: process.env.DB_USER || 'user',
         host: process.env.DB_HOST || 'db',
-        database: process.env.DB_NAME || dbName,
+        database: dbName || process.env.DB_NAME,
         password: process.env.DB_PASSWORD || 'password',
         port: process.env.DB_PORT || 5432,
       });
