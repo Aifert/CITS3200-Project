@@ -102,7 +102,6 @@ app.get('/active-channels', async (req, res) => {
 });
 
 app.get('/analytics/data', async (req, res) => {
-  console.log(req);
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
