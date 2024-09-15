@@ -131,7 +131,7 @@ When requesting to connect to a stream, the web server will generate an http end
 
 When stopping listening to a radio stream, tell the server to stop streaming data
 
-### STREAM /stream/{endpoint}
+### STREAM /monitor-channels/{endpoint}
 
 #### When to use
 
