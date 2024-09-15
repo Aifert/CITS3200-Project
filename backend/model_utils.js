@@ -195,6 +195,24 @@ async function updateDeviceInfo(dataObj) {
   await client.query(query);
 }
 
+async function processIncomingData(dataObj, dbName) {
+  await recheckConnection(dbName);
+  for (let frequency in dataObj.data) {
+    const freqObj = dataObj.frequency;
+    const channelId = await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)
+    for (let timePeriod in freqObj.strength) {
+      const query = `INSERT INTO "strength" ("c_id", "s_sample_time", "s_strength")
+                    VALUES (${channelId}, ${timePeriod}, ${freqObj.strength.timePeriod})`
+      return await client.query(query);
+    }
+
+    for (let timePeriod in freqObj.usage) {
+      const query = `INSERT INTO "utilisation" ("c_id", "a_start_time", "a_end_time")
+                    VALUES (${channelId}, ${timePeriod[0]}, ${timePeriod[1]})`
+      return await client.query(query);
+    }
+  }
+}
 
 exports.getAliveChannels = getAliveChannels;
 exports.getOfflineChannels = getOfflineChannels;
