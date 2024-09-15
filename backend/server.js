@@ -48,7 +48,12 @@ app.get('/monitor-channels', async (req, res) => {
 /**
  * API for starting monitor channels
  *
- * /monitor-channels/{frequency}
+ * /monitor-channels/start
+ *
+ * Parameters :
+ * - session-id : Unique integer identifying the session
+ * - channel-id : Radio channel name to listen in
+ * - frequency : The frequency to monitor
  */
 app.get('/monitor-channels/start', async (req, res) => {
   const session_id = req.query['session-id'] || '';
@@ -75,7 +80,7 @@ app.get('/monitor-channels/start', async (req, res) => {
 });
 
 /**
- * API for starting monitor channels
+ * API for monitoring frequencies
  *
  * /monitor-channels/{frequency}
  */
