@@ -176,8 +176,10 @@ async function getChannelUtilisation(requestObj, dbName) {
 }
 
 
-exports.getAliveChannels = getAliveChannels;
-exports.getOfflineChannels = getOfflineChannels;
-exports.getBusyChannels = getBusyChannels;
-exports.getChannelStrength = getChannelStrength;
-exports.getChannelUtilisation = getChannelUtilisation;
+module.exports = {
+  getAliveChannels,
+  getOfflineChannels,
+  getBusyChannels,
+  getChannelStrength,
+  getChannelUtilisation
+}
