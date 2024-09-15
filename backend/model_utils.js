@@ -1,4 +1,3 @@
-//import pg from 'pg' //pg is PostgreSQL
 const { Client } = require('pg')
 
 const ALIVETIME = 15;
