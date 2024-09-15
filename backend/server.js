@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { fileURLToPath } = require('url');
 const dotenv = require('dotenv');
 const pg = require('pg')
 const { startMonitor, stopMonitor } = require('./monitor_server.js');
