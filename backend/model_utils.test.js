@@ -1,4 +1,3 @@
-//import pg from 'pg' //pg is PostgreSQL//
 const { Client } = require('pg');
 const fs = require('fs');
 const model_utils = require('./model_utils');
