@@ -61,7 +61,7 @@ When first loading/reloading/opening, get a list of channels to request streamin
 
 ## HTTP from Front-end → WebServer Streaming
 
-### GET /stream/start
+### GET /monitor-channels/start
 
 #### Parameters
 
@@ -97,7 +97,7 @@ When first loading/reloading/opening, get a list of channels to request streamin
 
 When requesting to connect to a stream, the web server will generate an http endpoint to connect to and provide it here.
 
-### GET /stream/stop
+### GET /monitor-channels/stop
 
 #### Parameters
 
