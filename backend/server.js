@@ -4,7 +4,6 @@ const path = require('path');
 const { fileURLToPath } = require('url');
 const dotenv = require('dotenv');
 const pg = require('pg')
-const model_utils = require("./model_utils");
 const { startMonitor, stopMonitor } = require('./monitor_server.js');
 
 const app = express();
