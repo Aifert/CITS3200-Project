@@ -2,15 +2,17 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
-const { startMonitor, stopMonitor } = require('./monitor_server.js');
+const {
+  startMonitor,
+  stopMonitor,
+  decideMonitorMode } = require('./monitor_server.js');
 
 const {
   getAliveChannels,
   getBusyChannels,
   getOfflineChannels,
   getChannelStrength,
-  getChannelUtilisation,
-} = require('./model_utils.js');
+  getChannelUtilisation } = require('./model_utils.js');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -48,11 +50,40 @@ app.get('/monitor-channels', async (req, res) => {
  *
  * /monitor-channels/{frequency}
  */
+app.get('/monitor-channels/start', async (req, res) => {
+  const session_id = req.query['session-id'] || '';
+  const channel_id = req.query['channel-id'] || '';
+  const frequency = req.query['frequency'] || '';
+
+  const modeResult = decideMonitorMode(session_id, channel_id, frequency);
+
+  try {
+    await stopMonitor(SDR_URL, SDR_PORT);
+    const responseStream = await startMonitor(SDR_URL, SDR_PORT, modeResult);
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+
+    responseStream.pipe(res);
+  } catch (error) {
+    console.error('Error occurred while getting channel:', error);
+    res.status(500).send({
+      code: 500,
+      message: 'Error occurred while getting channel',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * API for starting monitor channels
+ *
+ * /monitor-channels/{frequency}
+ */
 app.get('/monitor-channels/:frequency', async (req, res) => {
   const frequency = req.params.frequency;
 
   try {
-    const stopStream = await stopMonitor(SDR_URL, SDR_PORT);
+    await stopMonitor(SDR_URL, SDR_PORT);
     const responseStream = await startMonitor(SDR_URL, SDR_PORT, frequency);
 
     res.setHeader('Content-Type', 'audio/mpeg');
@@ -67,6 +98,7 @@ app.get('/monitor-channels/:frequency', async (req, res) => {
     });
   }
 });
+
 
 
 /**
