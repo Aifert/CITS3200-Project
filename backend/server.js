@@ -1,11 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { fileURLToPath } = require('url');
 const dotenv = require('dotenv');
-const pg = require('pg')
-const model_utils = require("./model_utils");
 const { startMonitor, stopMonitor } = require('./monitor_server.js');
+
+const {
+  getAliveChannels,
+  getBusyChannels,
+  getOfflineChannels,
+  getChannelStrength,
+  getChannelUtilisation,
+} = require('./model_utils.js');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -14,8 +19,6 @@ const FRONTEND_PORT = 3000;
 const SDR_URL = "http://sdr"
 const SDR_PORT = 4000;
 
-//const __filename = fileURLToPath(import.meta.url);
-//const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -89,9 +92,9 @@ app.get('/monitor-channels/stop', async (req, res) => {
 app.get('/active-channels', async (req, res) => {
   try{
     let returnVal = {}
-    returnVal["active"] = await model_utils.getAliveChannels();
-    returnVal["busy"] = await model_utils.getBusyChannels();
-    returnVal["offline"] = await model_utils.getOfflineChannels();
+    returnVal["active"] = await getAliveChannels();
+    returnVal["busy"] = await getBusyChannels();
+    returnVal["offline"] = await getOfflineChannels();
     res.send(returnVal)
   }
   catch(error){
@@ -104,15 +107,14 @@ app.get('/active-channels', async (req, res) => {
 });
 
 app.get('/analytics/data', async (req, res) => {
-  console.log(req);
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
   }
   try{
-    const strengthData = await model_utils.getChannelStrength(requestObj)
-    const utilisationData = await model_utils.getChannelUtilisation(requestObj)
+    const strengthData = await getChannelStrength(requestObj)
+    const utilisationData = await getChannelUtilisation(requestObj)
     let returnVal = {}
     for (const key in strengthData) {
       returnVal[key] = {}
