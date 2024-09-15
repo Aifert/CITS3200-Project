@@ -176,12 +176,12 @@ async function getChannelUtilisation(requestObj, dbName) {
 }
 
 async function isDeviceNew(deviceId) {
-  await recheckConnection(dbName);
   let query = `SELECT d_id FROM "devices" WHERE d_id = ${deviceId}`
-  return await client.query(query).rows.length === 0;
+  return (await client.query(query)).rows.length === 0;
 }
 
-async function updateDeviceInfo(dataObj) {
+async function updateDeviceInfo(dataObj, dbName) {
+  await recheckConnection(dbName);
   let query = "";
   if (await isDeviceNew(dataObj["soc-id"])) {
     query = `INSERT INTO "devices" ("d_id", "d_address", "d_port")
@@ -194,21 +194,38 @@ async function updateDeviceInfo(dataObj) {
   await client.query(query);
 }
 
+async function isChannelNew(deviceId, freq) {
+  await recheckConnection(dbName);
+  const query = `SELECT c_id FROM "channels" WHERE d_id = ${deviceId} AND c_freq = ${freq}`;
+  return (await client.query(query)).rows.length === 0;
+}
+
+async function updateChannelInfo(deviceId, freq, dbName) {
+  await recheckConnection(dbName);
+  if (await isChannelNew(deviceId, freq)) {
+    const query = `INSERT INTO "channels" (c_freq, c_name, d_id)
+                  VALUES (${freq}, Channel ${freq}, ${deviceId})`;
+    await client.query(query);
+  }
+}
+
 async function processIncomingData(dataObj, dbName) {
   await recheckConnection(dbName);
+  await updateDeviceInfo(dataObj["soc-id"], dbName);
   for (let frequency in dataObj.data) {
-    const freqObj = dataObj.frequency;
-    const channelId = await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)
+    const freqObj = dataObj.data[frequency];
+    await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
+    const channelId = "3";//(await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)).rows[0];
     for (let timePeriod in freqObj.strength) {
       const query = `INSERT INTO "strength" ("c_id", "s_sample_time", "s_strength")
-                    VALUES (${channelId}, ${timePeriod}, ${freqObj.strength.timePeriod})`
-      return await client.query(query);
+                    VALUES (${channelId}, ${timePeriod}, ${freqObj.strength[timePeriod]})`
+      await client.query(query);
     }
 
     for (let timePeriod in freqObj.usage) {
-      const query = `INSERT INTO "utilisation" ("c_id", "a_start_time", "a_end_time")
-                    VALUES (${channelId}, ${timePeriod[0]}, ${timePeriod[1]})`
-      return await client.query(query);
+      let query = `INSERT INTO "utilisation" ("c_id", "a_start_time", "a_end_time")
+                    VALUES (${channelId}, ${freqObj.usage[timePeriod][0]}, ${freqObj.usage[timePeriod][1]})`
+      await client.query(query);
     }
   }
 }
@@ -217,5 +234,6 @@ module.exports = {
   getOfflineChannels,
   getBusyChannels,
   getChannelStrength,
-  getChannelUtilisation
+  getChannelUtilisation,
+  processIncomingData
 }

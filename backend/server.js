@@ -6,10 +6,11 @@ const { startMonitor, stopMonitor } = require('./monitor_server.js');
 
 const {
   getAliveChannels,
-  getBusyChannels,
   getOfflineChannels,
+  getBusyChannels,
   getChannelStrength,
   getChannelUtilisation,
+  processIncomingData
 } = require('./model_utils.js');
 
 const app = express();
@@ -142,7 +143,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
 });
 
+app.post('/data', async (req, res) => {
+  processIncomingData(req.body);
+});
 
 app.listen(PORT, () => {
   console.log(`Server successfully started on port ${PORT}`);
 });
+
