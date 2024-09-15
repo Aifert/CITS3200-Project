@@ -6,6 +6,14 @@ const dotenv = require('dotenv');
 const pg = require('pg')
 const { startMonitor, stopMonitor } = require('./monitor_server.js');
 
+const {
+  getAliveChannels,
+  getBusyChannels,
+  getOfflineChannels,
+  getChannelStrength,
+  getChannelUtilisation,
+} = require('./model_utils.js');
+
 const app = express();
 const PORT = process.env.PORT || 9000;
 const FRONTEND_URL = "http://frontend"
