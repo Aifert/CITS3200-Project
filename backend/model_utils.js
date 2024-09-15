@@ -24,7 +24,7 @@ async function connectToDatabase(dbName = "testdbmu") {
       client = new Client({
         user: process.env.DB_USER || 'user',
         host: process.env.DB_HOST || 'db',
-        database: dbName || process.env.DB_NAME,
+        database: process.env.DB_NAME || dbName ,
         password: process.env.DB_PASSWORD || 'password',
         port: process.env.DB_PORT || 5432,
       });
