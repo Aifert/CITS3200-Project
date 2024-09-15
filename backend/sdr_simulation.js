@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
-const { fileURLToPath } = require('url');
 
 const app = express();
 const PORT = process.env.SDR_PORT || 4000;
