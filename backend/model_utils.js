@@ -1,4 +1,3 @@
-//import pg from 'pg' //pg is PostgreSQL
 const { Client } = require('pg')
 
 const ALIVETIME = 15;
@@ -25,7 +24,7 @@ async function connectToDatabase(dbName = "testdbmu") {
       client = new Client({
         user: process.env.DB_USER || 'user',
         host: process.env.DB_HOST || 'db',
-        database: dbName || process.env.DB_NAME,
+        database: process.env.DB_NAME || dbName ,
         password: process.env.DB_PASSWORD || 'password',
         port: process.env.DB_PORT || 5432,
       });
@@ -213,9 +212,10 @@ async function processIncomingData(dataObj, dbName) {
     }
   }
 }
-
-exports.getAliveChannels = getAliveChannels;
-exports.getOfflineChannels = getOfflineChannels;
-exports.getBusyChannels = getBusyChannels;
-exports.getChannelStrength = getChannelStrength;
-exports.getChannelUtilisation = getChannelUtilisation;
+module.exports = {
+  getAliveChannels,
+  getOfflineChannels,
+  getBusyChannels,
+  getChannelStrength,
+  getChannelUtilisation
+}

@@ -1,8 +1,6 @@
-//import pg from 'pg' //pg is PostgreSQL//
 const { Client } = require('pg');
 const fs = require('fs');
 const model_utils = require('./model_utils');
-//import { getAliveChannels, getOfflineChannels, getBusyChannels, getChannelStrength, getChannelUtilisation } from "./model_utils.js";
 
 const initclient = new Client({
   user: 'user',
