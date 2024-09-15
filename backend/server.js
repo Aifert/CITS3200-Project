@@ -115,8 +115,8 @@ app.get('/analytics/data', async (req, res) => {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
   }
   try{
-    const strengthData = await model_utils.getChannelStrength(requestObj)
-    const utilisationData = await model_utils.getChannelUtilisation(requestObj)
+    const strengthData = await getChannelStrength(requestObj)
+    const utilisationData = await getChannelUtilisation(requestObj)
     let returnVal = {}
     for (const key in strengthData) {
       returnVal[key] = {}
