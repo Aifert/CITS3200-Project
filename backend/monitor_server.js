@@ -24,5 +24,7 @@ async function stopMonitor(SDR_URL, SDR_PORT){
     }
 }
 
-exports.startMonitor = startMonitor;
-exports.stopMonitor = stopMonitor;
+module.exports = {
+  startMonitor,
+  stopMonitor
+}
