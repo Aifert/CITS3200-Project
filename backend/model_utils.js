@@ -159,7 +159,7 @@ async function getChannelUtilisation(requestObj, dbName) {
     cond += `AND (a_end_time IS NULL OR a_end_time >= ${requestObj["start-time"]})`
   }
   if ("end-time" in requestObj) {
-    cond += `AND a_start_time <= ${requestObj["end-time"]}`
+    cond += `AND a_start_time <= ${requestObj["end-time"]}`;
   }
 
   let query = `SELECT c_id, a_start_time, a_end_time FROM "utilisation"
@@ -169,14 +169,32 @@ async function getChannelUtilisation(requestObj, dbName) {
   let output = {};
   for (const row of res.rows) {
     if (!(row.c_id in output)) {
-      output[row.c_id] = []
+      output[row.c_id] = [];
     }
       output[row.c_id].push([row.a_start_time, row.a_end_time]);
   }
   return output;
 }
 
-//export{ getAliveChannels, getOfflineChannels, getBusyChannels, getChannelStrength, getChannelUtilisation};
+async function isDeviceNew(deviceId) {
+  await recheckConnection(dbName);
+  let query = `SELECT d_id FROM "devices" WHERE d_id = ${deviceId}`
+  return await client.query(query).rows.length === 0;
+}
+
+async function updateDeviceInfo(dataObj) {
+  let query = "";
+  if (await isDeviceNew(dataObj["soc-id"])) {
+    query = `INSERT INTO "devices" ("d_id", "d_address", "d_port")
+                  VALUES (${dataObj["soc-id"]}, ${dataObj.address.split(":")[0]}, ${dataObj.address.split(":")[1]}`;
+  } else {
+    query = `UPDATE "devices" SET "d_address" = ${dataObj.address.split(":")[0]},
+                   "d_port" = ${dataObj.address.split(":")[1]}
+                   WHERE "d_id"=${dataObj["soc-id"]}`;
+  }
+  await client.query(query);
+}
+
 
 exports.getAliveChannels = getAliveChannels;
 exports.getOfflineChannels = getOfflineChannels;
