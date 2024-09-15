@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Stream Player</title>
+    <script>
+        async function submitFrequency(event) {
+            event.preventDefault();
+
+            try {
+                await fetch('http://localhost:9000/monitor-channels/stop');
+                console.log('Stopped current stream');
+            } catch (error) {
+                console.error('Error stopping the current stream:', error);
+            }
+
+            const frequency = document.getElementById('frequencyInput').value;
+
+            const audioElement = document.getElementById('audioPlayer');
+            const sourceElement = document.getElementById('audioSource');
+
+            sourceElement.src = `http://localhost:9000/monitor-channels/${frequency}`;
+            audioElement.load();
+            audioElement.play();
+        }
+    </script>
+    <style>
+        .main-container{
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sub-container{
+            display: flex;
+            justify-content: center;
+            padding: 100px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        label, input, button {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Audio Stream Player</h1>
+
+    <div class="main-container">
+        <form onsubmit="submitFrequency(event)">
+            <label for="frequencyInput">Enter a frequency:</label>
+            <input type="text" id="frequencyInput" name="frequency" required>
+            <button type="submit">Submit</button>
+        </form>
+
+        <!-- Audio Player -->
+        <div class="sub-container">
+            <audio id="audioPlayer" controls>
+                <source id="audioSource" src="http://localhost:9000/monitor-channels/test-1" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+    </div>
+</body>
+</html>
