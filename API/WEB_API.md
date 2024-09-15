@@ -45,10 +45,12 @@ When first loading/reloading/opening (TBD implementation), get a unique session-
 		"code": 200,
 		"alive": [{
 			"channel-id": 21892,
+			"channel-name": "Perth 1",
 			"frequency": 162.475
 		}]
 		"offline": [{
 			"channel-id": 192838,
+			"channel-name": "Perth 1",
 			"frequency": 162.825
 		}]
 	}
@@ -102,8 +104,7 @@ When requesting to connect to a stream, the web server will generate an http end
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
 | session-id | Required | String | Unique integer identifying the session |
-| channelid | Optional | Integer | Radio channel name to listen in to (preferred over frequency) |
-| frequency | Optional | Float | Radio frequency to stop listening to |
+| channel-id | Optional | Integer | Radio channel name to stop listening (preferred over endpoint) |
 | endpoint | Optional | Integer | Web Server end point to stop listening to |
 
 #### Parameters Example
@@ -173,21 +174,21 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 		"data": {
 			21892: {
 				"strength": {
-					1724322719: 0.3,
-					1724322724: 0.35
+					1724322719: -80.3,
+					1724322724: -85.5
 				},
 				"utilisation": {
-					(1724322716, 1724322723),
-					(1724322725, 1724322727)
+					(1724322716, 1724322723, false), //(start_time, end_time, sdr_busy)
+					(1724322725, 1724322727, false)
 				}
 			}
 			192838: {
 				"strength": {
-					1724322720: 0.6,
-					1724322725: 0.65
+					1724322720: -100.6,
+					1724322725: -90.65
 				},
 				"utilisation": {
-					(1724322716, 1724322720)
+					(1724322716, 1724322720, false)
 				}
 			}
 		}

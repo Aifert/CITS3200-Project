@@ -32,9 +32,9 @@ For hosting on your own web server
 
 1. **Clone the Respository**:
 ```bash
-$ git clone https://github.com/GravityWorld/CITS3200-Project.git
+git clone https://github.com/GravityWorld/CITS3200-Project.git
 
-$ cd CITS3200-Project #Enter into cloned repository
+cd CITS3200-Project #Enter into cloned repository
 ```
 
 2. **Start up Docker**
@@ -50,19 +50,19 @@ Before continuing make sure the docker desktop you've downloaded is running, run
 If you are using WSL on windows, activate WSL by doing in terminal
 
 ```bash
-$ wsl
+wsl
 ```
 
 Then
 
 (For Production)
 ```bash
-$ docker-compose up --build
+docker-compose up --build
 ```
 
 (For development)
 ```bash
-$ docker-compose -f docker-compose.dev.yml up --build
+docker-compose -f docker-compose.dev.yml up --build
 ```
 
 3. **Connect to db (not needed in setup)**
@@ -72,15 +72,15 @@ $ docker-compose -f docker-compose.dev.yml up --build
 Open your docker desktop, click into `CITS3200-Project`, then click into `postgres:13`, then click `Exec`
 
 ```bash
-$ psql -U user -d mydb
+psql -U user -d mydb
 ```
 
 OR alternatively, open a Terminal and do
 
-```
-$ docker exec -it cits3200-project-db-1 bash
+```bash
+docker exec -it cits3200-project-db-1 bash
 
-$ psql -U user -d mydb
+psql -U user -d mydb
 ```
 
 
@@ -88,7 +88,7 @@ This will launch the web application. You should be able to see status of applic
 
 Changes made will be automatically updated, so you do not have to keep restarting docker.
 
-The application will be available at `http://127.0.0.1:8001/`
+The application will be available at `http://localhost:3000/`
 
 ### Web Server configuration
 
@@ -114,11 +114,11 @@ Write this in your cits3200_project Nano and save it
 
 # Configuration for port 5000 (sdr service)
 server {
-    listen 5000;
+    listen 4000;
     server_name 20.213.23.98;
 
     location / {
-        proxy_pass http://127.0.0.1:5001;
+        proxy_pass http://127.0.0.1:4001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -156,7 +156,7 @@ server {
 ```
 
 Then again run
-```
+```bash
 sudo ln -s /etc/nginx/sites-available/cits3200_project /etc/nginx/sites-enabled/
 sudo systemctl reload nginx
 ```
@@ -180,26 +180,26 @@ GITHUB_REPO="<user>/<github_repo_name>"
 ```
 
 ```bash
-$ DOCKER_BUILDKIT=1 sudo docker-compose up --build
+DOCKER_BUILDKIT=1 sudo docker-compose up --build
 ```
 
-and the application should be available at `http://<your_server_ip>:8001`
+and the application should be available at `http://<your_server_ip>:9000`
 
 Our server is hosted on these credentials
 
 - IP : 20.213.23.98
-- Ports available : [8000, 5001]
+- Ports available : [3000, 4000, 9000]
 
 Sample request you can make to interact with webserver
 
-```http://20.213.23.98:8000```
+```http://20.213.23.98:9000```
 
 ```http://20.213.23.98:3000/login```
 
 
 ## Instructions to start frontend is available in `frontend/README.md`
 
-### NodeJS Unit Tetsing
+### NodeJS Unit Testing
 
 Unit testing has been set up in NodeJS using jest
 
