@@ -79,14 +79,14 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
    - rtl_power -f 161.0125M:469.5625M:6250 -d 0 -g 25 -i 10 -e 1m test_output.csv
      - -f 161.0125M:469.5625M:6250		← frequency range & bin size
        - choosing 6,250Hz for bin size as the smallest range between channel frequencies is 12,500Hz (choose algorithmically with min_distance_between_frequencies * 0.5)
-   - -d 0						← device index
-     - choosing RTL-SDRv4 device 0, as device 1 is used for audio streaming (solution expects two per SoC)
-   - -g 25						← gain amount (dB)
-     - adding 25dB gain, which is the mid-point between 0 and 50dB (max)
-     - main thing here is to choose a gain value, so that samples aren't using auto-gain (since this would cause fluctuations in sample baselines)
-   - -i
-   - -e
-   - name.csv
+     - -d 0						← device index
+       - choosing RTL-SDRv4 device 0, as device 1 is used for audio streaming (solution expects two per SoC)
+     - -g 25						← gain amount (dB)
+       - adding 25dB gain, which is the mid-point between 0 and 50dB (max)
+       - main thing here is to choose a gain value, so that samples aren't using auto-gain (since this would cause fluctuations in sample baselines)
+     - -i
+     - -e
+     - name.csv
 4. parse the output file to generate results, and send these to the server
    - calculate threshold_above_noise_floor values to use to test for channel activity
      - divide the monitored spectrum into ~even bands, which are <=10MHz ranges from the lowest frequency observed up the spectrum
