@@ -86,9 +86,9 @@ app.get('/monitor-channels/stop', async (req, res) => {
 app.get('/active-channels', async (req, res) => {
   try{
     let returnVal = {}
-    returnVal["active"] = await model_utils.getAliveChannels();
-    returnVal["busy"] = await model_utils.getBusyChannels();
-    returnVal["offline"] = await model_utils.getOfflineChannels();
+    returnVal["active"] = await getAliveChannels();
+    returnVal["busy"] = await getBusyChannels();
+    returnVal["offline"] = await getOfflineChannels();
     res.send(returnVal)
   }
   catch(error){
