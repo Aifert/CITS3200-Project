@@ -5,7 +5,7 @@ const { fileURLToPath } = require('url');
 const dotenv = require('dotenv');
 const pg = require('pg')
 const model_utils = require("./model_utils");
-import { startMonitor, stopMonitor } from './monitor_server.js';
+const { startMonitor, stopMonitor } = require('./monitor_server.js');
 
 const app = express();
 const PORT = process.env.PORT || 9000;

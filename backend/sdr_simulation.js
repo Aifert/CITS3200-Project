@@ -1,9 +1,8 @@
-import express from 'express';
-import cors from 'cors';
-import axios from 'axios';
-import path from 'path';
-
-import { fileURLToPath } from 'url';
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
+const path = require('path');
+const { fileURLToPath } = require('url');
 
 const app = express();
 const PORT = process.env.SDR_PORT || 4000;
@@ -11,9 +10,6 @@ const SDR_URL = "http://host.docker.internal"
 
 app.use(express.json());
 app.use(cors());
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 app.post("/sdr", (req, res) => {
     const data = req.body;
