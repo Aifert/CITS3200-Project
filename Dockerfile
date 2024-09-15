@@ -14,7 +14,7 @@ COPY . .
 
 # Expose necessary ports
 EXPOSE 9000
-EXPOSE 5000
+EXPOSE 4000
 EXPOSE 3000
 
 # Default to production if NODE_ENV is not set
