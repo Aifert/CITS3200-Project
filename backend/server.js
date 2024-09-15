@@ -14,8 +14,6 @@ const FRONTEND_PORT = 3000;
 const SDR_URL = "http://sdr"
 const SDR_PORT = 4000;
 
-//const __filename = fileURLToPath(import.meta.url);
-//const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
