@@ -1,22 +1,24 @@
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import dotenv from 'dotenv';
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const dotenv = require('dotenv');
+const { startMonitor, stopMonitor } = require('./monitor_server.js');
 
-import { fileURLToPath } from 'url';
-import { getAliveChannels, getOfflineChannels, getBusyChannels} from "./model_utils.js";
-import { startMonitor, stopMonitor } from './monitor_server.js';
+const {
+  getAliveChannels,
+  getBusyChannels,
+  getOfflineChannels,
+  getChannelStrength,
+  getChannelUtilisation,
+} = require('./model_utils.js');
 
+const app = express();
 const PORT = process.env.PORT || 9000;
-
 const FRONTEND_URL = "http://frontend"
 const FRONTEND_PORT = 3000;
 const SDR_URL = "http://sdr"
 const SDR_PORT = 4000;
 
-const app = express();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -101,7 +103,39 @@ app.get('/active-channels', async (req, res) => {
       message: "Error occurred while getting channels",
       error: error.message,
     })
-  }});
+  }
+});
+
+app.get('/analytics/data', async (req, res) => {
+  const sendObj = req.query;
+  let requestObj = {}
+  for (const elem in sendObj) {
+    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
+  }
+  try{
+    const strengthData = await getChannelStrength(requestObj)
+    const utilisationData = await getChannelUtilisation(requestObj)
+    let returnVal = {}
+    for (const key in strengthData) {
+      returnVal[key] = {}
+      returnVal[key]["strength"] = strengthData[key]
+    }
+    for (const key in utilisationData) {
+      if (!(key in returnVal)) {
+        returnVal[key] = {}
+      }
+      returnVal[key]["utilisation"] = utilisationData[key]
+    }
+    res.send(returnVal)
+  }
+  catch(error){
+    res.status(500).send({
+      code: 500,
+      message: "Error occurred while getting channels",
+      error: error.message,
+    })
+  }
+});
 
 
 app.get('/', (req, res) => {
