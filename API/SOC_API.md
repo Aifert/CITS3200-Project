@@ -24,14 +24,14 @@
 
 #### Parameters Example
 
-	{    
-		"soc-id": 162475163, 
+	{
+		"soc-id": 162475163,
 		“address”: “128.10.20.30:8080”,
 		data: {
 			162475000: {
 				"usage": [
-				(1724322719, 1724322724, false), //(start_time, end_time, sdr_busy)
-				(1724322719, null, true)
+				[1724322719, 1724322724, false], //(start_time, end_time)
+				[1724322719, null, true]
 				],
 				"strength" {
 					1724322719: -75.1,
@@ -40,7 +40,7 @@
 			},
 			163825000: {
 				"usage": [
-				(1724322600, 1724322710, false) //(start_time, end_time, sdr_busy)
+				[1724322600, 1724322710, false] //(start_time, end_time)
 				],
 				"strength" {
 					1724322600: -105.1,
@@ -68,7 +68,7 @@
 
 ## SoC Monitoring
 
-SoC Monitoring requires a constant connection, so will utilise websockets for this purpose.  
+SoC Monitoring requires a constant connection, so will utilise websockets for this purpose.
 We assume the Web Server hold the IP information of the SoC already.
 
 
@@ -85,8 +85,8 @@ We assume the Web Server hold the IP information of the SoC already.
 
 #### Parameters Example
 
-	{    
-		"type": "soc-init", 
+	{
+		"type": "soc-init",
 		"frequency": 162.475
 	}
 
@@ -109,8 +109,8 @@ Soc-init is designed to be originally sent from the Web Server, when monitoring 
 
 #### Parameters Example
 
-	{    
-		"type": "soc-abort", 
+	{
+		"type": "soc-abort",
 		"frequency": 162.475
 	}
 
@@ -128,8 +128,8 @@ Soc-init is designed to be originally sent from the Web Server, when monitoring 
 
 #### Response Parameters Example
 
-	{    
-		"type": "soc-abort", 
+	{
+		"type": "soc-abort",
 		"frequency": 162.475
 	}
 

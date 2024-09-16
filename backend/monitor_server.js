@@ -1,8 +1,8 @@
 const axios = require('axios');
 
-async function startMonitor(SDR_URL, SDR_PORT, frequency) {
+async function startMonitor(SDR_URL, SDR_PORT, params) {
   try {
-    const response = await axios.get(`${SDR_URL}:${SDR_PORT}/monitor/${frequency}`,{
+    const response = await axios.get(`${SDR_URL}:${SDR_PORT}/monitor/${params}`,{
       responseType: 'stream',
       insecureHTTPParser: true,
     });
@@ -15,16 +15,28 @@ async function startMonitor(SDR_URL, SDR_PORT, frequency) {
 
 async function stopMonitor(SDR_URL, SDR_PORT){
     try {
-        const response = await axios.get(`${SDR_URL}:${SDR_PORT}/monitor/stop`, {
+        await axios.get(`${SDR_URL}:${SDR_PORT}/monitor/stop`, {
           insecureHTTPParser: true
         });
-        return response.data;
     } catch (error) {
         throw new Error(error.message);
     }
 }
 
+function decideMonitorMode(session_id, channel_id, frequency){
+
+  // Decide by precendence, session_id, channel_id then frequency
+  if (session_id !== '') {
+    return session_id;
+  } else if (channel_id !== '') {
+    return channel_id;
+  } else {
+    return frequency;
+  }
+}
+
 module.exports = {
   startMonitor,
-  stopMonitor
+  stopMonitor,
+  decideMonitorMode
 }
