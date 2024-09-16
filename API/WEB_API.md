@@ -61,13 +61,13 @@ When first loading/reloading/opening, get a list of channels to request streamin
 
 ## HTTP from Front-end → WebServer Streaming
 
-### GET /stream/start
+### GET /monitor-channels/start
 
 #### Parameters
 
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
-| session-id | Required | String | Unique integer identifying the session |
+| session-id | Required | String | Unique string identifying the session |
 | channel-id | Optional | Integer | Radio channel name to listen in to (preferred over frequency) |
 | frequency | Optional | Float | Radio frequency to listen in to |
 
@@ -97,13 +97,13 @@ When first loading/reloading/opening, get a list of channels to request streamin
 
 When requesting to connect to a stream, the web server will generate an http endpoint to connect to and provide it here.
 
-### GET /stream/stop
+### GET /monitor-channels/stop
 
 #### Parameters
 
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
-| session-id | Required | String | Unique integer identifying the session |
+| session-id | Required | String | Unique string identifying the session |
 | channel-id | Optional | Integer | Radio channel name to stop listening (preferred over endpoint) |
 | endpoint | Optional | Integer | Web Server end point to stop listening to |
 
@@ -131,7 +131,7 @@ When requesting to connect to a stream, the web server will generate an http end
 
 When stopping listening to a radio stream, tell the server to stop streaming data
 
-### STREAM /stream/{endpoint}
+### STREAM /monitor-channels/{endpoint}
 
 #### When to use
 
@@ -178,7 +178,7 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 					1724322724: -85.5
 				},
 				"utilisation": {
-					(1724322716, 1724322723, false), //(start_time, end_time, sdr_busy)
+					(1724322716, 1724322723, false), //(start_time, end_time)
 					(1724322725, 1724322727, false)
 				}
 			}
