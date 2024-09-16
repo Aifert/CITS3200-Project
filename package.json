@@ -33,5 +33,5 @@
     "lint": "cd frontend && next lint",
     "test": "jest --detectOpenHandles --forceExit"
   },
-  "type": "module"
+  "type": "common"
 }
