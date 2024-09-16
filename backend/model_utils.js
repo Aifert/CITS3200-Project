@@ -244,6 +244,7 @@ async function processIncomingData(dataObj, dbName) {
   catch(error){
     throw error;
   }
+}
 module.exports = {
   getAliveChannels,
   getOfflineChannels,
