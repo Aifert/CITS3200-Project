@@ -213,30 +213,37 @@ async function updateChannelInfo(deviceId, freq, dbName) {
 }
 
 async function processIncomingData(dataObj, dbName) {
-  await recheckConnection(dbName);
-  if ("address" in dataObj) {
-    await updateDeviceInfo(dataObj, dbName);
-  }
-  for (let frequency in dataObj.data) {
-    const freqObj = dataObj.data[frequency];
-    await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
-    const channelId = (await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)).rows[0]["c_id"];
-    if ("strength" in freqObj) {
-      for (let timePeriod in freqObj.strength) {
-        const query = `INSERT INTO "strength" ("c_id", "s_sample_time", "s_strength")
-                      VALUES (${channelId}, ${timePeriod}, ${freqObj.strength[timePeriod]})`
-        await client.query(query);
+  try{
+    await recheckConnection(dbName);
+
+    if ("address" in dataObj) {
+      await updateDeviceInfo(dataObj, dbName);
+    }
+    for (let frequency in dataObj.data) {
+      const freqObj = dataObj.data[frequency];
+      await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
+      const channelId = (await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)).rows[0]["c_id"];
+      if ("strength" in freqObj) {
+        for (let timePeriod in freqObj.strength) {
+          const query = `INSERT INTO "strength" ("c_id", "s_sample_time", "s_strength")
+                        VALUES (${channelId}, ${timePeriod}, ${freqObj.strength[timePeriod]})`
+          await client.query(query);
+        }
+      }
+      if ("usage" in freqObj) {
+        for (let timePeriod in freqObj.usage) {
+          let query = `INSERT INTO "utilisation" ("c_id", "a_start_time", "a_end_time")
+                        VALUES (${channelId}, ${freqObj.usage[timePeriod][0]}, ${freqObj.usage[timePeriod][1]})`
+          await client.query(query);
+        }
       }
     }
-    if ("usage" in freqObj) {
-      for (let timePeriod in freqObj.usage) {
-        let query = `INSERT INTO "utilisation" ("c_id", "a_start_time", "a_end_time")
-                      VALUES (${channelId}, ${freqObj.usage[timePeriod][0]}, ${freqObj.usage[timePeriod][1]})`
-        await client.query(query);
-      }
-    }
+
+    return "Successfully processed data"
   }
-}
+  catch(error){
+    throw error;
+  }
 module.exports = {
   getAliveChannels,
   getOfflineChannels,
