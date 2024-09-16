@@ -182,7 +182,22 @@ app.get('/', (req, res) => {
 });
 
 app.post('/data', async (req, res) => {
-  processIncomingData(req.body, "mydb");
+  try{
+    const response = await processIncomingData(req.body, "mydb");
+
+    if (response){
+      res.status(200).send({
+        message: "Data successfully processed",
+        data: response,
+      });
+    }
+  }
+  catch(error){
+    res.status(500).send({
+      message: "Error occurred while processing data",
+      error: error.message,
+    })
+  }
 });
 
 app.listen(PORT, () => {
