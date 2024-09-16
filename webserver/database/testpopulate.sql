@@ -20,7 +20,7 @@ INSERT INTO "sessions" (session_id, auth_token)
 VALUES (2, 92317635287643543);
 INSERT INTO "sessions" (session_id, auth_token)
 VALUES (3, 44561672369236228);
-SELECT setval('"sessions_s_session_id_seq"', (SELECT MAX(session_id) from "sessions"));
+SELECT setval('"sessions_session_id_seq"', (SELECT MAX(session_id) from "sessions"));
 
 INSERT INTO "session_listeners" (session_id, c_id)
 VALUES (1, 1);
