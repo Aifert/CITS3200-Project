@@ -27,12 +27,12 @@ app.get('/stop', async (req, res) => {
     })
 })
 
-app.get('/monitor/:frequency', async (req, res) => {
-    const frequency = req.params.frequency;
+app.get('/monitor/:params', async (req, res) => {
+    const params = req.params.params;
 
     // Fetch the stream from the SDR server
     try {
-        const sdrResponse = await axios.get(`${SDR_URL}:5002/${frequency}`,{
+        const sdrResponse = await axios.get(`${SDR_URL}:5002/${params}`,{
             responseType: 'stream',
             insecureHTTPParser: true
         });
