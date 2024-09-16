@@ -45,7 +45,10 @@ async function connectToDatabase(dbName = "testdbmu") {
 }
 
 async function recheckConnection(dbName) {
-  if (!isConnected && !isConnecting) {
+  if ((client.database != dbName) || (!isConnected && !isConnecting)) {
+    if (client.database != dbName) {
+      await client.end();
+    }
     await connectToDatabase(dbName);
   }
 }
@@ -183,18 +186,18 @@ async function isDeviceNew(deviceId) {
 async function updateDeviceInfo(dataObj, dbName) {
   await recheckConnection(dbName);
   let query = "";
-  if (await isDeviceNew(dataObj["soc-id"])) {
+  if (await isDeviceNew(dataObj["soc-id"], dbName)) {
     query = `INSERT INTO "devices" ("d_id", "d_address", "d_port")
-                  VALUES (${dataObj["soc-id"]}, ${dataObj.address.split(":")[0]}, ${dataObj.address.split(":")[1]}`;
+                  VALUES (${dataObj["soc-id"]}, '${dataObj.address.split(":")[0]}', ${dataObj.address.split(":")[1]})`;
   } else {
-    query = `UPDATE "devices" SET "d_address" = ${dataObj.address.split(":")[0]},
+    query = `UPDATE "devices" SET "d_address" = '${dataObj.address.split(":")[0]}',
                    "d_port" = ${dataObj.address.split(":")[1]}
                    WHERE "d_id"=${dataObj["soc-id"]}`;
   }
   await client.query(query);
 }
 
-async function isChannelNew(deviceId, freq) {
+async function isChannelNew(deviceId, freq, dbName) {
   await recheckConnection(dbName);
   const query = `SELECT c_id FROM "channels" WHERE d_id = ${deviceId} AND c_freq = ${freq}`;
   return (await client.query(query)).rows.length === 0;
@@ -202,20 +205,20 @@ async function isChannelNew(deviceId, freq) {
 
 async function updateChannelInfo(deviceId, freq, dbName) {
   await recheckConnection(dbName);
-  if (await isChannelNew(deviceId, freq)) {
+  if (await isChannelNew(deviceId, freq, dbName)) {
     const query = `INSERT INTO "channels" (c_freq, c_name, d_id)
-                  VALUES (${freq}, Channel ${freq}, ${deviceId})`;
+                  VALUES (${freq}, 'Channel ${freq}', ${deviceId})`;
     await client.query(query);
   }
 }
 
 async function processIncomingData(dataObj, dbName) {
   await recheckConnection(dbName);
-  await updateDeviceInfo(dataObj["soc-id"], dbName);
+  await updateDeviceInfo(dataObj, dbName);
   for (let frequency in dataObj.data) {
     const freqObj = dataObj.data[frequency];
     await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
-    const channelId = "3";//(await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)).rows[0];
+    const channelId = (await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)).rows[0]["c_id"];
     for (let timePeriod in freqObj.strength) {
       const query = `INSERT INTO "strength" ("c_id", "s_sample_time", "s_strength")
                     VALUES (${channelId}, ${timePeriod}, ${freqObj.strength[timePeriod]})`

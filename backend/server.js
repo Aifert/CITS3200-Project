@@ -144,7 +144,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/data', async (req, res) => {
-  processIncomingData(req.body);
+  processIncomingData(req.body, "mydb");
 });
 
 app.listen(PORT, () => {
