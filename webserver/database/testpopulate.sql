@@ -12,6 +12,7 @@ INSERT INTO "channels" (c_id, d_id, c_name, c_freq, c_endpoint)
 VALUES (3, 1, 'Test channel 3', 457575000, NULL);
 INSERT INTO "channels" (c_id, d_id, c_name, c_freq, c_endpoint)
 VALUES (4, 2, 'Test channel 4', 163250000, NULL);
+SELECT setval('"channels_c_id_seq"', (SELECT MAX(c_id) from "channels"));
 
 INSERT INTO "sessions" (session_id, auth_token)
 VALUES (1, 32345978623457985);
@@ -19,6 +20,7 @@ INSERT INTO "sessions" (session_id, auth_token)
 VALUES (2, 92317635287643543);
 INSERT INTO "sessions" (session_id, auth_token)
 VALUES (3, 44561672369236228);
+SELECT setval('"sessions_session_id_seq"', (SELECT MAX(session_id) from "sessions"));
 
 INSERT INTO "session_listeners" (session_id, c_id)
 VALUES (1, 1);

@@ -9,10 +9,12 @@ const {
 
 const {
   getAliveChannels,
-  getBusyChannels,
   getOfflineChannels,
+  getBusyChannels,
   getChannelStrength,
-  getChannelUtilisation } = require('./model_utils.js');
+  getChannelUtilisation,
+  processIncomingData
+} = require('./model_utils.js');
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -179,7 +181,26 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
 });
 
+app.post('/data', async (req, res) => {
+  try{
+    const response = await processIncomingData(req.body, "mydb");
+
+    if (response){
+      res.status(200).send({
+        message: "Data successfully processed",
+        data: response,
+      });
+    }
+  }
+  catch(error){
+    res.status(500).send({
+      message: "Error occurred while processing data",
+      error: error.message,
+    })
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server successfully started on port ${PORT}`);
 });
+
