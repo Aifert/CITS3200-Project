@@ -190,26 +190,28 @@ console.log(cond);
 
   let percentageStart = requestObj?.["start-time"] ? requestObj["start-time"] : -1;
   let percentageEnd = requestObj?.["end-time"] ? requestObj["end-time"] : Math.floor(new Date().getTime()/1000);
-  for (const c_id in output) {
-    let totalTime = 0;
-    let utilTime = 0;
-    if (percentageStart == -1) {
-      percentageStart = output[c_id].values[0][0];
-    }
-    for (let pair=0; pair < output[c_id].values.length-1; pair++) {
-      if (output[c_id].values[pair][1] < percentageStart) {
-        continue;
-      }
-      const thisStart = Math.max(output[c_id].values[pair][0], percentageStart);
-      totalTime += output[c_id].values[pair+1][0] - thisStart;
-      utilTime += output[c_id].values[pair][1] - thisStart;
-    }
-    const thisStart = Math.max(output[c_id].values[output[c_id].values.length-1][0], percentageStart);
-    totalTime += percentageEnd - thisStart;
-    utilTime += Math.min(percentageEnd, output[c_id].values[output[c_id].values.length-1][1]) - thisStart;
-    output[c_id].average = 100.0*utilTime/totalTime;
+  Object.keys(output).forEach(c_id => {
+    const values = output[c_id].values;
+    let totalTime = 0, utilTime = 0;
+
+    let startTime = percentageStart === -1 ? values[0][0] : percentageStart;
+
+    values.forEach((timePair, index) => {
+      const [start, end] = timePair;
+      if (end < startTime) return;
+
+      const thisStart = Math.max(start, startTime);
+      const nextStart = values[index + 1]?.[0] || percentageEnd; 
+
+      totalTime += nextStart - thisStart;
+      utilTime += Math.min(end, percentageEnd) - thisStart;
+    });
+
+    output[c_id].average = (utilTime / totalTime) * 100;
     console.log(totalTime, utilTime);
-  }
+  });
+
+  return output;
 
   return output;
 }
