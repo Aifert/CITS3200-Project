@@ -148,12 +148,19 @@ async function getChannelStrength(requestObj, dbName) {
               WHERE c_id ${cond}
               ORDER BY c_id, s_sample_time`;
   let res = await client.query(query);
-  let output = {};
+  let query2 = `SELECT c_id, AVG(s_strength) AS s_average FROM "strength"
+              WHERE c_id ${cond} GROUP BY c_id`;
+  let aveStrength = await client.query(query2);
+  let output = {};;
   for (const row of res.rows) {
     if (!(row.c_id in output)) {
-      output[row.c_id] = {}
+      output[row.c_id] = {};
+      output[row.c_id].values = {}
     }
-      output[row.c_id][row.s_sample_time] = row.s_strength;
+      output[row.c_id].values[row.s_sample_time] = row.s_strength;
+  }
+  for (const row of aveStrength.rows) {
+      output[row.c_id]["average"] = row.s_average;
   }
   return output;
 }
