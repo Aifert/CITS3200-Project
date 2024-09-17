@@ -24,12 +24,11 @@ const DashboardPage = () => {
   }, [status]);
 
   if (isLoading) {
-    return <p>Loading...</p>;  // Show a loading message or spinner while checking authentication
+    return <p>Loading...</p>;
   }
 
   return (
     <div>
-      <Navbar />
       <div className="dashboard-content">
         <h1>Dashboard</h1>
         <p>This is your post-login dashboard where you can manage your account, view data, etc.</p>
@@ -39,7 +38,7 @@ const DashboardPage = () => {
       </div>
 
     </div>
-    
+
   );
 };
 
