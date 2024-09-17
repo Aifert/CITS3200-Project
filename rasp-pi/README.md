@@ -92,7 +92,7 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
      * rtl_power_output.csv                  ← file name 
 4. parse the output file to generate results, and send these to the server, in a new thread using python `threading` library, while rtl_power is being run for the next minute in a different one (giving this a limit of 1 minute to successfully execute before aborting!)
    * load the output file into memory
-     * 2D array rtl_power_output_data of [Y][X] where [Y] is seconds, and [X] is spacing by bin size along the frequency spectrum
+     * 2D array rtl_power_output_data of [Y][X] where [Y] is seconds, and [X] is spacing by bin size along the frequency spectrum holding decibel measurements at that time
    * calculate threshold_above_noise_floor values to use to test for channel activity
      * divide the monitored spectrum into ~even bands, which are <=2MHz ranges from the lowest frequency observed up the spectrum
        * For example, if your total range is 4.226 MHz and you target 2 MHz bands:
