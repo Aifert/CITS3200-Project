@@ -116,9 +116,9 @@ function getCondFromWhiteBlackList(requestObj) {
     cond = `IN ${"(" + requestObj.whitelist.toString() + ")"}`
   } else if ("blacklist" in requestObj) {
     if (requestObj.blacklist.length === 0) {
-      cond = "=1 OR 1=1"
+      cond = "<>-1"
     } else {
-      cond = `NOT IN ${"(" + requestObj.blacklist.toString() + ")"}`
+      cond = ` NOT IN ${"(" + requestObj.blacklist.toString() + ")"}`
     }
   } else {
     console.log(requestObj);
@@ -130,10 +130,10 @@ function getCondFromWhiteBlackList(requestObj) {
 function getCondStartEndTimes(requestObj) {
   let cond = "";
   if ("start-time" in requestObj) {
-    cond += `AND s_sample_time >= ${requestObj["start-time"]}`
+    cond += ` AND s_sample_time >= ${requestObj["start-time"]}`
   }
   if ("end-time" in requestObj) {
-    cond += `AND s_sample_time <= ${requestObj["end-time"]}`
+    cond += ` AND s_sample_time <= ${requestObj["end-time"]}`
   }
   return cond;
 }
@@ -174,7 +174,7 @@ async function getChannelUtilisation(requestObj, dbName) {
   if ("end-time" in requestObj) {
     cond += `AND a_start_time <= ${requestObj["end-time"]}`;
   }
-
+console.log(cond);
   let query = `SELECT c_id, a_start_time, a_end_time FROM "utilisation"
               WHERE c_id ${cond}
               ORDER BY c_id, a_start_time`;
@@ -182,10 +182,35 @@ async function getChannelUtilisation(requestObj, dbName) {
   let output = {};
   for (const row of res.rows) {
     if (!(row.c_id in output)) {
-      output[row.c_id] = [];
+      output[row.c_id] = {};
+      output[row.c_id].values = [];
     }
-      output[row.c_id].push([row.a_start_time, row.a_end_time]);
+      output[row.c_id].values.push([row.a_start_time, row.a_end_time]);
   }
+
+  let percentageStart = requestObj?.["start-time"] ? requestObj["start-time"] : -1;
+  let percentageEnd = requestObj?.["end-time"] ? requestObj["end-time"] : Math.floor(new Date().getTime()/1000);
+  for (const c_id in output) {
+    let totalTime = 0;
+    let utilTime = 0;
+    if (percentageStart == -1) {
+      percentageStart = output[c_id].values[0][0];
+    }
+    for (let pair=0; pair < output[c_id].values.length-1; pair++) {
+      if (output[c_id].values[pair][1] < percentageStart) {
+        continue;
+      }
+      const thisStart = Math.max(output[c_id].values[pair][0], percentageStart);
+      totalTime += output[c_id].values[pair+1][0] - thisStart;
+      utilTime += output[c_id].values[pair][1] - thisStart;
+    }
+    const thisStart = Math.max(output[c_id].values[output[c_id].values.length-1][0], percentageStart);
+    totalTime += percentageEnd - thisStart;
+    utilTime += Math.min(percentageEnd, output[c_id].values[output[c_id].values.length-1][1]) - thisStart;
+    output[c_id].average = 100.0*utilTime/totalTime;
+    console.log(totalTime, utilTime);
+  }
+
   return output;
 }
 
