@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import Navbar from '../../components/Navbar';
 import DynamicChannels from '../../components/DynamicChannels';
 
 const DashboardPage = () => {
@@ -33,22 +32,21 @@ const DashboardPage = () => {
   };
 
   if (isLoading) {
-    return <p>Loading...</p>;  
+    return <p>Loading...</p>;
   }
 
   return (
     <div style={{ height: '100vh', width: '100vw', margin: 0, padding: 0, boxSizing: 'border-box', backgroundColor: '#181817' }}>
-      <Navbar />
-      
+
       {/* Gray line for visual separator */}
       <div style={{ width: '100%', height: '5px', backgroundColor: 'gray' }}></div>
-      
+
       <div className="dashboard-content" style={{ padding: '20px', height: 'calc(100vh - 50px)', overflowY: 'auto' }}>
         <br></br>
         <div style={{ padding: '20px' }}>
           <DynamicChannels data={data} handleStateClick={handleStateClick} />
         </div>
-        
+
         {/* Volume slider container styled same as table */}
         <div style={{ marginTop: '40px', textAlign: 'center', padding: '0 20px' }}>
           <p style={{ marginBottom: '10px', fontSize: '18px', fontWeight: 'bold', color: 'white' }}>Master Volume</p>
@@ -60,7 +58,7 @@ const DashboardPage = () => {
             max="100"
             value={sliderValue}
             onChange={handleSliderChange}
-            style={{ width: '100%', maxWidth: '100%' }} 
+            style={{ width: '100%', maxWidth: '100%' }}
           />
         </div>
       </div>
