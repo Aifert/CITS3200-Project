@@ -200,6 +200,35 @@ app.post('/data', async (req, res) => {
   }
 });
 
+app.get('/testdata', async (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
+  while(true) {
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    const nowTime = Math.floor(new Date().getTime()/1000);
+    let testObj1 = {
+      "soc-id": 1, 
+      "address": "127.10.20.30:8980",
+      "data": {
+        467687500: {
+          "usage": Math.random() > 0.7 ? [[nowTime-5, nowTime]] : [],
+          "strength": {
+          }
+        },
+        457712500: {
+          "usage": Math.random() > 0.7 ? [[nowTime-5, nowTime]] : [],
+          "strength": {
+          }
+        }
+      }
+    }
+    testObj1.data[467687500].strength[nowTime] = Math.random() * 50.0 - 112.5;
+    testObj1.data[457712500].strength[nowTime] = Math.random() * 50.0 - 112.5;
+    await processIncomingData(testObj1, "testdbmu");
+  }
+});
+
+
 app.listen(PORT, () => {
   console.log(`Server successfully started on port ${PORT}`);
 });
