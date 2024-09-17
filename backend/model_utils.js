@@ -1,6 +1,6 @@
 const { Client } = require('pg')
 
-const ALIVETIME = 15;
+const ALIVETIME = 120;
 const STRENGTHMAX = -70.0;
 const STRENGTHMIN = -110;
 
