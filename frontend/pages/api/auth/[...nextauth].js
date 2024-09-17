@@ -25,7 +25,7 @@ export default NextAuth.default({
   callbacks: {
     async redirect({ url, baseUrl }) {
       // Redirect to the dashboard after login
-      return baseUrl + "/channel-listening";
+      return baseUrl + "/dashboard";
     },
   },
   debug: true,
