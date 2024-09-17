@@ -69,30 +69,74 @@ Given these constraints, using two separate SDR devices is often the solution fo
 
 It's worth noting that more advanced (and typically more expensive) SDR hardware often can perform these tasks simultaneously due to wider instantaneous bandwidth and more processing power. If you need the most accurate and truly simultaneous operation for both listening and broad spectrum analysis, using two separate RTL-SDR devices is the most straightforward and reliable approach.
 
-## (Work In Progress) Process For Gathering Analytics Data
-1. scan the SESChannelList.csv file to find the min & max frequencies (transmit & receive are the same for each channel, so either can be used)
-   - also gather the min_distance_between_frequencies, as this will be used to calculate the bin size
+## Process For Gathering Analytics Data
+1. scan the SESChannelList.csv file to find the min & max frequencies in the VHF (30 MHz to 300 MHz) or UHF (300 MHz to 3 GHz) range, depending on which is being targetted (transmit & receive are the same for each channel, so either can be used)
+   * also gather the min_distance_between_frequencies in this range, as this will be used to calculate the bin size
 2. extend the range slightly to accommodate for frequency drift, so min_frequency - 50,000Hz (0.05Mhz) and max_frequency + 50,000Hz (0.05Mhz)
-   - verify that these buffers / assigned frequencies don't fall outside of the RTL-SDRv4's range, which is 24 - 1766MHz
-     - (source: https://www.rtl-sdr.com/about-rtl-sdr/)
+   * verify that these buffers / assigned frequencies don't fall outside of the RTL-SDRv4's range, which is 24 - 1766MHz
+     * (source: https://www.rtl-sdr.com/about-rtl-sdr/)
 3. run rtl_power over this range to generate the data points across the spectrum
-   - rtl_power -f 161.0125M:469.5625M:6250 -d 0 -g 25 -i 10 -e 1m test_output.csv
-     - -f 161.0125M:469.5625M:6250		← frequency range & bin size
-       - choosing 6,250Hz for bin size as the smallest range between channel frequencies is 12,500Hz (choose algorithmically with min_distance_between_frequencies * 0.5)
-     - -d 0						← device index
-       - choosing RTL-SDRv4 device 0, as device 1 is used for audio streaming (solution expects two per SoC)
-     - -g 25						← gain amount (dB)
-       - adding 25dB gain, which is the mid-point between 0 and 50dB (max)
-       - main thing here is to choose a gain value, so that samples aren't using auto-gain (since this would cause fluctuations in sample baselines)
-     - -i
-     - -e
-     - name.csv
-4. parse the output file to generate results, and send these to the server
-   - calculate threshold_above_noise_floor values to use to test for channel activity
-     - divide the monitored spectrum into ~even bands, which are <=10MHz ranges from the lowest frequency observed up the spectrum
-       - For example, if your total range is 308.55 MHz and you target 10 MHz bands:
-         - N = ceil(308.55 / 10) = 31
-         - band_width = ceil(308.55 / 31) ≈ 9.95 MHz
-         - actual_num_bands = ceil(308.55 / 9.95) = 31
-     - slide a window across the channels in the band, as you slide it calculate an average signal strength & standard deviation, test & record the minimum observed value to be the threshold, with threshold_above_noise_floor = minimum_average_signal_strength + (associated_standard_deviation * K) ← K is a constant factor, we will use 2
-       - each csv data file represents 1 minutes of samples, so the window could be 10 seconds long, meaning we do 6 calculations per band & take the minimum that we observe.
+   * rtl_power -f 161.0125M:165.238M:6250 -d 0 -g 25 -i 1 -e 60 rtl_power_output.csv
+     * -f 161.0125M:165.238M:6250		← frequency range & bin size (VHF)
+     * -f 457.562M:469.525M:6250        ← frequency range & bin size (UHF)
+       * choosing 6,250Hz for bin size as the smallest range between channel frequencies is 12,500Hz (choose algorithmically with min_distance_between_frequencies * 0.5)
+     * -d 0						← device index
+       * choosing RTL-SDRv4 device 0, as device 1 is used for audio streaming (solution expects two per SoC)
+     * -g 25						← gain amount (dB)
+       * adding 25dB gain, which is the mid-point between 0 and 50dB (max)
+       * main thing here is to choose a gain value, so that samples aren't using auto-gain (since this would cause fluctuations in sample baselines)
+     * -i 1                        ← integration interval
+       * 1 second between each sample
+       * 1 second is the fastest integration interval rtl_power supports
+     * -e 60                       ← exit timer 
+     * rtl_power_output.csv                  ← file name 
+4. parse the output file to generate results, and send these to the server, in a new thread using python `threading` library, while rtl_power is being run for the next minute in a different one (giving this a limit of 1 minute to successfully execute before aborting!)
+   * load the output file into memory
+     * 2D array rtl_power_output_data of [Y][X] where [Y] is seconds, and [X] is spacing by bin size along the frequency spectrum
+   * calculate threshold_above_noise_floor values to use to test for channel activity
+     * divide the monitored spectrum into ~even bands, which are <=2MHz ranges from the lowest frequency observed up the spectrum
+       * For example, if your total range is 4.226 MHz and you target 2 MHz bands:
+         * N = math.ceil(4.226 / 2) = 3
+         * band_width = 4.226 / N ≈ 1.40866 MHz
+     * slide a window across the channels in the band, as you slide it calculate an average signal strength & standard deviation, test & record the minimum observed value to be the threshold, with threshold_above_noise_floor = minimum_average_signal_strength + (associated_standard_deviation * K) ← K is a constant factor, we will use 2
+       * each csv data file represents 1 minutes of samples, so the window will be 10 seconds long, meaning we do 6 calculations per band & take the minimum that we observe.
+       * using python `statistics` library for calculating:
+         * average_signal_strength = statistics.mean(values)
+         * associated_standard_deviation = statistics.stdev(values)
+           * ...where 'values' is the list of floats within the relevant <=2MHz band & 10 second window
+   * create an array of value pairs, associating monitored channels (from the SESChannelList.csv file) with their relevant [X] index band to associate them with relevant rtl_power_output_data values
+   * record the Channel Utilization Data
+     * move through each channel's samples & test if the signal is above its relevant <=2MHz band's threshold_above_noise_floor value. 
+       * If so (and signal_is_currently_above_threshold = false), note that timestamp as a 'start_time' value in an array of values for that channel and set signal_is_currently_above_threshold = true.
+       * If not (and signal_is_currently_above_threshold = true), note that timestamp as a 'stop_time' value in an array of values for that channel and set signal_is_currently_above_threshold = false.
+   * record the Channel Signal Strength Data
+     * note the very last signal strength datapoint for each channel with its timestamp as a pair of signal_strength and sample_time values.
+   * send the noted Channel Utilization Data and Channel Signal Strength Data to the server
+     * POST to /data endpoint as per SOC_API.md spec:
+#### Parameters Example
+
+	{
+		"soc-id": 162475163,
+		“address”: “128.10.20.30:8080”,
+		data: {
+			162475000: {
+				"usage": [
+				[1724322719, 1724322724, false], //(start_time, end_time)
+				[1724322719, null, true]
+				],
+				"strength" {
+					1724322719: -75.1,
+					1724322724: -73.2
+				}
+			},
+			163825000: {
+				"usage": [
+				[1724322600, 1724322710, false] //(start_time, end_time)
+				],
+				"strength" {
+					1724322600: -105.1,
+					1724322724: -103.2
+				}
+			}
+		}
+	}
