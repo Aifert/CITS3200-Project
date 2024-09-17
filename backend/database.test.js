@@ -29,8 +29,9 @@ test("Connect to Test Server", async () => {
   const initQuery = fs.readFileSync("./webserver/database/init.sql");
   const initResponse = await testclient.query(initQuery.toString());
   expect(initResponse.length).toBeGreaterThan(1);
+  const nowTime = Math.floor(new Date().getTime()/1000)-200;
   const populateQuery = fs.readFileSync("./webserver/database/testpopulate.sql");
-  const populateResponse = await testclient.query(populateQuery.toString());
+  const populateResponse = await testclient.query(populateQuery.toString().replaceAll("@@@", nowTime.toString()));
   expect(populateResponse.length).toBeGreaterThan(1);
 });
 
