@@ -1,6 +1,8 @@
 const { Client } = require('pg')
 
 const ALIVETIME = 15;
+const STRENGTHMAX = -70.0;
+const STRENGTHMIN = -110;
 
 let isConnecting = false;
 let isConnected = false;
@@ -140,7 +142,9 @@ async function getChannelStrength(requestObj, dbName) {
   await recheckConnection(dbName);
   let cond = getCondFromWhiteBlackList(requestObj)+getCondStartEndTimes(requestObj);
 
-  let query = `SELECT c_id, s_strength, s_sample_time FROM "strength"
+  let query = `SELECT c_id, 
+              CASE WHEN s_strength < ${STRENGTHMIN} THEN ${STRENGTHMIN} WHEN s_strength > ${STRENGTHMAX} THEN ${STRENGTHMAX} ELSE s_strength END AS "s_strength",
+              s_sample_time FROM "strength"
               WHERE c_id ${cond}
               ORDER BY c_id, s_sample_time`;
   let res = await client.query(query);
