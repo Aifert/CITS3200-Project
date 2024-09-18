@@ -18,7 +18,7 @@
 
 body {
   color: #010409;
-  overflow: hidden;
+  overflow: auto;
   /* color: rgb(var(--foreground-rgb)); */
   background: linear-gradient(
       to bottom,
