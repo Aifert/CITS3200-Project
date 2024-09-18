@@ -48,8 +48,9 @@ test("Connect to Test Server", async () => {
   const initQuery = fs.readFileSync("./webserver/database/init.sql");
   const initResponse = await testclient.query(initQuery.toString());
   expect(initResponse.length).toBeGreaterThan(1);
+  const nowTime = Math.floor(new Date().getTime()/1000)-200;
   const populateQuery = fs.readFileSync("./webserver/database/testpopulate.sql");
-  const populateResponse = await testclient.query(populateQuery.toString());
+  const populateResponse = await testclient.query(populateQuery.toString().replaceAll("@@@", nowTime.toString()));
   expect(populateResponse.length).toBeGreaterThan(1);
 });
 
@@ -65,13 +66,13 @@ test("Channel States", async () => {
   expect(creation.command).toBe("INSERT");
 
   let active = await model_utils.getAliveChannels('testdbmu');
-  expect(active.length).toBe(1);
+  expect(active.length).toBe(2);
 
   let busy = await model_utils.getBusyChannels('testdbmu');
-  expect(busy.length).toBe(1);
+  expect(busy.length).toBe(2);
 
   let offline = await model_utils.getOfflineChannels('testdbmu');
-  expect(offline.length).toBe(2);
+  expect(offline.length).toBe(1);
   expect(Object.keys(offline[0])).toContain("channel-id");
   expect(Object.keys(offline[0])).toContain("frequency");
   expect(Object.keys(offline[0])).toContain("channel-name");
@@ -109,13 +110,13 @@ test("Strength Data", async () => {
   const creation = await testclient.query(query1);
   expect(creation.command).toBe("INSERT");
   
-  requestObjAll["start-time"] = nowTime-2;
+  requestObjAll["start-time"] = nowTime-1;
   const timedOutput = await model_utils.getChannelStrength(requestObjAll, 'testdbmu');
   expect(Object.keys(timedOutput).length).toBe(1);
   
   const requestObjAllOthers = {};
   requestObjAllOthers.blacklist = [];
-  requestObjAllOthers["end-time"] = nowTime-2;
+  requestObjAllOthers["end-time"] = nowTime-1;
   const otherTimedOutput = await model_utils.getChannelStrength(requestObjAllOthers, 'testdbmu');
   expect(Object.keys(otherTimedOutput).length).toBe(totalStrength);
 });
