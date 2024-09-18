@@ -52,16 +52,12 @@ const AnalyticsPage = () => {
             const processedData = allChannels.map(channel => {
               const channelId = channel['channel-id'];
               const analyticsForChannel = analyticsData?.[channelId] || {};  // Ensure the data is accessed safely
-              const strengthData = analyticsForChannel.strength || {};  // Default to empty object
-              const utilisationData = analyticsForChannel.utilisation || [];  // Default to empty array
+              const strengthData = analyticsForChannel?.strength?.values || {};  // Access strength values
+              const utilisationData = analyticsForChannel?.utilisation?.values || [];  // Access utilization values
 
               // Check if data exists for the channel
               const hasStrengthData = Object.keys(strengthData).length > 0;
               const hasUtilizationData = utilisationData.length > 0;
-
-              const lastStrengthValue = hasStrengthData 
-                ? Object.values(strengthData).slice(-1)[0] // Get the last value in the strength object
-                : 'No data';
 
               // Get the last timestamp for relative time calculation
               const lastTimestamp = hasStrengthData
@@ -72,11 +68,9 @@ const AnalyticsPage = () => {
               const strengthLabels = hasStrengthData
                 ? Object.keys(strengthData).map(timestamp => {
                     const deltaSeconds = lastTimestamp - timestamp;  // Time difference in seconds
-                    const deltaDisplay = `${deltaSeconds % 60}`;
-                    return deltaDisplay;  // Display relative time from the last timestamp
+                    return `${deltaSeconds}`;
                   })
                 : [];
-
               // Convert utilization timestamps to relative time (optional)
               const utilizationLabels = utilisationData.map(util => {
                 const startTime = new Date(util[0] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -90,7 +84,7 @@ const AnalyticsPage = () => {
                     labels: utilizationLabels,  // Timestamps for utilization
                     datasets: [{
                       label: 'Utilization Over Time',
-                      data: utilisationData.map(() => Math.random() * 100), // Placeholder random data for utilization
+                      data: utilisationData.map(util => util[1] - util[0]), // Placeholder random data for utilization (duration)
                       borderColor: 'rgb(75, 192, 192)',
                       tension: 0.1,
                     }],
@@ -113,8 +107,8 @@ const AnalyticsPage = () => {
                 status: channel.status,
                 name: channel['channel-name'],
                 frequency: channel.frequency / 1e6,  // Convert frequency to MHz
-                utilization: hasUtilizationData ? 'Available' : 'No data',
-                strength: hasStrengthData ? lastStrengthValue : 'No data',
+                utilization: hasUtilizationData ? analyticsForChannel?.utilisation?.average : 'No data',
+                strength: hasStrengthData ? analyticsForChannel?.strength?.average : 'No data',
                 dataUtilization,
                 dataStrength,
               };

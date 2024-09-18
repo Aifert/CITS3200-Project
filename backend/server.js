@@ -23,8 +23,44 @@ const FRONTEND_PORT = 3000;
 const SDR_URL = "http://sdr"
 const SDR_PORT = 4000;
 
+let is_populating = false;
+
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+async function singlePopulate() {
+    const nowTime = Math.floor(new Date().getTime()/1000);
+    let testObj1 = {
+      "soc-id": 1, 
+      "address": "127.10.20.30:8980",
+      "data": {
+        467687500: {
+          "usage": Math.random() > 0.7 ? [[nowTime-5, nowTime]] : [],
+          "strength": {
+          }
+        },
+        457712500: {
+          "usage": Math.random() > 0.7 ? [[nowTime-5, nowTime]] : [],
+          "strength": {
+          }
+        }
+      }
+    }
+    testObj1.data[467687500].strength[nowTime] = Math.random() * 50.0 - 112.5;
+    testObj1.data[457712500].strength[nowTime] = Math.random() * 50.0 - 112.5;
+    await processIncomingData(testObj1, "testdbmu");
+}
+
+async function populateTestData() {
+  if (!is_populating){
+    is_populating = true;
+    while(true) {
+      await singlePopulate();
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
+}
+
 
 app.use(cors());
 
@@ -146,6 +182,9 @@ app.get('/active-channels', async (req, res) => {
 });
 
 app.get('/analytics/data', async (req, res) => {
+  if (!is_populating) {
+    await singlePopulate();
+  }
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -202,30 +241,7 @@ app.post('/data', async (req, res) => {
 
 app.get('/testdata', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
-  while(true) {
-    await new Promise(resolve => setTimeout(resolve, 5000));
-
-    const nowTime = Math.floor(new Date().getTime()/1000);
-    let testObj1 = {
-      "soc-id": 1, 
-      "address": "127.10.20.30:8980",
-      "data": {
-        467687500: {
-          "usage": Math.random() > 0.7 ? [[nowTime-5, nowTime]] : [],
-          "strength": {
-          }
-        },
-        457712500: {
-          "usage": Math.random() > 0.7 ? [[nowTime-5, nowTime]] : [],
-          "strength": {
-          }
-        }
-      }
-    }
-    testObj1.data[467687500].strength[nowTime] = Math.random() * 50.0 - 112.5;
-    testObj1.data[457712500].strength[nowTime] = Math.random() * 50.0 - 112.5;
-    await processIncomingData(testObj1, "testdbmu");
-  }
+  await populateTestData();
 });
 
 
