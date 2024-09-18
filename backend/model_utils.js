@@ -1,6 +1,8 @@
 const { Client } = require('pg')
 
-const ALIVETIME = 15;
+const ALIVETIME = 120;
+const STRENGTHMAX = -70.0;
+const STRENGTHMIN = -110;
 
 let isConnecting = false;
 let isConnected = false;
@@ -114,9 +116,9 @@ function getCondFromWhiteBlackList(requestObj) {
     cond = `IN ${"(" + requestObj.whitelist.toString() + ")"}`
   } else if ("blacklist" in requestObj) {
     if (requestObj.blacklist.length === 0) {
-      cond = "=1 OR 1=1"
+      cond = "<>-1"
     } else {
-      cond = `NOT IN ${"(" + requestObj.blacklist.toString() + ")"}`
+      cond = ` NOT IN ${"(" + requestObj.blacklist.toString() + ")"}`
     }
   } else {
     console.log(requestObj);
@@ -128,10 +130,10 @@ function getCondFromWhiteBlackList(requestObj) {
 function getCondStartEndTimes(requestObj) {
   let cond = "";
   if ("start-time" in requestObj) {
-    cond += `AND s_sample_time >= ${requestObj["start-time"]}`
+    cond += ` AND s_sample_time >= ${requestObj["start-time"]}`
   }
   if ("end-time" in requestObj) {
-    cond += `AND s_sample_time <= ${requestObj["end-time"]}`
+    cond += ` AND s_sample_time <= ${requestObj["end-time"]}`
   }
   return cond;
 }
@@ -140,16 +142,25 @@ async function getChannelStrength(requestObj, dbName) {
   await recheckConnection(dbName);
   let cond = getCondFromWhiteBlackList(requestObj)+getCondStartEndTimes(requestObj);
 
-  let query = `SELECT c_id, s_strength, s_sample_time FROM "strength"
+  let query = `SELECT c_id, 
+              CASE WHEN s_strength < ${STRENGTHMIN} THEN ${STRENGTHMIN} WHEN s_strength > ${STRENGTHMAX} THEN ${STRENGTHMAX} ELSE s_strength END AS "s_strength",
+              s_sample_time FROM "strength"
               WHERE c_id ${cond}
               ORDER BY c_id, s_sample_time`;
   let res = await client.query(query);
-  let output = {};
+  let query2 = `SELECT c_id, AVG(s_strength) AS s_average FROM "strength"
+              WHERE c_id ${cond} GROUP BY c_id`;
+  let aveStrength = await client.query(query2);
+  let output = {};;
   for (const row of res.rows) {
     if (!(row.c_id in output)) {
-      output[row.c_id] = {}
+      output[row.c_id] = {};
+      output[row.c_id].values = {}
     }
-      output[row.c_id][row.s_sample_time] = row.s_strength;
+      output[row.c_id].values[row.s_sample_time] = row.s_strength;
+  }
+  for (const row of aveStrength.rows) {
+      output[row.c_id]["average"] = row.s_average;
   }
   return output;
 }
@@ -163,7 +174,7 @@ async function getChannelUtilisation(requestObj, dbName) {
   if ("end-time" in requestObj) {
     cond += `AND a_start_time <= ${requestObj["end-time"]}`;
   }
-
+console.log(cond);
   let query = `SELECT c_id, a_start_time, a_end_time FROM "utilisation"
               WHERE c_id ${cond}
               ORDER BY c_id, a_start_time`;
@@ -171,10 +182,37 @@ async function getChannelUtilisation(requestObj, dbName) {
   let output = {};
   for (const row of res.rows) {
     if (!(row.c_id in output)) {
-      output[row.c_id] = [];
+      output[row.c_id] = {};
+      output[row.c_id].values = [];
     }
-      output[row.c_id].push([row.a_start_time, row.a_end_time]);
+      output[row.c_id].values.push([row.a_start_time, row.a_end_time]);
   }
+
+  let percentageStart = requestObj?.["start-time"] ? requestObj["start-time"] : -1;
+  let percentageEnd = requestObj?.["end-time"] ? requestObj["end-time"] : Math.floor(new Date().getTime()/1000);
+  Object.keys(output).forEach(c_id => {
+    const values = output[c_id].values;
+    let totalTime = 0, utilTime = 0;
+
+    let startTime = percentageStart === -1 ? values[0][0] : percentageStart;
+
+    values.forEach((timePair, index) => {
+      const [start, end] = timePair;
+      if (end < startTime) return;
+
+      const thisStart = Math.max(start, startTime);
+      const nextStart = values[index + 1]?.[0] || percentageEnd; 
+
+      totalTime += nextStart - thisStart;
+      utilTime += Math.min(end, percentageEnd) - thisStart;
+    });
+
+    output[c_id].average = (utilTime / totalTime) * 100;
+    console.log(totalTime, utilTime);
+  });
+
+  return output;
+
   return output;
 }
 
