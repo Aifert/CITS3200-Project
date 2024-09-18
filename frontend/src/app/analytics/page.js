@@ -11,11 +11,12 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/';
 
   useEffect(() => {
     const fetchChannelData = async () => {
       try {
-        const response = await fetch('http://localhost:9000/active-channels');
+        const response = await fetch(`${backendUrl}active-channels`);
         const data = await response.json();
 
         console.log('Active channels response:', data);
@@ -36,12 +37,12 @@ const AnalyticsPage = () => {
             'whitelist': `[${channelIds.join(',')}]`
           }).toString();
 
-          const analyticsResponse = await fetch(`http://localhost:9000/analytics/data?${queryString}`, {
+          const analyticsResponse = await fetch(`${backendUrl}analytics/data?${queryString}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           });
 
-          const analyticsUrl = `http://localhost:9000/analytics/data?${queryString}`;
+          const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
           console.log('Fetching analytics data from:', analyticsUrl);
 
           const analyticsData = await analyticsResponse.json();
