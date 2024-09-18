@@ -121,7 +121,7 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 		data: {
 			162475000: {
 				"usage": [
-				[1724322719, 1724322724, false], //(start_time, end_time)
+				[1724322719, 1724322724], //(start_time, end_time)
 				[1724322719, null, true]
 				],
 				"strength" {
@@ -131,7 +131,7 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 			},
 			163825000: {
 				"usage": [
-				[1724322600, 1724322710, false] //(start_time, end_time)
+				[1724322600, 1724322710] //(start_time, end_time)
 				],
 				"strength" {
 					1724322600: -105.1,
