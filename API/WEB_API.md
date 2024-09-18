@@ -47,7 +47,12 @@ When first loading/reloading/opening (TBD implementation), get a unique session-
 			"channel-id": 21892,
 			"channel-name": "Perth 1",
 			"frequency": 162.475
-		}]
+		}],
+		"busy": [{
+			"channel-id": 21321892,
+			"channel-name": "Perth 2",
+			"frequency": 162.55
+		}],
 		"offline": [{
 			"channel-id": 192838,
 			"channel-name": "Perth 1",
@@ -174,21 +179,33 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 		"data": {
 			21892: {
 				"strength": {
-					1724322719: -80.3,
-					1724322724: -85.5
+					"values": {
+						1724322719: -80.3,
+						1724322724: -85.5
+					},
+					"average": -82.7
 				},
 				"utilisation": {
-					(1724322716, 1724322723, false), //(start_time, end_time)
-					(1724322725, 1724322727, false)
+					"values" : {
+						[1724322716, 1724322723], //(start_time, end_time)
+						[1724322725, 1724322727]
+					},
+					"average": 79.54
 				}
 			}
 			192838: {
 				"strength": {
-					1724322720: -100.6,
-					1724322725: -90.65
+					"values" : {
+						1724322720: -100.6,
+						1724322725: -90.65
+					},
+					"average": -95.63
 				},
 				"utilisation": {
-					(1724322716, 1724322720, false)
+					"values": {
+						[1724322716, 1724322720]
+					},
+					"average": 100.0
 				}
 			}
 		}
