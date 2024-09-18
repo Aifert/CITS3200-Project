@@ -130,7 +130,8 @@ function getCondFromWhiteBlackList(requestObj) {
   //whitelist has precedence over blacklist
   if ("whitelist" in requestObj) {
     if (requestObj.whitelist.length === 0) {
-      return {}
+      //This will always return false, as nothing in the whitelist will return nothing
+      return "=-1"
     }
     cond = `IN ${"(" + requestObj.whitelist.toString() + ")"}`
   } else if ("blacklist" in requestObj) {
