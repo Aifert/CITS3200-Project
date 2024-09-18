@@ -1,4 +1,5 @@
 const { Client } = require('pg')
+const fs = require('fs');
 
 const ALIVETIME = 120;
 const STRENGTHMAX = -70.0;
@@ -6,17 +7,18 @@ const STRENGTHMIN = -110;
 
 let isConnecting = false;
 let isConnected = false;
+let hasEverConnected = false;
 
 let client = new Client({
         user: process.env.DB_USER || 'user',
         host: process.env.DB_HOST || 'db',
-        database: process.env.DB_NAME || 'testdb',
+        database: process.env.DB_NAME || 'mydb',
         password: process.env.DB_PASSWORD || 'password',
         port: process.env.DB_PORT || 5432,
       });
 
 
-async function connectToDatabase(dbName = "testdbmu") {
+async function connectToDatabase(dbName = "testdbmu", isNew = false) {
   const maxRetries = 10;
   let retries = 0;
   isConnecting = true;
@@ -32,6 +34,11 @@ async function connectToDatabase(dbName = "testdbmu") {
       });
       await client.connect();
       isConnected = true;
+      if (isNew) {
+        console.log("NEW");
+        const initQuery = fs.readFileSync("./webserver/database/init.sql");
+        const initResponse = await client.query(initQuery.toString());
+      }
       break;
     } catch (err) {
       retries++;
@@ -46,18 +53,24 @@ async function connectToDatabase(dbName = "testdbmu") {
   }
 }
 
-async function recheckConnection(dbName) {
+async function recheckConnection(dbName = "testdbmu") {
+  let isNew = false;
+  if (!hasEverConnected) {
+    await client.connect();
+    hasEverConnected = true;
+    console.log("mydb", client.database, dbName)
+  }
   if ((client.database != dbName) || (!isConnected && !isConnecting)) {
     if (client.database != dbName) {
-      if (isConnected) {
-        const exists = (await client.query(`SELECT datname FROM pg_database WHERE datname = "${dbName}"`)).rows.length;
-        if (exists === 0) {
-          await client.query("CREATE DATABASE "+dbName);
-        }
+      const exists = (await client.query(`SELECT datname FROM pg_database WHERE datname = '${dbName}'`)).rows.length;
+      console.log(exists);
+      if (exists == 0) {
+        await client.query("CREATE DATABASE "+dbName);
+        isNew = true;
       }
       await client.end();
     }
-    await connectToDatabase(dbName);
+    await connectToDatabase(dbName, isNew);
   }
 }
 

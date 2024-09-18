@@ -71,7 +71,6 @@ const AnalyticsPage = () => {
                     return `${deltaSeconds % 60}s ago`;
                   })
                 : [];
-
               // Convert utilization timestamps to relative time (optional)
               const utilizationLabels = utilisationData.map(util => {
                 const startTime = new Date(util[0] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
