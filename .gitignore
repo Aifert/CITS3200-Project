@@ -4,6 +4,9 @@ vevn
 *.pyc
 __pycache__
 .env
+.env.local
+.env.production
+.env.development
 node_modules
 
 # dependencies
