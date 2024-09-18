@@ -49,6 +49,12 @@ async function connectToDatabase(dbName = "testdbmu") {
 async function recheckConnection(dbName) {
   if ((client.database != dbName) || (!isConnected && !isConnecting)) {
     if (client.database != dbName) {
+      if (isConnected) {
+        const exists = (await client.query(`SELECT datname FROM pg_database WHERE datname = "${dbName}"`)).rows.length;
+        if (exists === 0) {
+          await client.query("CREATE DATABASE "+dbName);
+        }
+      }
       await client.end();
     }
     await connectToDatabase(dbName);
@@ -121,7 +127,6 @@ function getCondFromWhiteBlackList(requestObj) {
       cond = ` NOT IN ${"(" + requestObj.blacklist.toString() + ")"}`
     }
   } else {
-    console.log(requestObj);
     throw new Error("Neither blacklist nor whitelist has been specified")
   }
   return cond;
@@ -174,7 +179,6 @@ async function getChannelUtilisation(requestObj, dbName) {
   if ("end-time" in requestObj) {
     cond += `AND a_start_time <= ${requestObj["end-time"]}`;
   }
-console.log(cond);
   let query = `SELECT c_id, a_start_time, a_end_time FROM "utilisation"
               WHERE c_id ${cond}
               ORDER BY c_id, a_start_time`;
@@ -208,7 +212,6 @@ console.log(cond);
     });
 
     output[c_id].average = (utilTime / totalTime) * 100;
-    console.log(totalTime, utilTime);
   });
 
   return output;
@@ -216,7 +219,8 @@ console.log(cond);
   return output;
 }
 
-async function isDeviceNew(deviceId) {
+async function isDeviceNew(deviceId, dbName) {
+  await recheckConnection(dbName);
   let query = `SELECT d_id FROM "devices" WHERE d_id = ${deviceId}`
   return (await client.query(query)).rows.length === 0;
 }
