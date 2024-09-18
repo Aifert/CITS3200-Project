@@ -68,7 +68,7 @@ const AnalyticsPage = () => {
               const strengthLabels = hasStrengthData
                 ? Object.keys(strengthData).map(timestamp => {
                     const deltaSeconds = lastTimestamp - timestamp;  // Time difference in seconds
-                    return `${deltaSeconds % 60}s ago`;
+                    return `${deltaSeconds}`;
                   })
                 : [];
               // Convert utilization timestamps to relative time (optional)
