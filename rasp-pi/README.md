@@ -72,7 +72,7 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 ## Process For Gathering Analytics Data
 1. scan the SESChannelList.csv file to find the min & max frequencies in the VHF (30 MHz to 300 MHz) or UHF (300 MHz to 3 GHz) range, depending on which is being targetted (transmit & receive are the same for each channel, so either can be used)
    * also gather the min_distance_between_frequencies in this range, as this will be used to calculate the bin size
-2. extend the range slightly to accommodate for frequency drift, so min_frequency - 50,000Hz (0.05Mhz) and max_frequency + 50,000Hz (0.05Mhz)
+2. extend the range slightly to accommodate for frequency drift, so min_frequency_hz - 50,000Hz (0.05Mhz) and max_frequency_hz + 50,000Hz (0.05Mhz)
    * verify that these buffers / assigned frequencies don't fall outside of the RTL-SDRv4's range, which is 24 - 1766MHz
      * (source: https://www.rtl-sdr.com/about-rtl-sdr/)
 3. run rtl_power over this range to generate the data points across the spectrum
