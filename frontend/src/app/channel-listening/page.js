@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import DynamicChannels from '../../components/DynamicChannels';
+import DynamicChannels from '../../components/DynamicChannel';
 
 const DashboardPage = () => {
   const { data: session, status } = useSession();

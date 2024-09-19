@@ -1,4 +1,5 @@
 const { Client } = require('pg')
+const fs = require('fs');
 
 const ALIVETIME = 120;
 const STRENGTHMAX = -70.0;
@@ -6,17 +7,18 @@ const STRENGTHMIN = -110;
 
 let isConnecting = false;
 let isConnected = false;
+let hasEverConnected = false;
 
 let client = new Client({
         user: process.env.DB_USER || 'user',
         host: process.env.DB_HOST || 'db',
-        database: process.env.DB_NAME || 'testdb',
+        database: process.env.DB_NAME || 'mydb',
         password: process.env.DB_PASSWORD || 'password',
         port: process.env.DB_PORT || 5432,
       });
 
 
-async function connectToDatabase(dbName = "testdbmu") {
+async function connectToDatabase(dbName = "testdbmu", isNew = false) {
   const maxRetries = 10;
   let retries = 0;
   isConnecting = true;
@@ -32,6 +34,11 @@ async function connectToDatabase(dbName = "testdbmu") {
       });
       await client.connect();
       isConnected = true;
+      if (isNew) {
+        console.log("NEW");
+        const initQuery = fs.readFileSync("./webserver/database/init.sql");
+        const initResponse = await client.query(initQuery.toString());
+      }
       break;
     } catch (err) {
       retries++;
@@ -46,12 +53,24 @@ async function connectToDatabase(dbName = "testdbmu") {
   }
 }
 
-async function recheckConnection(dbName) {
+async function recheckConnection(dbName = "testdbmu") {
+  let isNew = false;
+  if (!hasEverConnected) {
+    await client.connect();
+    hasEverConnected = true;
+    console.log("mydb", client.database, dbName)
+  }
   if ((client.database != dbName) || (!isConnected && !isConnecting)) {
     if (client.database != dbName) {
+      const exists = (await client.query(`SELECT datname FROM pg_database WHERE datname = '${dbName}'`)).rows.length;
+      console.log(exists);
+      if (exists == 0) {
+        await client.query("CREATE DATABASE "+dbName);
+        isNew = true;
+      }
       await client.end();
     }
-    await connectToDatabase(dbName);
+    await connectToDatabase(dbName, isNew);
   }
 }
 
@@ -111,7 +130,8 @@ function getCondFromWhiteBlackList(requestObj) {
   //whitelist has precedence over blacklist
   if ("whitelist" in requestObj) {
     if (requestObj.whitelist.length === 0) {
-      return {}
+      //This will always return false, as nothing in the whitelist will return nothing
+      return "=-1"
     }
     cond = `IN ${"(" + requestObj.whitelist.toString() + ")"}`
   } else if ("blacklist" in requestObj) {
@@ -121,7 +141,6 @@ function getCondFromWhiteBlackList(requestObj) {
       cond = ` NOT IN ${"(" + requestObj.blacklist.toString() + ")"}`
     }
   } else {
-    console.log(requestObj);
     throw new Error("Neither blacklist nor whitelist has been specified")
   }
   return cond;
@@ -174,7 +193,6 @@ async function getChannelUtilisation(requestObj, dbName) {
   if ("end-time" in requestObj) {
     cond += `AND a_start_time <= ${requestObj["end-time"]}`;
   }
-console.log(cond);
   let query = `SELECT c_id, a_start_time, a_end_time FROM "utilisation"
               WHERE c_id ${cond}
               ORDER BY c_id, a_start_time`;
@@ -208,7 +226,6 @@ console.log(cond);
     });
 
     output[c_id].average = (utilTime / totalTime) * 100;
-    console.log(totalTime, utilTime);
   });
 
   return output;
@@ -216,7 +233,8 @@ console.log(cond);
   return output;
 }
 
-async function isDeviceNew(deviceId) {
+async function isDeviceNew(deviceId, dbName) {
+  await recheckConnection(dbName);
   let query = `SELECT d_id FROM "devices" WHERE d_id = ${deviceId}`
   return (await client.query(query)).rows.length === 0;
 }
