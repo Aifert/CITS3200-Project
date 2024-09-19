@@ -30,14 +30,14 @@ test("Connect to Init Server", async () => {
   await initclient.connect();
   let oldExists = await initclient.query("SELECT 1 FROM pg_database WHERE datname='testdbmu'");
   if (oldExists.rows.length === 1) {
-    await initclient.query("DROP DATABASE testdbmu WITH (FORCE)");
+    await initclient.query("DROP DATABASE testdbmu");
   }  
   let creation = await initclient.query("CREATE DATABASE testdbmu");
   expect(creation.command).toBe("CREATE");
 
   oldExists = await initclient.query("SELECT 1 FROM pg_database WHERE datname='testdbi'");
   if (oldExists.rows.length === 1) {
-    await initclient.query("DROP DATABASE testdbi WITH (FORCE)");
+    await initclient.query("DROP DATABASE testdbi");
   }  
   creation = await initclient.query("CREATE DATABASE testdbi");
   expect(creation.command).toBe("CREATE");
