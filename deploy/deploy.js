@@ -62,7 +62,7 @@ app.post('/webhook_handler', async (req, res) => {
   const branch = req.body.ref ? req.body.ref.split('/').pop() : 'unknown'; // Capture branch, default to 'unknown' if not available
 
   try {
-    await axios.post(process.env.DISCORD_WEBHOOK, {
+    await axios.post(process.env.DISCORD_WEBHOOK_URL, {
       "content": null,
       "embeds": [
         {
