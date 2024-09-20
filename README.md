@@ -34,7 +34,7 @@ For hosting on your own web server
 ```bash
 git clone https://github.com/GravityWorld/CITS3200-Project.git
 
-cd CITS3200-Project #Enter into cloned repository
+cd CITS3200-Project
 ```
 
 2. **Start up Docker**
@@ -64,31 +64,6 @@ docker-compose up --build
 ```bash
 docker-compose -f docker-compose.dev.yml up --build
 ```
-
-3. **Connect to db (not needed in setup)**
-
-**Default credentials for db is user: user, password: password, to connect**
-
-Open your docker desktop, click into `CITS3200-Project`, then click into `postgres:13`, then click `Exec`
-
-```bash
-psql -U user -d mydb
-```
-
-OR alternatively, open a Terminal and do
-
-```bash
-docker exec -it cits3200-project-db-1 bash
-
-psql -U user -d mydb
-```
-
-
-This will launch the web application. You should be able to see status of application in your terminal.
-
-Changes made will be automatically updated, so you do not have to keep restarting docker.
-
-The application will be available at `http://localhost:3000/`
 
 ### Web Server configuration
 
@@ -239,17 +214,43 @@ You can start web server by doing (Make sure you are in the clone project direct
 
 If you want to set up CI/CD before starting add these env values to your .env file
 ```bash
-WEBHOOK_API_KEY="<github_webhook_key>"
-GITHUB_API_KEY="<github_api_key>"
-GITHUB_USERNAME="<github_username>"
-GITHUB_REPO="<user>/<github_repo_name>"
+sudo nano .env
 ```
 
 ```bash
-DOCKER_BUILDKIT=1 sudo docker-compose up --build
+AZURE_AD_CLIENT_ID=***
+AZURE_AD_CLIENT_SECRET=***
+AZURE_AD_TENANT_ID=***
+NEXTAUTH_SECRET=***
+NEXTAUTH_URL=http://localhost:3000/
+DISCORD_WEBHOOK_URL=***
+GITHUB_USERNAME=Aifert
+GITHUB_REPO=GravityWorld/CITS3200-Project
+GITHUB_SECRET=***
+PROJECT_DIR=~/CITS3200-Project
+branch=main
 ```
 
-and the application should be available at `http://<your_server_ip>:9000`
+Then you also need a `.env.local` file in frontend directory
+```bash
+sudo nano frontend/.env.local
+```
+
+```bash
+NEXTAUTH_URL=https://<public_ip>:3000/
+NEXT_PUBLIC_BACKEND_URL=https://<public_ip>:9000/
+NEXT_PUBLIC_FRONTEND_URL=https://<public_ip>:3000/
+NEXT_PUBLIC_SDR_URL=https://<public_ip>:4000/
+```
+
+Finally run the deploy script
+```bash
+chmod +x deploy.sh
+
+./deploy.sh
+````
+
+and the application should be available at `http://<your_server_ip>:3000`
 
 Our server is hosted on these credentials
 
