@@ -127,7 +127,7 @@ app.post('/webhook_handler', async (req, res) => {
     if (err) {
       console.error(`Deployment error: ${err.message}`);
       try {
-        await axios.post(process.env.DISCORD_WEBHOOK, {
+        await axios.post(process.env.DISCORD_WEBHOOK_URL, {
           "content": null,
           "embeds": [
             {
@@ -160,7 +160,7 @@ app.post('/webhook_handler', async (req, res) => {
 
     try {
       await checkContainers();
-      await axios.post(process.env.DISCORD_WEBHOOK, {
+      await axios.post(process.env.DISCORD_WEBHOOK_URL, {
         "content": null,
         "embeds": [
           {
@@ -184,7 +184,7 @@ app.post('/webhook_handler', async (req, res) => {
       console.log('Webhook sent successfully.');
     } catch (checkErr) {
       console.error('Failed to check containers:', checkErr.message);
-      await axios.post(process.env.DISCORD_WEBHOOK, {
+      await axios.post(process.env.DISCORD_WEBHOOK_URL, {
         "content": null,
         "embeds": [
           {
