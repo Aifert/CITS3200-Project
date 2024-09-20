@@ -29,7 +29,7 @@ class SESChannel:
         self.name_clash: bool = False #set to True if this frequency has more than one name assigned to it in SESChannelList.csv
         self.frequency_hz: int = frequency_hz #in Hz (int)
         self.index_to_spectrum_decibel_datapoints: int #channel tuning to relevant rtl_power_output_temporal_samples' spectrum_decibel_datapoints index
-        self.signal_is_currently_above_threshold: bool #for measuring flips in usage vs non-usage (TODO, consider the possibility of two utilization_states being a start_time or stop_time in a row for db processing!)
+        self.signal_is_currently_above_threshold: bool #for measuring flips in usage vs non-usage (TODO, consider the possibility of two utilization_states being a start_time or stop_time in a row (if program restarts for instance) for db processing!)
         self.utilization_states: List[UtilizationState] = []
         self.signal_strength_samples: List[SignalStrengthSample] = []
     # REPORTING STATE AS STRING (debugging)
@@ -58,7 +58,7 @@ class RTLPowerOutputTemporalSample:
 
 # CONSTANTS
 RTL_SDR_V4_RANGE_MIN_HZ: int = 24000000 #24MHz (represented in Hz)
-RTL_SDR_V4_RANGE_MAX_HZ: int = 1766000000 #1766MHz (represented in Hz)
+RTL_SDR_V4_RANGE_MAX_HZ: int = 1766000000 #1.766GHz (1766MHz) (represented in Hz)
 VHF_RANGE_MIN_HZ: int = 30000000 #30MHz (represented in Hz)
 VHF_RANGE_MAX_HZ: int = 300000000 #300MHz (represented in Hz)
 UHF_RANGE_MIN_HZ: int = 300000000 #300MHz (represented in Hz)
@@ -72,8 +72,8 @@ SLIDING_WINDOWS_BAND_SIZE_MAX_HZ: int = 2000000 #2MHz (represented in Hz), maxim
 # GLOBAL VARIABLES
 targetting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
 targetting_test_range: bool = False #set to True to target the test range in CONSTANTS
-min_frequency_hz: int #minimum frequency in range we're analyzing, -50000 Hz (accommodate frequency drift)
-max_frequency_hz: int #maximum frequency in range we're analyzing, +50000 Hz (accommodate frequency drift)
+min_frequency_hz: int #minimum frequency in range we're analyzing, -RANGE_DRIFT_OFFSET_HZ Hz (accommodate frequency drift)
+max_frequency_hz: int #maximum frequency in range we're analyzing, +RANGE_DRIFT_OFFSET_HZ Hz (accommodate frequency drift)
 min_distance_between_frequencies_hz: int #minimum distance between frequencies in the range we're analyzing
 SES_channels: List[SESChannel] = [] #list of SES_channels, sorted by frequency, with no duplicate frequencies (if there is a name clash only one channel is recorded)
 SES_channels_index_lookup_dictionary: Dict[int, int] = {} #query a frequency and get an index to it in SES_channels, or None if it doesn't exist (use .get)
@@ -128,6 +128,8 @@ def main():
 
     # FOR EACH SESChannel IN SES_channels RECORD THE VERY LAST rtl_power_output_temporal_samples AT YOUR index_to_spectrum_decibel_datapoints
     # ...AS THE SignalStrengthSample ENTRY IN YOUR signal_strength_samples
+
+    # EMPTY rtl_power_output_temporal_samples AND sliding_windows_thresholds_above_noise_floor_db NOW THAT PROCESSING IS DONE
 
     # FOR EACH SESChannel IN SES_channels REPRESENT IN JSON THE CONTENTS OF YOUR utilization_states AND signal_strength_samples
     # ...AND UPLOAD IT TO THE SERVER AT POST /data
