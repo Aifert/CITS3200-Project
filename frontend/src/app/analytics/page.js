@@ -11,7 +11,15 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [timeScale, setTimeScale] = useState(86400); // Default: 24 hours in seconds
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/';
+
+  // Time scale options in seconds (1 day = 86400 seconds)
+  const timeScales = {
+    '24 hours': 86400,
+    '7 days': 86400 * 7,
+    '30 days': 86400 * 30,
+  };
 
   useEffect(() => {
     const fetchChannelData = async () => {
@@ -24,16 +32,15 @@ const AnalyticsPage = () => {
         if (data.active || data.offline || data.busy) {
           // Extract the channel IDs from all available channels and assign status
           const allChannels = [
-            ...data.active.map(channel => ({ ...channel, status: 'Active' })),
-            ...data.offline.map(channel => ({ ...channel, status: 'Offline' })),
-            ...data.busy.map(channel => ({ ...channel, status: 'Busy' }))
+            ...data.active.map(channel => ({ ...channel, status: 'Active', isFavorite: false })),
+            ...data.offline.map(channel => ({ ...channel, status: 'Offline', isFavorite: false })),
+            ...data.busy.map(channel => ({ ...channel, status: 'Busy', isFavorite: false }))
           ];
           const channelIds = allChannels.map(channel => channel['channel-id']);
 
-          // Fetch the analytics data for those channels using the whitelist and start-time
-          const startTime = 86400; // Request data for the past 24 hours
+          // Fetch the analytics data for those channels using the whitelist and selected time scale
           const queryString = new URLSearchParams({
-            'start-time': startTime,
+            'start-time': timeScale, // Dynamic based on the selected time scale
             'whitelist': `[${channelIds.join(',')}]`
           }).toString();
 
@@ -112,6 +119,8 @@ const AnalyticsPage = () => {
                 strength: hasStrengthData ? analyticsForChannel?.strength?.average : 'No data',
                 dataUtilization,
                 dataStrength,
+                isFavorite: channel.isFavorite, 
+                id: channel['channel-id'],
               };
             });
             console.log('Processed Data:', processedData);
@@ -129,13 +138,44 @@ const AnalyticsPage = () => {
     };
 
     fetchChannelData();
-  }, []);
+  }, [timeScale]); // Re-fetch data when time scale changes
+
+  // Function to toggle favorite status of a channel
+  const toggleFavorite = (channelId) => {
+    const updatedChannels = channelData.map(channel =>
+      channel.id === channelId
+        ? { ...channel, isFavorite: !channel.isFavorite }
+        : channel
+    );
+    setChannelData(updatedChannels);
+
+    // Move favorites to the top
+    const favorites = updatedChannels.filter(channel => channel.isFavorite);
+    const nonFavorites = updatedChannels.filter(channel => !channel.isFavorite);
+    setChannelData([...favorites, ...nonFavorites]);
+  };
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Channel Analytics</h1>
 
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
+
+      {/* Time scale selection dropdown */}
+      <div className="mb-6">
+        <label className="mr-2">Select Time Scale:</label>
+        <select
+          value={timeScale}
+          onChange={e => setTimeScale(Number(e.target.value))} // Update the time scale
+          className="p-2 border border-gray-300 rounded"
+        >
+          {Object.entries(timeScales).map(([label, value]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {channelData.map((channel, index) => (
         <div key={index} className="mb-10">
@@ -153,7 +193,11 @@ const AnalyticsPage = () => {
               )}
             </div>
             <div className="flex items-center justify-center border-r border-gray-300">
+              {/* Attach star to the channel name */}
               {channel.name} ({channel.frequency.toFixed(6)} MHz)
+              <button onClick={() => toggleFavorite(channel.id)}>
+                {channel.isFavorite ? ' ★' : ' ☆'}
+              </button>
             </div>
             <div className="flex items-center justify-center border-r border-gray-300">
               {channel.utilization}
