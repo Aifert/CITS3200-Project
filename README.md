@@ -105,32 +105,47 @@ sudo systemctl start nginx
 sudo systemctl enable nginx
 
 cd /etc/nginx/sites-available/
+```
 
-sudo nano cits3200_project
+To use entraID, you need to generate a self-signed SSL certificate and configure Nginx to use it.
+```bash
+# Generate a self-signed SSL certificate
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /etc/nginx/self-signed.key \
+  -out /etc/nginx/self-signed.crt
+
+# Generate a strong Diffie-Hellman parameter
+sudo openssl dhparam -out /etc/nginx/dhparam.pem 2048
 ```
 
 Write this in your cits3200_project Nano and save it
 ```bash
 
-# Configuration for port 5000 (sdr service)
+# Open your cits3200_project file in Nginx
+sudo nano /etc/nginx/sites-available/cits3200_project
+
+# Redirect all HTTP traffic to HTTPS on their respective ports
 server {
-    listen 4000;
+    listen 80;
     server_name 20.213.23.98;
 
-    location / {
-        proxy_pass http://127.0.0.1:4001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+    return 301 https://$host$request_uri;
 }
 
-# Configuration for port 3000 (Frontend service)
+# HTTPS Server for Frontend Application on port 3000
 server {
-    listen 3000;
+    listen 3000 ssl;
     server_name 20.213.23.98;
 
+    ssl_certificate /etc/nginx/self-signed.crt;
+    ssl_certificate_key /etc/nginx/self-signed.key;
+    ssl_dhparam /etc/nginx/dhparam.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256";
+
+    # Proxy for frontend application
     location / {
         proxy_pass http://127.0.0.1:3001;
         proxy_set_header Host $host;
@@ -140,11 +155,43 @@ server {
     }
 }
 
-# Configuration for port 9000 (backend service)
+# HTTPS Server for SDR Service on port 4000
 server {
-    listen 9000;
+    listen 4000 ssl;
     server_name 20.213.23.98;
 
+    ssl_certificate /etc/nginx/self-signed.crt;
+    ssl_certificate_key /etc/nginx/self-signed.key;
+    ssl_dhparam /etc/nginx/dhparam.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256";
+
+    # Proxy for SDR service
+    location / {
+        proxy_pass http://127.0.0.1:4001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# HTTPS Server for Backend Service on port 9000
+server {
+    listen 9000 ssl;
+    server_name 20.213.23.98;
+
+    ssl_certificate /etc/nginx/self-signed.crt;
+    ssl_certificate_key /etc/nginx/self-signed.key;
+    ssl_dhparam /etc/nginx/dhparam.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256";
+
+    # Proxy for backend service
     location / {
         proxy_pass http://127.0.0.1:9001;
         proxy_set_header Host $host;
@@ -153,9 +200,28 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
-```
 
-Then again run
+# Configuration for port pipeline
+server {
+    listen 8000;
+    server_name 20.213.23.98;
+
+    location / {
+        proxy_pass http://127.0.0.1:8001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+	proxy_connect_timeout 600;
+	proxy_send_timeout 600;
+	proxy_read_timeout 600;
+	send_timeout 600;
+    }
+}
+```
+Then save it and run
+
 ```bash
 sudo ln -s /etc/nginx/sites-available/cits3200_project /etc/nginx/sites-enabled/
 sudo systemctl reload nginx
