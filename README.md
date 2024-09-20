@@ -84,22 +84,17 @@ cd /etc/nginx/sites-available/
 
 To use entraID, you need to generate a self-signed SSL certificate and configure Nginx to use it.
 ```bash
-# Generate a self-signed SSL certificate
 sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout /etc/nginx/self-signed.key \
   -out /etc/nginx/self-signed.crt
 
-# Generate a strong Diffie-Hellman parameter
 sudo openssl dhparam -out /etc/nginx/dhparam.pem 2048
 ```
 
 Write this in your cits3200_project Nano and save it
 ```bash
-
-# Open your cits3200_project file in Nginx
 sudo nano /etc/nginx/sites-available/cits3200_project
 
-# Redirect all HTTP traffic to HTTPS on their respective ports
 server {
     listen 80;
     server_name 20.213.23.98;
@@ -222,7 +217,6 @@ AZURE_AD_CLIENT_ID=***
 AZURE_AD_CLIENT_SECRET=***
 AZURE_AD_TENANT_ID=***
 NEXTAUTH_SECRET=***
-NEXTAUTH_URL=http://localhost:3000/
 DISCORD_WEBHOOK_URL=***
 GITHUB_USERNAME=Aifert
 GITHUB_REPO=GravityWorld/CITS3200-Project
@@ -250,7 +244,7 @@ chmod +x deploy.sh
 ./deploy.sh
 ````
 
-and the application should be available at `http://<your_server_ip>:3000`
+and the application should be available at `https://<your_server_ip>:3000`
 
 Our server is hosted on these credentials
 
@@ -259,9 +253,9 @@ Our server is hosted on these credentials
 
 Sample request you can make to interact with webserver
 
-```http://20.213.23.98:9000```
+```https://20.213.23.98:9000```
 
-```http://20.213.23.98:3000/login```
+```https://20.213.23.98:3000/login```
 
 
 ## Instructions to start frontend is available in `frontend/README.md`
