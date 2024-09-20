@@ -6,4 +6,4 @@ sudo apt install npm
 
 sudo npm i -g pm2
 
-cd deploy && pm2 deploy server.js
+cd deploy && pm2 start deploy.js
