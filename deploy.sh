@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo docker-compose up --build -d
+sudo DOCKER_BUILDKIT=1 docker-compose up --build -d
 
 sudo apt install npm
 
