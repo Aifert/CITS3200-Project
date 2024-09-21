@@ -86,6 +86,7 @@ sliding_windows_band_width_hz: int #the actual band width of our sliding windows
 sliding_windows_thresholds_above_noise_floor_db: List[float] #threshold above which we consider channels in this window 'in use'
 # ...index into your appropriate sliding window threshold here with: 
 # ...int((channel_frequency_hz - min_frequency_hz) / sliding_windows_band_width_hz)
+message_id: int = 0 # tally for how many messages sent to the server while running, to send with each update, so DB knows if data has been lost since last period
 
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
