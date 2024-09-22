@@ -2,7 +2,8 @@ const axios = require('axios');
 
 async function startMonitor(SDR_URL, SDR_PORT, params) {
   try {
-    const response = await axios.get(`${SDR_URL}:${SDR_PORT}/sdr_api/monitor/${params}`,{
+    console.log(`${SDR_URL}:${SDR_PORT}sdr_api/monitor/${params}`);
+    const response = await axios.get(`${SDR_URL}:${SDR_PORT}sdr_api/monitor/${params}`,{
       responseType: 'stream',
       insecureHTTPParser: true,
     });
@@ -15,9 +16,10 @@ async function startMonitor(SDR_URL, SDR_PORT, params) {
 
 async function stopMonitor(SDR_URL, SDR_PORT){
     try {
-        await axios.get(`${SDR_URL}:${SDR_PORT}/sdr_api/monitor/stop`, {
-          insecureHTTPParser: true
-        });
+      console.log(`${SDR_URL}:${SDR_PORT}sdr_api/monitor/stop`);
+      await axios.get(`${SDR_URL}:${SDR_PORT}sdr_api/monitor/stop`, {
+        insecureHTTPParser: true
+      });
     } catch (error) {
         throw new Error(error.message);
     }
