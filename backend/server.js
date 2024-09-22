@@ -56,7 +56,8 @@ const verifyToken = async (req, res, next) => {
       res.status(403).json({ error: 'Invalid token' });
     }
   } else {
-    return res.redirect(`${PUBLIC_FRONTEND_URL}/login`);
+    const requestedUrl = req.originalUrl;
+    return res.redirect(`${PUBLIC_FRONTEND_URL}/login?requestedUrl=${encodeURIComponent(requestedUrl)}&port=${PORT}`);
   }
 };
 
