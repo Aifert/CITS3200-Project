@@ -21,13 +21,13 @@ app.post("/sdr", (req, res) => {
     });
 })
 
-app.get('/stop', async (req, res) => {
+app.get('/sdr_api/stop', async (req, res) => {
     axios.get(`${SDR_URL}:5002/stop`, { insecureHTTPParser: true }).then((response) => {
         res.send(response.data);
     })
 })
 
-app.get('/monitor/:params', async (req, res) => {
+app.get('/sdr_api/monitor/:params', async (req, res) => {
     const params = req.params.params;
 
     // Fetch the stream from the SDR server
