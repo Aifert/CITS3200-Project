@@ -38,6 +38,7 @@ export const config = {
     '/analytics/:path*',
     '/channel-listening/:path*',
     '/login',
-    '/api/auth/:path*'
+    '/api/auth/:path*',
+    '/sdr_api/:path*'
   ],
 };
