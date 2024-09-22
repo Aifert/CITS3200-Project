@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
+const { decode } = require('next-auth/jwt');
+const cookieParser = require('cookie-parser');
 const {
   startMonitor,
   stopMonitor,
@@ -22,11 +24,44 @@ const FRONTEND_URL = "http://frontend"
 const FRONTEND_PORT = 3000;
 const SDR_URL = "http://sdr"
 const SDR_PORT = 4000;
+const PUBLIC_FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
+const PUBLIC_SDR_URL = process.env.NEXT_PUBLIC_SDR_URL || 'http://localhost:4000/api/';
 
 let is_populating = false;
 
-
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+app.use(cors({
+  origin: PUBLIC_FRONTEND_URL,
+  credentials: true,
+}));
+
+app.use(cookieParser());
+
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies['next-auth.session-token'];
+
+  if (token) {
+    try {
+      const secret = process.env.NEXTAUTH_SECRET;
+      const decoded = await decode({ token, secret });
+      console.log('Decoded token:', decoded);
+      if (decoded) {
+        req.user = decoded;
+        next();
+      } else {
+        throw new Error('Failed to decode token');
+      }
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      res.status(403).json({ error: 'Invalid token' });
+    }
+  } else {
+    return res.redirect(`${PUBLIC_FRONTEND_URL}/login`);
+  }
+};
+
+app.use('/api', verifyToken);
 
 async function singlePopulate() {
     const nowTime = Math.floor(new Date().getTime()/1000);
@@ -62,7 +97,10 @@ async function populateTestData() {
 }
 
 
-app.use(cors());
+app.use(cors({
+  origin: `${FRONTEND_URL}:${FRONTEND_PORT}` || 'http://localhost:3000',
+  credentials: true,
+}));
 
 app.use(express.json({
   verify: (req, res, buf) => {
