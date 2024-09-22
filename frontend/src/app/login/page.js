@@ -8,22 +8,36 @@ const LoginPage = () => {
     const { data: session, status } = useSession();
     const router = useRouter();
     const searchParams = useSearchParams();
-
+    const URL = process.env.NEXT_PUBLIC_URL|| 'http://localhost';
 
     useEffect(() => {
         if (status === 'authenticated') {
-            router.push('/dashboard');
+            const requestedUrl = searchParams.get('requestedUrl');
+            const port = searchParams.get('port') || '3000';
+            if (requestedUrl) {
+                const decodedUrl = decodeURIComponent(requestedUrl);
+                const redirectUrl = `${URL}:${port}${decodedUrl}`;
+                window.location.href = redirectUrl;
+            } else {
+                router.push('/dashboard');
+            }
         }
-    }, [status, router]);
+    }, [status, router, searchParams, URL]);
 
     if (status === 'loading') {
         return <p>Loading...</p>;
     }
 
     const handleSignIn = async () => {
+        const requestedUrl = searchParams.get('requestedUrl');
+        const port = searchParams.get('port') || '3000';
+        const callbackUrl = requestedUrl
+            ? `${URL}:${port}${decodeURIComponent(requestedUrl)}`
+            : '/dashboard';
+
         const result = await signIn("azure-ad", {
             redirect: false,
-            callbackUrl: '/dashboard'
+            callbackUrl: callbackUrl
         });
 
         if (result?.error) {
