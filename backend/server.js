@@ -25,15 +25,9 @@ const PORT = process.env.PORT || 9000;
 const FRONTEND_URL = "http://frontend"
 const FRONTEND_PORT = 3000;
 const SDR_URL = "http://sdr"
-const SDR_PORT = 4000;
+const SDR_PORT = 4000 + "/";
 const PUBLIC_FRONTEND_URL = `${process.env.NEXT_PUBLIC_URL}:${process.env.NEXT_PUBLIC_FRONTEND_PORT}` || 'http://localhost:3000';
 const PUBLIC_SDR_URL = `${process.env.NEXT_PUBLIC_URL}:${process.env.NEXT_PUBLIC_SDR_PORT}` || 'http://localhost:4000/api/';
-
-
-console.log(PUBLIC_FRONTEND_URL)
-console.log(PUBLIC_SDR_URL)
-
-console.log(FRONTEND_URL)
 
 let is_populating = false;
 
@@ -64,7 +58,7 @@ const verifyToken = async (req, res, next) => {
     }
   } else {
     const requestedUrl = req.originalUrl;
-    return res.redirect(`${PUBLIC_FRONTEND_URL}/login?requestedUrl=${encodeURIComponent(requestedUrl)}&port=${PORT}`);
+    return res.redirect(`${PUBLIC_FRONTEND_URL}login?requestedUrl=${encodeURIComponent(requestedUrl)}&port=${PORT}`);
   }
 };
 
@@ -119,7 +113,6 @@ app.use(express.static(path.join(__dirname, 'public')));
  * <NOT NEED FOR END PRODUCT USED FOR TESTING ONLY>
  */
 app.get('/api/monitor-channels', async (req, res) => {
-  console.log("hello")
   res.sendFile(path.join(__dirname, 'public', 'monitor.html'))
 })
 
@@ -211,8 +204,6 @@ app.get('/api/active-channels', async (req, res) => {
     returnVal["active"] = await getAliveChannels();
     returnVal["busy"] = await getBusyChannels();
     returnVal["offline"] = await getOfflineChannels();
-
-    console.log(returnVal)
     res.send(returnVal)
   }
   catch(error){
