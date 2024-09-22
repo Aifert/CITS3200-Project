@@ -28,7 +28,11 @@ export default NextAuth({
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // Redirect to the dashboard after login
+      const parsedUrl = new URL(url, baseUrl);
+
+      if (parsedUrl) {
+        return parsedUrl;
+      }
       return baseUrl + "/dashboard";
     },
     async jwt({ token, account }) {
