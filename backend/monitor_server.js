@@ -2,7 +2,6 @@ const axios = require('axios');
 
 async function startMonitor(SDR_URL, SDR_PORT, params) {
   try {
-    console.log(`${SDR_URL}:${SDR_PORT}sdr_api/monitor/${params}`);
     const response = await axios.get(`${SDR_URL}:${SDR_PORT}sdr_api/monitor/${params}`,{
       responseType: 'stream',
       insecureHTTPParser: true,
