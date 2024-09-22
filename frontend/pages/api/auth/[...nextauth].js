@@ -23,11 +23,27 @@ export default NextAuth({
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
     async redirect({ url, baseUrl }) {
       // Redirect to the dashboard after login
       return baseUrl + "/dashboard";
     },
+    async jwt({ token, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      session.accessToken = token.accessToken;
+      return session;
+    },
   },
-  debug: true,
+  pages: {
+    signIn: '/login',
+  },
+  debug: process.env.NODE_ENV === 'development',
 });
