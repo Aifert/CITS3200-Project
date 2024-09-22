@@ -45,7 +45,6 @@ const verifyToken = async (req, res, next) => {
     try {
       const secret = process.env.NEXTAUTH_SECRET;
       const decoded = await decode({ token, secret });
-      console.log('Decoded token:', decoded);
       if (decoded) {
         req.user = decoded;
         next();
@@ -95,12 +94,6 @@ async function populateTestData() {
     }
   }
 }
-
-
-app.use(cors({
-  origin: `${FRONTEND_URL}:${FRONTEND_PORT}` || 'http://localhost:3000',
-  credentials: true,
-}));
 
 app.use(express.json({
   verify: (req, res, buf) => {
@@ -204,10 +197,13 @@ app.get('/api/monitor-channels/stop', async (req, res) => {
 
 app.get('/api/active-channels', async (req, res) => {
   try{
+    console.log('getting active channels')
     let returnVal = {}
     returnVal["active"] = await getAliveChannels();
     returnVal["busy"] = await getBusyChannels();
     returnVal["offline"] = await getOfflineChannels();
+
+    console.log(returnVal)
     res.send(returnVal)
   }
   catch(error){
