@@ -1,4 +1,5 @@
 import csv #reading .csv files
+import os #providing directory that this script is in for opening files
 from typing import List, Dict #for providing type hints for lists & dictionaries
 
 #component of SESChannel, represents a timestamp of a channel beginning use (start time) or ending use (stop time)
@@ -65,15 +66,19 @@ UHF_RANGE_MIN_HZ: int = 300000000 #300MHz (represented in Hz)
 UHF_RANGE_MAX_HZ: int = 3000000000 #3GHz (3000MHz) (represented in Hz)
 TEST_RANGE_MIN_HZ: int = 477087500 #CB channel 67
 TEST_RANGE_MAX_HZ: int = 477087500 #CB channel 67
-RANGE_DRIFT_OFFSET_HZ: int = 50000 #0.05MHz (represented in Hz), subtract from min_frequency_hz, add to max_frequency_hz
+RANGE_DRIFT_OFFSET_HZ: int = 50000 #0.05MHz (represented in Hz), subtract from min_rtl_power_frequency_hz, add to max_rtl_power_frequency_hz
 SLIDING_WINDOWS_TEMPORAL_LENGTH_UNIX: int = 10 #window is sliding in 10 second intervals from the first temporal sample in rtl_power_output_temporal_samples
 SLIDING_WINDOWS_BAND_SIZE_MAX_HZ: int = 2000000 #2MHz (represented in Hz), maximum size of sliding window bands
+SES_CHANNEL_LIST_FILE_NAME = 'SESChannelList.csv'
+SES_CHANNEL_FOLDER_NAME = 'SESChannelList'
 
 # GLOBAL VARIABLES
 targetting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
 targetting_test_range: bool = False #set to True to target the test range in CONSTANTS
-min_frequency_hz: int #minimum frequency in range we're analyzing, -RANGE_DRIFT_OFFSET_HZ Hz (accommodate frequency drift)
-max_frequency_hz: int #maximum frequency in range we're analyzing, +RANGE_DRIFT_OFFSET_HZ Hz (accommodate frequency drift)
+min_targeted_frequency_hz: int #minimum SESChannelList.csv frequency we are analyzing
+max_targeted_frequency_hz: int #maximum SESChannelList.csv frequency we are analyzing
+min_rtl_power_frequency_hz: int #minimum frequency in range we're analyzing, -RANGE_DRIFT_OFFSET_HZ Hz (accommodate frequency drift)
+max_rtl_power_frequency_hz: int #maximum frequency in range we're analyzing, +RANGE_DRIFT_OFFSET_HZ Hz (accommodate frequency drift)
 min_distance_between_frequencies_hz: int #minimum distance between frequencies in the range we're analyzing
 SES_channels: List[SESChannel] = [] #list of SES_channels, sorted by frequency, with no duplicate frequencies (if there is a name clash only one channel is recorded)
 SES_channels_index_lookup_dictionary: Dict[int, int] = {} #query a frequency and get an index to it in SES_channels, or None if it doesn't exist (use .get)
@@ -85,8 +90,70 @@ sliding_windows_band_width_hz: int #the actual band width of our sliding windows
 # ...range_hz / num_sliding_windows
 sliding_windows_thresholds_above_noise_floor_db: List[float] #threshold above which we consider channels in this window 'in use'
 # ...index into your appropriate sliding window threshold here with: 
-# ...int((channel_frequency_hz - min_frequency_hz) / sliding_windows_band_width_hz)
+# ...int((channel_frequency_hz - min_rtl_power_frequency_hz) / sliding_windows_band_width_hz)
 message_id: int = 0 # tally for how many messages sent to the server while running, to send with each update, so DB knows if data has been lost since last period
+
+# FUNCTIONS
+
+# Converts MHz representation (float) to Hz representation (int)
+def convert_mhz_to_hz_int(mhz):
+    hz = float(mhz) * 1000000
+    hz = int(hz)
+    return hz
+
+# Set the desired range of our analytics (wider range = greater strain on RTL-SDRv4)
+def set_targeted_frequency_range(targetting_VHF: bool, targetting_test_range: bool):
+    global min_targeted_frequency_hz
+    global max_targeted_frequency_hz
+    if(targetting_VHF):
+        # VHF
+        min_targeted_frequency_hz = VHF_RANGE_MIN_HZ
+        max_targeted_frequency_hz = VHF_RANGE_MAX_HZ
+    else:
+        # UHF
+        min_targeted_frequency_hz = UHF_RANGE_MIN_HZ
+        max_targeted_frequency_hz = UHF_RANGE_MAX_HZ
+    if(targetting_test_range):
+        # TEST RANGE (will take priority if enabled)
+        min_targeted_frequency_hz = TEST_RANGE_MIN_HZ
+        max_targeted_frequency_hz = TEST_RANGE_MAX_HZ
+    #print(min_targeted_frequency_hz) #DEBUG
+    #print(max_targeted_frequency_hz) #DEBUG
+
+# READ SESChannelList.csv AND POPULATE SES_channels WITH CHANNELS WITHIN OUR RANGE (VHF, UHF, test) (SEE CONSTANTS FOR RANGES)
+# ...test for read failure
+def read_and_populate_SES_channels_list():
+    # READ SESChannelList.csv
+    try:
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        full_path_to_channel_list = os.path.join(current_directory + '/' + SES_CHANNEL_FOLDER_NAME, SES_CHANNEL_LIST_FILE_NAME)
+        with open(full_path_to_channel_list, 'r') as file:
+            csv_reader = csv.reader(file)
+            next(csv_reader) #skip the first row
+            for row in csv_reader:
+                try:
+                    #print(row) #DEBUG
+                    new_channel = SESChannel(name=row[0], frequency_hz=convert_mhz_to_hz_int(row[1]))
+                    #print(convert_mhz_to_hz_int(row[1])) #DEBUG
+                    # TEST THAT CHANNEL IS WITHIN OUR TARGETED RANGE
+                    if(min_targeted_frequency_hz <= new_channel.frequency_hz & new_channel.frequency_hz <= max_targeted_frequency_hz):
+                        # ADD CHANNEL TO OUR LIST
+                        SES_channels.append(new_channel)
+                except IndexError:
+                    print(f"Warning: Skipping malformed row in CSV: {row}")
+                except ValueError:
+                    print(f"Warning: Invalid frequency value in row: {row}")
+        if not SES_channels:
+            print("Warning: No channels were found within the targeted frequency range.")
+        return True  #indicate successful read and population 
+    except FileNotFoundError:
+        print(f"Error: The file {SES_CHANNEL_LIST_FILE_NAME} was not found in {SES_CHANNEL_FOLDER_NAME}.")
+    except PermissionError:
+        print(f"Error: Permission denied when trying to read {SES_CHANNEL_LIST_FILE_NAME}.")
+    except csv.Error as e:
+        print(f"Error: CSV file {SES_CHANNEL_LIST_FILE_NAME} could not be parsed: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
@@ -97,6 +164,8 @@ def main():
 
     # READ SESChannelList.csv AND POPULATE SES_channels WITH CHANNELS WITHIN OUR RANGE (VHF, UHF, test) (SEE CONSTANTS FOR RANGES)
     # ...test for read failure
+    set_targeted_frequency_range(targetting_VHF, targetting_test_range)
+    read_and_populate_SES_channels_list()
 
     # SORT SES_channels BY FREQUENCY
 
@@ -106,7 +175,7 @@ def main():
 
     # PARSE SES_channels AND CREATE SES_channels_index_lookup_dictionary ENTRIES FOR FREQUENCIES -> INDEXES (INTO SES_channels)
     
-    # SET THE min_frequency_hz AND max_frequency_hz BASED ON SES_channels, RANGE_DRIFT_OFFSET_HZ, AND RTL_SDR_V4_RANGE_MIN & MAX
+    # SET THE min_rtl_power_frequency_hz AND max_rtl_power_frequency_hz BASED ON SES_channels, RANGE_DRIFT_OFFSET_HZ, AND RTL_SDR_V4_RANGE_MIN & MAX
     # ...ensure there is at least 1Hz difference between min & max, else rtl_power will generate a file 0.5Gb large with a sample rate of 0Hz! Insert this 1Hz if it's needed.
 
     # READ rtl_power_output.csv AND POPULATE rtl_power_output_temporal_samples WITH ALL AVAILABLE TEMPORAL SAMPLES
