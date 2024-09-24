@@ -27,11 +27,12 @@
 	{
 		"soc-id": 162475163,
 		“address”: “128.10.20.30:8080”,
+		"message-id": 112,
 		data: {
 			162475000: {
 				"usage": [
-				[1724322719, 1724322724, false], //(start_time, end_time)
-				[1724322719, null, true]
+				[1724322719, false], //(time, is_start_time)
+				[1724322719, true]
 				],
 				"strength" {
 					1724322719: -75.1,
@@ -40,7 +41,7 @@
 			},
 			163825000: {
 				"usage": [
-				[1724322600, 1724322710, false] //(start_time, end_time)
+				[1724322600, false] //(time, is_start_time)
 				],
 				"strength" {
 					1724322600: -105.1,
