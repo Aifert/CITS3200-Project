@@ -1,5 +1,6 @@
 import csv #reading .csv files
 import os #providing directory that this script is in for opening files
+import math #infinite numbers
 from typing import List, Dict #for providing type hints for lists & dictionaries
 
 #component of SESChannel, represents a timestamp of a channel beginning use (start time) or ending use (stop time)
@@ -171,6 +172,20 @@ def remove_SES_duplicate_frequencies():
     for channel in clashed_channels_to_remove:
         SES_channels.remove(channel)
 
+# PARSE SES_channels AND RECORD THE min_distance_between_frequencies_hz
+def record_min_distance_between_frequencies():
+    global min_distance_between_frequencies_hz
+    min_distance_between_frequencies_hz = math.inf #max value
+    previous_SES_channel = None
+    for channel in SES_channels:
+        if(previous_SES_channel == None):
+            previous_SES_channel = channel
+            continue
+        distance_between_frequencies = abs(previous_SES_channel.frequency_hz - channel.frequency_hz)
+        if(distance_between_frequencies < min_distance_between_frequencies_hz):
+            min_distance_between_frequencies_hz = distance_between_frequencies
+            #print(min_distance_between_frequencies_hz) #DEBUG
+
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
 def main():
@@ -193,6 +208,7 @@ def main():
     remove_SES_duplicate_frequencies()
 
     # PARSE SES_channels AND RECORD THE min_distance_between_frequencies_hz
+    record_min_distance_between_frequencies()
 
     # PARSE SES_channels AND CREATE SES_channels_index_lookup_dictionary ENTRIES FOR FREQUENCIES -> INDEXES (INTO SES_channels)
     
