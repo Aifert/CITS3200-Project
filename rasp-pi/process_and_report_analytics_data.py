@@ -73,8 +73,8 @@ SES_CHANNEL_LIST_FILE_NAME = 'SESChannelList.csv'
 SES_CHANNEL_FOLDER_NAME = 'SESChannelList'
 
 # GLOBAL VARIABLES
-targetting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
-targetting_test_range: bool = False #set to True to target the test range in CONSTANTS
+targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
+targeting_test_range: bool = False #set to True to target the test range in CONSTANTS
 min_targeted_frequency_hz: int #minimum SESChannelList.csv frequency we are analyzing
 max_targeted_frequency_hz: int #maximum SESChannelList.csv frequency we are analyzing
 min_rtl_power_frequency_hz: int #minimum frequency in range we're analyzing, -RANGE_DRIFT_OFFSET_HZ Hz (accommodate frequency drift)
@@ -102,10 +102,10 @@ def convert_mhz_to_hz_int(mhz):
     return hz
 
 # Set the desired range of our analytics (wider range = greater strain on RTL-SDRv4)
-def set_targeted_frequency_range(targetting_VHF: bool, targetting_test_range: bool):
+def set_targeted_frequency_range(targeting_VHF: bool, targeting_test_range: bool):
     global min_targeted_frequency_hz
     global max_targeted_frequency_hz
-    if(targetting_VHF):
+    if(targeting_VHF):
         # VHF
         min_targeted_frequency_hz = VHF_RANGE_MIN_HZ
         max_targeted_frequency_hz = VHF_RANGE_MAX_HZ
@@ -113,7 +113,7 @@ def set_targeted_frequency_range(targetting_VHF: bool, targetting_test_range: bo
         # UHF
         min_targeted_frequency_hz = UHF_RANGE_MIN_HZ
         max_targeted_frequency_hz = UHF_RANGE_MAX_HZ
-    if(targetting_test_range):
+    if(targeting_test_range):
         # TEST RANGE (will take priority if enabled)
         min_targeted_frequency_hz = TEST_RANGE_MIN_HZ
         max_targeted_frequency_hz = TEST_RANGE_MAX_HZ
@@ -122,7 +122,7 @@ def set_targeted_frequency_range(targetting_VHF: bool, targetting_test_range: bo
 
 # READ SESChannelList.csv AND POPULATE SES_channels WITH CHANNELS WITHIN OUR RANGE (VHF, UHF, test) (SEE CONSTANTS FOR RANGES)
 # ...test for read failure
-def read_and_populate_SES_channels_list():
+def read_and_populate_SES_channels_list() -> bool: #return bool to indicate success / failure
     # READ SESChannelList.csv
     try:
         current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -158,16 +158,20 @@ def read_and_populate_SES_channels_list():
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
 def main():
+    #python global statements
+    global SES_channels
+
     # QUERY SERVER TO DETERMINE IF targeting_VHF (TODO, add to docs too)
 
     # USE A KNOWN STRONG FREQUENCY TO SET RTL_SDR_V4_tuning_hz, IF RTL-SDR IS OUT OF TUNE (TODO, add to docs too)
 
     # READ SESChannelList.csv AND POPULATE SES_channels WITH CHANNELS WITHIN OUR RANGE (VHF, UHF, test) (SEE CONSTANTS FOR RANGES)
     # ...test for read failure
-    set_targeted_frequency_range(targetting_VHF, targetting_test_range)
+    set_targeted_frequency_range(targeting_VHF, targeting_test_range)
     read_and_populate_SES_channels_list()
 
     # SORT SES_channels BY FREQUENCY
+    SES_channels = sorted(SES_channels, key=lambda channel: channel.frequency_hz)
 
     # PARSE SES_channels AND REMOVE ANY DUPLICATE FREQUENCIES (MARKING THE KEPT CHANNEL AS A name_clash)
 
