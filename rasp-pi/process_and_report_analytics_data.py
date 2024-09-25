@@ -186,6 +186,12 @@ def record_min_distance_between_frequencies():
             min_distance_between_frequencies_hz = distance_between_frequencies
             #print(min_distance_between_frequencies_hz) #DEBUG
 
+# PARSE SES_channels AND CREATE SES_channels_index_lookup_dictionary ENTRIES FOR FREQUENCIES -> INDEXES (INTO SES_channels)
+def create_SES_channels_index_lookup_dictionary():
+    for index, channel in enumerate(SES_channels):
+        SES_channels_index_lookup_dictionary[channel.frequency_hz] = index
+    #print(SES_channels_index_lookup_dictionary[162150000]) #DEBUG
+
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
 def main():
@@ -211,6 +217,7 @@ def main():
     record_min_distance_between_frequencies()
 
     # PARSE SES_channels AND CREATE SES_channels_index_lookup_dictionary ENTRIES FOR FREQUENCIES -> INDEXES (INTO SES_channels)
+    create_SES_channels_index_lookup_dictionary()
     
     # SET THE min_rtl_power_frequency_hz AND max_rtl_power_frequency_hz BASED ON SES_channels, RANGE_DRIFT_OFFSET_HZ, AND RTL_SDR_V4_RANGE_MIN & MAX
     # ...ensure there is at least 1Hz difference between min & max, else rtl_power will generate a file 0.5Gb large with a sample rate of 0Hz! Insert this 1Hz if it's needed.
