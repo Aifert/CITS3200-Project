@@ -155,10 +155,26 @@ def read_and_populate_SES_channels_list() -> bool: #return bool to indicate succ
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
+# PARSE SES_channels AND REMOVE ANY DUPLICATE FREQUENCIES (MARKING THE KEPT CHANNEL AS A name_clash)
+# ...assumes the SES_channels list is already sorted by frequency
+def remove_SES_duplicate_frequencies():
+    clashed_channels_to_remove = []
+    previous_SES_channel = None
+    for channel in SES_channels:
+        if(previous_SES_channel == None):
+            previous_SES_channel = channel
+            continue
+        if(previous_SES_channel.frequency_hz == channel.frequency_hz):
+            clashed_channels_to_remove.append(previous_SES_channel)
+            channel.name_clash = True
+        previous_SES_channel = channel
+    for channel in clashed_channels_to_remove:
+        SES_channels.remove(channel)
+
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
 def main():
-    #python global statements
+    #python global statements (for assigning to our global variables)
     global SES_channels
 
     # QUERY SERVER TO DETERMINE IF targeting_VHF (TODO, add to docs too)
@@ -174,6 +190,7 @@ def main():
     SES_channels = sorted(SES_channels, key=lambda channel: channel.frequency_hz)
 
     # PARSE SES_channels AND REMOVE ANY DUPLICATE FREQUENCIES (MARKING THE KEPT CHANNEL AS A name_clash)
+    remove_SES_duplicate_frequencies()
 
     # PARSE SES_channels AND RECORD THE min_distance_between_frequencies_hz
 
