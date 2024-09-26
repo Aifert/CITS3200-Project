@@ -301,11 +301,60 @@ async function processIncomingData(dataObj, dbName) {
     throw error;
   }
 }
+
+async function generateUtilDataDump(requestObj, dbName) {
+  try{
+     await recheckConnection(dbName);
+    let cond = getCondFromWhiteBlackList(requestObj);
+    if ("start-time" in requestObj) {
+      cond += `AND (a_end_time IS NULL OR a_end_time >= ${requestObj["start-time"]})`
+    }
+    if ("end-time" in requestObj) {
+      cond += `AND a_start_time <= ${requestObj["end-time"]}`;
+    }
+    let query = `SELECT c.d_id, c.c_name, c.c_freq, u.a_start_time, u.a_end_time, u.a_end_time-u.a_start_time
+                FROM "utilisation" AS u JOIN "channels" AS c ON c.c_id=u.c_id
+                WHERE c.c_id ${cond}
+                ORDER BY c.c_id, u.a_start_time`;
+    let res = await client.query(query);
+    let output = "Device Number, Channel Name, Channel Frequency, Transmission Start Time, Transmission End Time, Transmission Length";
+    for (const row of res.rows) {
+      output += "\n" + Object.values(row).toString();
+    }
+    return output;
+
+  } catch(error){
+    throw error;
+  }
+}
+
+async function generateStrengthDataDump(requestObj, dbName) {
+  try{
+    await recheckConnection(dbName);
+    let cond = getCondFromWhiteBlackList(requestObj)+getCondStartEndTimes(requestObj);
+    let query = `SELECT c.d_id, c.c_name, c.c_freq, s.s_sample_time, s.s_strength
+                 FROM "channels" AS c JOIN "strength" AS s ON s.c_id=c.c_id
+                WHERE s.c_id ${cond}
+                ORDER BY s.c_id, s.s_sample_time`;
+    let res = await client.query(query);
+    let output = "Device Number, Channel Name, Channel Frequency, Sample Time, Strength";
+    for (const row of res.rows) {
+      output += "\n" + Object.values(row).toString();
+    }
+    return output;
+
+  } catch(error){
+    throw error;
+  }
+}
+
 module.exports = {
   getAliveChannels,
   getOfflineChannels,
   getBusyChannels,
   getChannelStrength,
   getChannelUtilisation,
-  processIncomingData
+  processIncomingData,
+  generateStrengthDataDump,
+  generateUtilDataDump
 }
