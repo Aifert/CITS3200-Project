@@ -149,6 +149,7 @@ function getCondFromWhiteBlackList(requestObj) {
 function getCondStartEndTimes(requestObj) {
   let cond = "";
   if ("start-time" in requestObj) {
+    requestObj["start-time"] = Math.floor(new Date().getTime()/1000) - requestObj["start-time"];
     cond += ` AND s_sample_time >= ${requestObj["start-time"]}`
   }
   if ("end-time" in requestObj) {
@@ -188,6 +189,7 @@ async function getChannelUtilisation(requestObj, dbName) {
   await recheckConnection(dbName);
   let cond = getCondFromWhiteBlackList(requestObj);
   if ("start-time" in requestObj) {
+      requestObj["start-time"] = Math.floor(new Date().getTime()/1000) - requestObj["start-time"];
     cond += `AND (a_end_time IS NULL OR a_end_time >= ${requestObj["start-time"]})`
   }
   if ("end-time" in requestObj) {
@@ -307,6 +309,7 @@ async function generateUtilDataDump(requestObj, dbName) {
      await recheckConnection(dbName);
     let cond = getCondFromWhiteBlackList(requestObj);
     if ("start-time" in requestObj) {
+      requestObj["start-time"] = Math.floor(new Date().getTime()/1000) - requestObj["start-time"];
       cond += `AND (a_end_time IS NULL OR a_end_time >= ${requestObj["start-time"]})`
     }
     if ("end-time" in requestObj) {
