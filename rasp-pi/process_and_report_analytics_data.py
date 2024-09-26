@@ -192,6 +192,26 @@ def create_SES_channels_index_lookup_dictionary():
         SES_channels_index_lookup_dictionary[channel.frequency_hz] = index
     #print(SES_channels_index_lookup_dictionary[162150000]) #DEBUG
 
+# SET THE min_rtl_power_frequency_hz AND max_rtl_power_frequency_hz BASED ON SES_channels, RANGE_DRIFT_OFFSET_HZ, AND RTL_SDR_V4_RANGE_MIN & MAX
+# ...ensure there is at least 1Hz difference between min & max, else rtl_power will generate a file 0.5Gb large with a sample rate of 0Hz! Insert this 1Hz if it's needed.
+def set_rtl_power_frequency_range():
+    global min_rtl_power_frequency_hz
+    global max_rtl_power_frequency_hz
+    if(len(SES_channels) == 0): 
+        return False #test for empty channels list edge case
+    min_rtl_power_frequency_hz = SES_channels[0].frequency_hz
+    max_rtl_power_frequency_hz = SES_channels[-1].frequency_hz
+    min_rtl_power_frequency_hz -= RANGE_DRIFT_OFFSET_HZ
+    max_rtl_power_frequency_hz += RANGE_DRIFT_OFFSET_HZ
+    if(min_rtl_power_frequency_hz < RTL_SDR_V4_RANGE_MIN_HZ):
+        print(f"Warning: Some SES Channels fall below the RTL-SDRv4's minimum range of {RTL_SDR_V4_RANGE_MIN_HZ}Hz")
+        min_rtl_power_frequency_hz = RTL_SDR_V4_RANGE_MIN_HZ
+    if(max_rtl_power_frequency_hz > RTL_SDR_V4_RANGE_MAX_HZ):
+        print(f"Warning: Some SES Channels fall above the RTL-SDRv4's maximum range of {RTL_SDR_V4_RANGE_MAX_HZ}Hz")
+        max_rtl_power_frequency_hz = RTL_SDR_V4_RANGE_MAX_HZ
+    if(min_rtl_power_frequency_hz == max_rtl_power_frequency_hz):
+        max_rtl_power_frequency_hz += 1
+
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
 def main():
@@ -207,6 +227,10 @@ def main():
     set_targeted_frequency_range(targeting_VHF, targeting_test_range)
     read_and_populate_SES_channels_list()
 
+    # VERIFY THAT WE HAVE CHANNELS IN OUR RANGE TO MONITOR (in practice we always should, else this code has nothing to analyze)
+    if(len(SES_channels) == 0):
+        print(f"Warning: No channels in {SES_CHANNEL_LIST_FILE_NAME} within our analysis range, nothing to do")
+
     # SORT SES_channels BY FREQUENCY
     SES_channels = sorted(SES_channels, key=lambda channel: channel.frequency_hz)
 
@@ -221,6 +245,7 @@ def main():
     
     # SET THE min_rtl_power_frequency_hz AND max_rtl_power_frequency_hz BASED ON SES_channels, RANGE_DRIFT_OFFSET_HZ, AND RTL_SDR_V4_RANGE_MIN & MAX
     # ...ensure there is at least 1Hz difference between min & max, else rtl_power will generate a file 0.5Gb large with a sample rate of 0Hz! Insert this 1Hz if it's needed.
+    set_rtl_power_frequency_range()
 
     # READ rtl_power_output.csv AND POPULATE rtl_power_output_temporal_samples WITH ALL AVAILABLE TEMPORAL SAMPLES
     # ...test for read failure
