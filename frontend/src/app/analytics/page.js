@@ -11,15 +11,7 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [timeScale, setTimeScale] = useState(86400); // Default: 24 hours in seconds
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/';
-
-  // Time scale options in seconds (1 day = 86400 seconds)
-  const timeScales = {
-    '24 hours': 86400,
-    '7 days': 86400 * 7,
-    '30 days': 86400 * 30,
-  };
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api/';
 
   useEffect(() => {
     const fetchChannelData = async () => {

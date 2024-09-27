@@ -31,7 +31,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 async function singlePopulate() {
     const nowTime = Math.floor(new Date().getTime()/1000);
     let testObj1 = {
-      "soc-id": 1, 
+      "soc-id": 1,
       "address": "127.10.20.30:8980",
       "data": {
         467687500: {
@@ -79,7 +79,7 @@ app.use(express.static(path.join(__dirname, 'public')));
  *
  * <NOT NEED FOR END PRODUCT USED FOR TESTING ONLY>
  */
-app.get('/monitor-channels', async (req, res) => {
+app.get('/api/monitor-channels', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'monitor.html'))
 })
 
@@ -93,7 +93,7 @@ app.get('/monitor-channels', async (req, res) => {
  * - channel-id : Radio channel name to listen in
  * - frequency : The frequency to monitor
  */
-app.get('/monitor-channels/start', async (req, res) => {
+app.get('/api/monitor-channels/start', async (req, res) => {
   const session_id = req.query['session-id'] || '';
   const channel_id = req.query['channel-id'] || '';
   const frequency = req.query['frequency'] || '';
@@ -122,7 +122,7 @@ app.get('/monitor-channels/start', async (req, res) => {
  *
  * /monitor-channels/{frequency}
  */
-app.get('/monitor-channels/:frequency', async (req, res) => {
+app.get('/api/monitor-channels/:frequency', async (req, res) => {
   const frequency = req.params.frequency;
 
   try {
@@ -149,7 +149,7 @@ app.get('/monitor-channels/:frequency', async (req, res) => {
  *
  * /monitor-channels/stop
  */
-app.get('/monitor-channels/stop', async (req, res) => {
+app.get('/api/monitor-channels/stop', async (req, res) => {
   try{
     const response = await stopMonitor(SDR_URL, SDR_PORT);
 
@@ -164,7 +164,7 @@ app.get('/monitor-channels/stop', async (req, res) => {
   }
 })
 
-app.get('/active-channels', async (req, res) => {
+app.get('/api/active-channels', async (req, res) => {
   try{
     let returnVal = {}
     returnVal["active"] = await getAliveChannels();
@@ -181,7 +181,7 @@ app.get('/active-channels', async (req, res) => {
   }
 });
 
-app.get('/analytics/data', async (req, res) => {
+app.get('/api/analytics/data', async (req, res) => {
   if (!is_populating) {
     await singlePopulate();
   }
@@ -220,7 +220,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
 });
 
-app.post('/data', async (req, res) => {
+app.post('/api/data', async (req, res) => {
   try{
     const response = await processIncomingData(req.body, "mydb");
 
