@@ -5,13 +5,19 @@ import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement } from 'chart.js';
 import Link from 'next/link';
 
-// Register Chart.js components
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [timeScale, setTimeScale] = useState(86400); 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api/';
+
+  const timeScales = {
+    '24 hours': 86400,
+    '7 days': 86400 * 7,
+    '30 days': 86400 * 30,
+  };
 
   useEffect(() => {
     const fetchChannelData = async () => {
@@ -22,7 +28,6 @@ const AnalyticsPage = () => {
         console.log('Active channels response:', data);
 
         if (data.active || data.offline || data.busy) {
-          // Extract the channel IDs from all available channels and assign status
           const allChannels = [
             ...data.active.map(channel => ({ ...channel, status: 'Active', isFavorite: false })),
             ...data.offline.map(channel => ({ ...channel, status: 'Offline', isFavorite: false })),
@@ -51,9 +56,9 @@ const AnalyticsPage = () => {
             // Process the data from analytics
             const processedData = allChannels.map(channel => {
               const channelId = channel['channel-id'];
-              const analyticsForChannel = analyticsData?.[channelId] || {};  // Ensure the data is accessed safely
-              const strengthData = analyticsForChannel?.strength?.values || {};  // Access strength values
-              const utilisationData = analyticsForChannel?.utilisation?.values || [];  // Access utilization values
+              const analyticsForChannel = analyticsData?.[channelId] || {};  
+              const strengthData = analyticsForChannel?.strength?.values || {};  
+              const utilisationData = analyticsForChannel?.utilisation?.values || [];  
 
               // Check if data exists for the channel
               const hasStrengthData = Object.keys(strengthData).length > 0;
@@ -71,17 +76,17 @@ const AnalyticsPage = () => {
                     return `${deltaSeconds}`;
                   })
                 : [];
-              // Convert utilization timestamps to relative time (optional)
+
               const utilizationLabels = utilisationData.map(util => {
                 const startTime = new Date(util[0] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const endTime = new Date(util[1] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                return `${startTime} - ${endTime}`;  // Format start to end time range
+                return `${startTime} - ${endTime}`; 
               });
 
               // Create data for graphs
               const dataUtilization = hasUtilizationData
                 ? {
-                    labels: utilizationLabels,  // Timestamps for utilization
+                    labels: utilizationLabels,
                     datasets: [{
                       label: 'Utilization Over Time',
                       data: utilisationData.map(util => util[1] - util[0]), // Placeholder random data for utilization (duration)
@@ -93,7 +98,7 @@ const AnalyticsPage = () => {
 
               const dataStrength = hasStrengthData
                 ? {
-                    labels: strengthLabels,  // Relative time labels for strength
+                    labels: strengthLabels, 
                     datasets: [{
                       label: 'Strength Over Time (dBm)',
                       data: Object.values(strengthData),
@@ -185,7 +190,6 @@ const AnalyticsPage = () => {
               )}
             </div>
             <div className="flex items-center justify-center border-r border-gray-300">
-              {/* Attach star to the channel name */}
               {channel.name} ({channel.frequency.toFixed(6)} MHz)
               <button onClick={() => toggleFavorite(channel.id)}>
                 {channel.isFavorite ? ' ★' : ' ☆'}
@@ -246,3 +250,4 @@ const AnalyticsPage = () => {
 };
 
 export default AnalyticsPage;
+
