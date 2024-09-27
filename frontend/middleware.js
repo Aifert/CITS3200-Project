@@ -20,8 +20,9 @@ export async function middleware(req) {
     }
   }
 
-  if (!token && (pathname.startsWith('/dashboard') || pathname.startsWith('/analytics') || pathname.startsWith('/channel-listening'))) {
+  if (!token) {
     const loginUrl = new URL('/login', req.url);
+
     loginUrl.searchParams.set('requestedUrl', encodeURIComponent(pathname));
 
     console.log(`Redirecting to login. RequestedUrl:`, loginUrl.searchParams.get('requestedUrl'));
