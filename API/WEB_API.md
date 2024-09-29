@@ -221,7 +221,7 @@ When requiring data \- either when initially requesting or when asking for perio
 Black list is efficient if one set of data is already received for a single analytics page
 While list is efficient if just one is wanted
 
-### GET /analytics/strength-dump
+### GET /api/analytics/strength-dump
 
 #### Parameters
 
