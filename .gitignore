@@ -58,3 +58,5 @@ rasp-pi/*.csv
 
 # Audio files used for testing
 /rasp-pi/radio-streaming/audio/*
+
+main
