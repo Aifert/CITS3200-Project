@@ -51,7 +51,7 @@ frontend/.next
 .secret.pem
 
 # rasp-pi channel data files
-rasp-pi/*.csv
+rasp-pi/rtl_powerOutput/*.csv
 
 # SES Channel List
 **/SESChannelList.csv

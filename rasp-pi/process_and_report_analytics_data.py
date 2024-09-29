@@ -2,6 +2,8 @@ import csv #reading .csv files
 import os #providing directory that this script is in for opening files
 import math #infinite numbers
 from typing import List, Dict #for providing type hints for lists & dictionaries
+from datetime import datetime #for conversion of timestamps to UNIX representation
+import time #for conversion of timestamps to UNIX representation
 
 #component of SESChannel, represents a timestamp of a channel beginning use (start time) or ending use (stop time)
 class UtilizationState:
@@ -72,6 +74,9 @@ SLIDING_WINDOWS_TEMPORAL_LENGTH_UNIX: int = 10 #window is sliding in 10 second i
 SLIDING_WINDOWS_BAND_SIZE_MAX_HZ: int = 2000000 #2MHz (represented in Hz), maximum size of sliding window bands
 SES_CHANNEL_LIST_FILE_NAME = 'SESChannelList.csv'
 SES_CHANNEL_FOLDER_NAME = 'SESChannelList'
+RTL_POWER_OUTPUT_FILE_NAME = 'rtl_power_output.csv'
+RTL_POWER_OUTPUT_FOLDER_NAME = 'rtl_powerOutput'
+NUM_RTL_POWER_CONTEXT_COLUMNS = 6
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
@@ -141,11 +146,11 @@ def read_and_populate_SES_channels_list() -> bool: #return bool to indicate succ
                         # ADD CHANNEL TO OUR LIST
                         SES_channels.append(new_channel)
                 except IndexError:
-                    print(f"Warning: Skipping malformed row in CSV: {row}")
+                    print(f"Warning: Skipping malformed row in {SES_CHANNEL_LIST_FILE_NAME} CSV: {row}")
                 except ValueError:
-                    print(f"Warning: Invalid frequency value in row: {row}")
+                    print(f"Warning: Invalid frequency value in {SES_CHANNEL_LIST_FILE_NAME} row: {row}")
         if not SES_channels:
-            print("Warning: No channels were found within the targeted frequency range.")
+            print(f"Warning: No channels were found in {SES_CHANNEL_LIST_FILE_NAME} within the targeted frequency range.")
         return True  #indicate successful read and population 
     except FileNotFoundError:
         print(f"Error: The file {SES_CHANNEL_LIST_FILE_NAME} was not found in {SES_CHANNEL_FOLDER_NAME}.")
@@ -197,20 +202,90 @@ def create_SES_channels_index_lookup_dictionary():
 def set_rtl_power_frequency_range():
     global min_rtl_power_frequency_hz
     global max_rtl_power_frequency_hz
-    if(len(SES_channels) == 0): 
+    if(not SES_channels): 
         return False #test for empty channels list edge case
     min_rtl_power_frequency_hz = SES_channels[0].frequency_hz
     max_rtl_power_frequency_hz = SES_channels[-1].frequency_hz
     min_rtl_power_frequency_hz -= RANGE_DRIFT_OFFSET_HZ
     max_rtl_power_frequency_hz += RANGE_DRIFT_OFFSET_HZ
     if(min_rtl_power_frequency_hz < RTL_SDR_V4_RANGE_MIN_HZ):
-        print(f"Warning: Some SES Channels fall below the RTL-SDRv4's minimum range of {RTL_SDR_V4_RANGE_MIN_HZ}Hz")
+        print(f"Warning: Some SES Channels fall below the RTL-SDRv4's minimum range of {RTL_SDR_V4_RANGE_MIN_HZ}Hz.")
         min_rtl_power_frequency_hz = RTL_SDR_V4_RANGE_MIN_HZ
     if(max_rtl_power_frequency_hz > RTL_SDR_V4_RANGE_MAX_HZ):
-        print(f"Warning: Some SES Channels fall above the RTL-SDRv4's maximum range of {RTL_SDR_V4_RANGE_MAX_HZ}Hz")
+        print(f"Warning: Some SES Channels fall above the RTL-SDRv4's maximum range of {RTL_SDR_V4_RANGE_MAX_HZ}Hz.")
         max_rtl_power_frequency_hz = RTL_SDR_V4_RANGE_MAX_HZ
     if(min_rtl_power_frequency_hz == max_rtl_power_frequency_hz):
         max_rtl_power_frequency_hz += 1
+
+# CONVERT date AND time STRINGS INTO UNIX int
+# ...example input: '2024-09-18', '19:16:02'
+def convert_date_and_time_to_unix(csv_date: str, csv_time: str) -> int:
+    datetime_string = f"{csv_date} {csv_time}"
+    datetime_object = datetime.strptime(datetime_string, '%Y-%m-%d %H:%M:%S')
+    unix_timestamp = int(time.mktime(datetime_object.timetuple()))
+    #print(f"Unix timestamp: {unix_timestamp}") #DEBUG
+    return unix_timestamp
+
+# READ rtl_power_output.csv AND POPULATE rtl_power_output_temporal_samples WITH ALL AVAILABLE TEMPORAL SAMPLES
+# ...test for read failure
+def read_and_populate_rtl_power_output_temporal_samples():
+    # READ rtl_power_output.csv
+    try:
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        full_path_to_rtl_power_output = os.path.join(current_directory + '/' + RTL_POWER_OUTPUT_FOLDER_NAME, RTL_POWER_OUTPUT_FILE_NAME)
+        with open(full_path_to_rtl_power_output, 'r') as file:
+            csv_reader = csv.reader(file)
+            current_rtl_power_temporal_sample: RTLPowerOutputTemporalSample = None
+            for row in csv_reader:
+                try:
+                    #print(row) #DEBUG
+                    #print(len(row)) #DEBUG
+                    row_unix_timestamp = convert_date_and_time_to_unix(row[0], row[1])
+                    num_data_columns_in_row = len(row) - NUM_RTL_POWER_CONTEXT_COLUMNS
+                    row_starting_frequency_hz = int(row[2])
+                    row_upper_frequency_hz = int(row[3])
+                    row_bin_size: float = (row_upper_frequency_hz - row_starting_frequency_hz) / num_data_columns_in_row #DO NOT USE THE rtl_power OUTPUT FOR THIS! It's legit wrong, calculate it from the range
+                    # ...(row's_upper_value - row's_lower_value) / (row's_num_decibel_datapoints) = calculated_bin_size eg. (163125250 - 161012500) / (519 - 6) = 4118.421 (rtl_power reports 4126.46)
+                    row_spectrum_decibel_datapoints: List[float] = []
+                    for i in range(NUM_RTL_POWER_CONTEXT_COLUMNS, len(row)):
+                        row_spectrum_decibel_datapoints.append(float(row[i]))
+                        #print(float(row[i])) #DEBUG
+                    #print(row[1]) #DEBUG
+                    #print(row_bin_size) #DEBUG
+                    # TEST WHICH TIME SLICE THIS BELONGS TO
+                    if(current_rtl_power_temporal_sample == None):
+                        # FIRST ENTRY
+                        # ...create & begin populating current_rtl_power_temporal_sample
+                        current_rtl_power_temporal_sample = RTLPowerOutputTemporalSample(row_unix_timestamp, row_bin_size, 
+                                                                                         row_starting_frequency_hz, row_spectrum_decibel_datapoints)
+                    elif(current_rtl_power_temporal_sample.timestamp_unix == row_unix_timestamp):
+                        # ANOTHER ROW FOR THE SAME TIME SLICE
+                        # ...carry on populating decibel datapoints
+                        current_rtl_power_temporal_sample.spectrum_decibel_datapoints.extend(row_spectrum_decibel_datapoints)
+                    elif(current_rtl_power_temporal_sample.timestamp_unix != row_unix_timestamp):
+                        # ROW ASSOCIATED WITH A NEW TIME SLICE
+                        # ...file the old one in rtl_power_output_temporal_samples
+                        # ...create & begin populating a new current_rtl_power_temporal_sample
+                        rtl_power_output_temporal_samples.append(current_rtl_power_temporal_sample)
+                        current_rtl_power_temporal_sample = RTLPowerOutputTemporalSample(row_unix_timestamp, row_bin_size, 
+                                                                                         row_starting_frequency_hz, row_spectrum_decibel_datapoints)
+                except IndexError:
+                    print(f"Warning: Skipping malformed row in {RTL_POWER_OUTPUT_FILE_NAME} CSV: {row}")
+            if(current_rtl_power_temporal_sample != None):
+                    # FINAL TIME SLICE (if there were any to begin with)
+                    # ...file it in rtl_power_output_temporal_samples
+                    rtl_power_output_temporal_samples.append(current_rtl_power_temporal_sample)
+        if not rtl_power_output_temporal_samples:
+            print(f"Warning: No data was recorded from the file {RTL_POWER_OUTPUT_FILE_NAME} generated by rtl_power.")
+        return True  #indicate successful read and population 
+    except FileNotFoundError:
+        print(f"Error: The file {RTL_POWER_OUTPUT_FILE_NAME} was not found in {RTL_POWER_OUTPUT_FOLDER_NAME}.")
+    except PermissionError:
+        print(f"Error: Permission denied when trying to read {RTL_POWER_OUTPUT_FILE_NAME}.")
+    except csv.Error as e:
+        print(f"Error: CSV file {RTL_POWER_OUTPUT_FILE_NAME} could not be parsed: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
@@ -249,6 +324,7 @@ def main():
 
     # READ rtl_power_output.csv AND POPULATE rtl_power_output_temporal_samples WITH ALL AVAILABLE TEMPORAL SAMPLES
     # ...test for read failure
+    read_and_populate_rtl_power_output_temporal_samples()
 
     # CALCULATE num_sliding_windows AND sliding_windows_band_width_hz
 
