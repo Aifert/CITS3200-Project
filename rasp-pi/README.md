@@ -146,4 +146,4 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 #### SESChannelList.csv
 * 'SESChannelList.csv' placed in folder 'rasp-pi/SESChannelList'
 * row format:
-  * Channel Name, Receive Frequency, Transmit Frequency, Band Width
+  * Channel Name, Receive Frequency (MHz), Transmit Frequency (MHz), Band Width
