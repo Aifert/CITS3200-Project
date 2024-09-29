@@ -55,3 +55,6 @@ rasp-pi/*.csv
 
 # SES Channel List
 **/SESChannelList.csv
+
+# Audio files used for testing
+/rasp-pi/radio-streaming/audio/*
