@@ -8,13 +8,9 @@ RUN npm ci
 
 COPY . .
 
-# EXPOSE 3000
-
-# CMD ["npm", "start"]
-
 RUN npm run build
 
-from node:18-alpine
+FROM node:18-alpine
 
 WORKDIR /app
 
@@ -24,7 +20,7 @@ COPY --from=builder /app/.env .env
 COPY --from=builder /app/frontend/.env.local ./frontend/.env.local
 COPY --from=builder /app/frontend/public ./frontend/public
 
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 EXPOSE 3000
 
