@@ -124,28 +124,25 @@ app.get('/api/monitor-channels', async (req, res) => {
  * - frequency : The frequency to monitor
  */
 app.get('/api/monitor-channels/start', async (req, res) => {
-  // const session_id = req.query['session-id'] || '';
-  // const channel_id = req.query['channel-id'] || '';
-  // const frequency = req.query['frequency'] || '';
-
   const file = req.query['file'] || '';
-  const params = {
-    file: file,
-  };
-
-  // const modeResult = decideMonitorMode(session_id, channel_id, frequency);
 
   try {
-    // await stopMonitor(SDR_URL, SDR_PORT);
-    const responseStream = await startMonitorMP3(SDR_URL, SDR_PORT, params);
+    if (file){
+      const params = {
+        file: file,
+      };
+      const responseStream = await startMonitorMP3(SDR_URL, SDR_PORT, params);
 
-    res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Type', 'audio/mpeg');
 
-    responseStream.pipe(res);
+      responseStream.pipe(res);
+    }
+    res.status(400).send({
+      message: 'No file provided',
+    });
   } catch (error) {
     console.error('Error occurred while getting channel:', error);
     res.status(500).send({
-      code: 500,
       message: 'Error occurred while getting channel',
       error: error.message,
     });
