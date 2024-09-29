@@ -18,14 +18,21 @@ async function startMonitorMP3(SDR_URL, SDR_PORT, params) {
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join('&');
   const paramsStr = queryParams ? `?${queryParams}` : '';
-  console.log(`${SDR_URL}:${SDR_PORT}/tune${paramsStr}`);
-  try {
-    const response = await axios.get(`${SDR_URL}:${SDR_PORT}/tune${paramsStr}`,{
-      responseType: 'stream',
-      insecureHTTPParser: true,
-    });
 
-    return response.data;
+  try {
+    const tuneResponse = await axios.get(`${SDR_URL}:${SDR_PORT}/tune${paramsStr}`);
+
+    if (tuneResponse.status === 200){
+      const streamResponse = await axios.get(`${SDR_URL}:${SDR_PORT}/stream`, {
+        responseType: 'stream',
+        insecureHTTPParser: true,
+      });
+
+      return streamResponse.data;
+    }
+    else{
+      throw new Error('Error tuning to frequency');
+    }
   } catch (error) {
     throw new Error(error.message);
   }
