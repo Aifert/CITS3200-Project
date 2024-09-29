@@ -266,7 +266,7 @@ When a user requests the data dump file for strength data \- it is to be created
 
 #### Parameters Example
 
-	/analyics/util-dump?black-list=[21892]&start-time=86400
+	/api/analyics/util-dump?black-list=[21892]&start-time=86400
 
 	{
 		"black-list": [21892],
