@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 const { decode } = require('next-auth/jwt');
 const cookieParser = require('cookie-parser');
 const {
-  startMonitor,
+  startMonitorMP3,
   stopMonitor,
   decideMonitorMode } = require('./monitor_server.js');
 
@@ -24,8 +24,8 @@ const app = express();
 const PORT = process.env.PORT || 9000;
 const FRONTEND_URL = "http://frontend"
 const FRONTEND_PORT = 3000;
-const SDR_URL = "http://sdr"
-const SDR_PORT = 4000 + "/";
+const SDR_URL = "http://localhost"
+const SDR_PORT = 4001;
 const PUBLIC_FRONTEND_URL = `${process.env.NEXT_PUBLIC_URL}:${process.env.NEXT_PUBLIC_FRONTEND_PORT}` || 'http://localhost:3000';
 const PUBLIC_SDR_URL = `${process.env.NEXT_PUBLIC_URL}:${process.env.NEXT_PUBLIC_SDR_PORT}` || 'http://localhost:4000/api/';
 
@@ -113,7 +113,7 @@ app.use(express.static(path.join(__dirname, 'public')));
  * <NOT NEED FOR END PRODUCT USED FOR TESTING ONLY>
  */
 app.get('/api/monitor-channels', async (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'monitor.html'))
+  res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
 })
 
 /**
@@ -127,15 +127,20 @@ app.get('/api/monitor-channels', async (req, res) => {
  * - frequency : The frequency to monitor
  */
 app.get('/api/monitor-channels/start', async (req, res) => {
-  const session_id = req.query['session-id'] || '';
-  const channel_id = req.query['channel-id'] || '';
-  const frequency = req.query['frequency'] || '';
+  // const session_id = req.query['session-id'] || '';
+  // const channel_id = req.query['channel-id'] || '';
+  // const frequency = req.query['frequency'] || '';
 
-  const modeResult = decideMonitorMode(session_id, channel_id, frequency);
+  const file = req.query['file'] || '';
+  const params = {
+    file: file,
+  };
+
+  // const modeResult = decideMonitorMode(session_id, channel_id, frequency);
 
   try {
-    await stopMonitor(SDR_URL, SDR_PORT);
-    const responseStream = await startMonitor(SDR_URL, SDR_PORT, modeResult);
+    // await stopMonitor(SDR_URL, SDR_PORT);
+    const responseStream = await startMonitorMP3(SDR_URL, SDR_PORT, params);
 
     res.setHeader('Content-Type', 'audio/mpeg');
 
