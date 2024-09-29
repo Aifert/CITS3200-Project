@@ -41,7 +41,7 @@ When first loading/reloading/opening (TBD implementation), get a unique session-
 
 #### Responses Example
 
-	/active-channels
+	/api/active-channels
 
 	{
 		"code": 200,
