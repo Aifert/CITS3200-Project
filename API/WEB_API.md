@@ -234,7 +234,7 @@ While list is efficient if just one is wanted
 
 #### Parameters Example
 
-	/analyics/strength-dump?black-list=[21892]&start-time=86400
+	/api/analyics/strength-dump?black-list=[21892]&start-time=86400
 
 	{
 		"black-list": [21892],
