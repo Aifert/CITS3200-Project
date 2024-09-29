@@ -25,12 +25,12 @@ func StartServer() {
 	connPool := pool.NewConnectionPool()
 
 	// Define HTTP handlers
-	http.HandleFunc("/stream", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/stream", AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		StreamHandler(w, r, connPool)
-	})
-	http.HandleFunc("/tune", func(w http.ResponseWriter, r *http.Request) {
+	}))
+	http.HandleFunc("/tune", AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		TuneHandler(w, r, connPool)
-	})
+	}))
 
 	// Start the server
 	fmt.Println("Starting server on :8001")
