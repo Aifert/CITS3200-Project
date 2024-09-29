@@ -6,9 +6,16 @@ import (
     "io/ioutil"
     "net/http"
     "net/url"
+    "os"
+
+	"github.com/joho/godotenv"
 )
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("Error loading .env file")
+	}
+
     return func(w http.ResponseWriter, r *http.Request) {
         cookie, err := r.Cookie("next-auth.session-token")
         if err != nil {
@@ -29,12 +36,14 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func redirectToLogin(w http.ResponseWriter, r *http.Request) {
-    loginURL := fmt.Sprintf("http://localhost:3000/login?requestedUrl=%s&port=8001", url.QueryEscape(r.URL.String()))
+    nextAuthUrl := os.Getenv("NEXTAUTH_URL")
+    loginURL := fmt.Sprintf("%s/login?requestedUrl=%s&port=8001", nextAuthUrl, url.QueryEscape(r.URL.String()))
     http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
 }
 
 func getAccessTokenFromSession(sessionToken string) (string, error) {
-    sessionApiUrl := "http://localhost:3000/api/auth/session"
+    nextAuthUrl := os.Getenv("NEXTAUTH_URL")
+    sessionApiUrl := fmt.Sprintf("%s/api/auth/session", nextAuthUrl)
     req, err := http.NewRequest("GET", sessionApiUrl, nil)
     if err != nil {
         return "", err
