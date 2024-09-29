@@ -159,7 +159,7 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 
 #### Parameters Example
 
-	/analyics/data?black-list=[21892]&start-time=86400
+	/api/analyics/data?black-list=[21892]&start-time=86400
 
 	{
 		"black-list": [21892],
