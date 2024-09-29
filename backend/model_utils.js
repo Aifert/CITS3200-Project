@@ -157,24 +157,45 @@ function getCondStartEndTimes(requestObj) {
 
 async function getChannelStrength(requestObj, dbName) {
   await recheckConnection(dbName);
+  const nowTime = Math.floor(new Date().getTime()/1000);
+  let sampleRate = 60*60; //Defaults to every hour
+  if ("sample-rate" in requestObj) {
+    sampleRate = requestObj["sample-rate"];
+  }
   let cond = getCondFromWhiteBlackList(requestObj)+getCondStartEndTimes(requestObj);
-
-  let query = `SELECT c_id, 
-              CASE WHEN s_strength < ${STRENGTHMIN} THEN ${STRENGTHMIN} WHEN s_strength > ${STRENGTHMAX} THEN ${STRENGTHMAX} ELSE s_strength END AS "s_strength",
-              s_sample_time FROM "strength"
-              WHERE c_id ${cond}
-              ORDER BY c_id, s_sample_time`;
+  let query = `SELECT c_id, FLOOR((${nowTime}-s_sample_time)/${sampleRate}) AS zone, 
+   CASE WHEN AVG(s_strength) < ${STRENGTHMIN} THEN ${STRENGTHMIN} WHEN AVG(s_strength) > ${STRENGTHMAX} THEN ${STRENGTHMAX} ELSE AVG(s_strength) END AS "s_strength" 
+   FROM "strength" WHERE c_id ${cond}
+   GROUP BY c_id, zone
+   ORDER BY c_id, zone`
   let res = await client.query(query);
   let query2 = `SELECT c_id, AVG(s_strength) AS s_average FROM "strength"
               WHERE c_id ${cond} GROUP BY c_id`;
   let aveStrength = await client.query(query2);
-  let output = {};;
+
+  let maxZone = 60*30/sampleRate;
+  let minZone = 0
+
+   if ("start-time" in requestObj) {
+    maxZone = requestObj["start-time"]/sampleRate;
+   }
+
+   if ("end-time" in requestObj) {
+    minZone = (nowTime - requestObj["end-time"])/sampleRate;
+   }
+
+   maxZone = maxZone - minZone > 30 ? minZone + 30 : maxZone;
+
+  let output = {};
   for (const row of res.rows) {
     if (!(row.c_id in output)) {
       output[row.c_id] = {};
-      output[row.c_id].values = {}
+      output[row.c_id].values = {};
+      for (let i = minZone; i <= maxZone; i++) {
+        output[row.c_id].values[i] = null;
+      }
     }
-      output[row.c_id].values[row.s_sample_time] = row.s_strength;
+      output[row.c_id].values[row.zone] = row.s_strength;
   }
   for (const row of aveStrength.rows) {
       output[row.c_id]["average"] = row.s_average;
@@ -225,8 +246,6 @@ async function getChannelUtilisation(requestObj, dbName) {
 
     output[c_id].average = (utilTime / totalTime) * 100;
   });
-
-  return output;
 
   return output;
 }
