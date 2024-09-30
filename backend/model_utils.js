@@ -157,7 +157,7 @@ function getCondStartEndTimes(requestObj) {
 
 async function getChannelStrength(requestObj, dbName) {
   await recheckConnection(dbName);
-  const nowTime = Math.floor(new Date().getTime()/1000);
+  const nowTime =1727599804;// Math.floor(new Date().getTime()/1000);
   let sampleRate = 60*60; //Defaults to every hour
   if ("sample-rate" in requestObj) {
     sampleRate = requestObj["sample-rate"];
@@ -183,8 +183,9 @@ async function getChannelStrength(requestObj, dbName) {
    if ("end-time" in requestObj) {
     minZone = (nowTime - requestObj["end-time"])/sampleRate;
    }
-
-   maxZone = maxZone - minZone > 30 ? minZone + 30 : maxZone;
+   //Don't include more than 50 data points in total - otherwise it can easily slow down the front end and server
+   maxZone = maxZone - minZone > 50 ? minZone + 50 : maxZone;
+   console.log("ZONES:", minZone, maxZone);
 
   let output = {};
   for (const row of res.rows) {
@@ -195,7 +196,9 @@ async function getChannelStrength(requestObj, dbName) {
         output[row.c_id].values[i] = null;
       }
     }
+    if (row.zone <= maxZone && row.zone >= minZone) {
       output[row.c_id].values[row.zone] = row.s_strength;
+    }
   }
   for (const row of aveStrength.rows) {
       output[row.c_id]["average"] = row.s_average;
@@ -205,16 +208,37 @@ async function getChannelStrength(requestObj, dbName) {
 
 async function getChannelUtilisation(requestObj, dbName) {
   await recheckConnection(dbName);
+  
+  let sampleRate = 15;//60*60; // default to one hour
+  let avgData = false;
+
+  let maxZone = 60*30/sampleRate;
+  let minZone = 0
+  if ("avg-data" in requestObj && requestObj["avg-data"] === "true") {
+    console.log("I")
+    avgData = true
+    if ("sample-rate" in requestObj) {
+      sampleRate = requestObj["sample-rate"];
+    }
+  }
+
   let cond = getCondFromWhiteBlackList(requestObj);
   if ("start-time" in requestObj) {
     cond += `AND (a_end_time IS NULL OR a_end_time >= ${requestObj["start-time"]})`
+    maxZone = requestObj["start-time"]/sampleRate;
   }
   if ("end-time" in requestObj) {
     cond += `AND a_start_time <= ${requestObj["end-time"]}`;
+    minZone = (nowTime - requestObj["end-time"])/sampleRate;
   }
+
+  //Don't include more than 50 data points in total - otherwise it can easily slow down the front end and server
+   maxZone = maxZone - minZone > 50 ? minZone + 50 : maxZone;
+
   let query = `SELECT c_id, a_start_time, a_end_time FROM "utilisation"
               WHERE c_id ${cond}
               ORDER BY c_id, a_start_time`;
+
   let res = await client.query(query);
   let output = {};
   for (const row of res.rows) {
@@ -246,6 +270,31 @@ async function getChannelUtilisation(requestObj, dbName) {
 
     output[c_id].average = (utilTime / totalTime) * 100;
   });
+
+  //If want to calculate averages per sample time period
+  if (avgData) {
+    const nowTime = Math.floor(new Date().getTime()/1000);
+    let newOutput = {};
+    for (let cId in output) {
+      output[cId].zones = {};
+      if (!output[cId].values[output[cId].values.length-1][1]) {
+        output[cId].values[output[cId].values.length-1][1] = nowTime;
+      }
+      for (let zone = minZone; zone <= maxZone; zone++) {
+        zoneTime = nowTime - zone * sampleRate;
+        let zoneUpTime = 0;
+        while (output[cId].values.length > 0 && output[cId].values[output[cId].values.length-1][1] > zoneTime-sampleRate) {
+          if (output[cId].values[output[cId].values.length-1][0] > zoneTime-sampleRate) {
+            zoneUpTime += Math.min(output[cId].values[output[cId].values.length-1][1], zoneTime) - output[cId].values[output[cId].values.length-1][0];
+          } else {
+            zoneUpTime += Math.min(output[cId].values[output[cId].values.length-1][1], zoneTime) - (zoneTime-sampleRate);
+            break;
+          }
+        }
+        output[cId].zones[zone] = 100.0*zoneUpTime/sampleRate;
+      }
+    }
+  }
 
   return output;
 }
