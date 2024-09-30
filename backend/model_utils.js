@@ -158,8 +158,8 @@ function getCondStartEndTimes(requestObj) {
 
 async function getChannelStrength(requestObj, dbName) {
   await recheckConnection(dbName);
-  const nowTime =1727599804;// Math.floor(new Date().getTime()/1000);
-  let sampleRate = 60*60; //Defaults to every hour
+  const nowTime = Math.floor(new Date().getTime()/1000);
+  let sampleRate = 24*60*60; //Defaults to every day
   if ("sample-rate" in requestObj) {
     sampleRate = requestObj["sample-rate"];
   }
@@ -174,7 +174,7 @@ async function getChannelStrength(requestObj, dbName) {
               WHERE c_id ${cond} GROUP BY c_id`;
   let aveStrength = await client.query(query2);
 
-  let maxZone = 60*30/sampleRate;
+  let maxZone = 24*60*60*30/sampleRate;
   let minZone = 0
 
    if ("start-time" in requestObj) {
@@ -186,7 +186,6 @@ async function getChannelStrength(requestObj, dbName) {
    }
    //Don't include more than 50 data points in total - otherwise it can easily slow down the front end and server
    maxZone = maxZone - minZone > 50 ? minZone + 50 : maxZone;
-   console.log("ZONES:", minZone, maxZone);
 
   let output = {};
   for (const row of res.rows) {
@@ -210,13 +209,12 @@ async function getChannelStrength(requestObj, dbName) {
 async function getChannelUtilisation(requestObj, dbName) {
   await recheckConnection(dbName);
   
-  let sampleRate = 15;//60*60; // default to one hour
+  let sampleRate = 24*60*60; // default to one day
   let avgData = false;
 
-  let maxZone = 60*30/sampleRate;
+  let maxZone = 60*24*60*30/sampleRate;
   let minZone = 0
   if ("avg-data" in requestObj && requestObj["avg-data"] === "true") {
-    console.log("I")
     avgData = true
     if ("sample-rate" in requestObj) {
       sampleRate = requestObj["sample-rate"];
@@ -276,24 +274,31 @@ async function getChannelUtilisation(requestObj, dbName) {
   //If want to calculate averages per sample time period
   if (avgData) {
     const nowTime = Math.floor(new Date().getTime()/1000);
-    let newOutput = {};
     for (let cId in output) {
-      output[cId].zones = {};
+      output[cId].zones = {}; //one zone for every "sample-time" length period
+
+      //If last timeslot ends in null, set it to the current time for easlier calculation
       if (!output[cId].values[output[cId].values.length-1][1]) {
         output[cId].values[output[cId].values.length-1][1] = nowTime;
       }
+      //Calulate for every specified zone
       for (let zone = minZone; zone <= maxZone; zone++) {
-        zoneTime = nowTime - zone * sampleRate;
-        let zoneUpTime = 0;
+        zoneTime = nowTime - zone * sampleRate; //"end-time" of this zone of length sampleRate
+        let zoneUpTime = 0; //holds the usage time across this zone
+
+        //output[cId].values can be presumed to be sorted
+        //while there are unfinished uptime pairs, and the last one fits within this zone at all
         while (output[cId].values.length > 0 && output[cId].values[output[cId].values.length-1][1] > zoneTime-sampleRate) {
+          //if the uptime pair finishes within this zone, pop it from values
           if (output[cId].values[output[cId].values.length-1][0] > zoneTime-sampleRate) {
             zoneUpTime += Math.min(output[cId].values[output[cId].values.length-1][1], zoneTime) - output[cId].values[output[cId].values.length-1][0];
           } else {
+            //add the portion of the uptime pair that is in this zone to uptime
             zoneUpTime += Math.min(output[cId].values[output[cId].values.length-1][1], zoneTime) - (zoneTime-sampleRate);
             break;
           }
         }
-        output[cId].zones[zone] = 100.0*zoneUpTime/sampleRate;
+        output[cId].zones[zone] = 100.0*zoneUpTime/sampleRate; //%up time for this zone
       }
     }
   }
