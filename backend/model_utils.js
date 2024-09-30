@@ -35,7 +35,6 @@ async function connectToDatabase(dbName = "testdbmu", isNew = false) {
       await client.connect();
       isConnected = true;
       if (isNew) {
-        console.log("NEW");
         const initQuery = fs.readFileSync("./webserver/database/init.sql");
         const initResponse = await client.query(initQuery.toString());
       }
@@ -58,12 +57,10 @@ async function recheckConnection(dbName = "testdbmu") {
   if (!hasEverConnected) {
     await client.connect();
     hasEverConnected = true;
-    console.log("mydb", client.database, dbName)
   }
   if ((client.database != dbName) || (!isConnected && !isConnecting)) {
     if (client.database != dbName) {
       const exists = (await client.query(`SELECT datname FROM pg_database WHERE datname = '${dbName}'`)).rows.length;
-      console.log(exists);
       if (exists == 0) {
         await client.query("CREATE DATABASE "+dbName);
         isNew = true;
@@ -81,6 +78,7 @@ function convertToAPIForm(arr) {
     info["channel-id"] = elem["c_id"];
     info["frequency"] = elem["c_freq"];
     info["channel-name"] = elem["c_name"];
+    info["device-id"] = elem["d_id"];
     output.push(info);
   }
   return output;
@@ -91,7 +89,7 @@ async function getAliveChannels(dbName) {
   // Get channels which have received data in last 15 seconds from strength table 
   // On a currently non-streaming device
   // unless the channel itself is being streamed
-  const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name FROM "strength" AS st INNER JOIN "channels" AS ch ON st.c_id = ch.c_id 
+  const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name, ch.d_id FROM "strength" AS st INNER JOIN "channels" AS ch ON st.c_id = ch.c_id 
                 WHERE st.s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME} AND 
                 ((d_id NOT IN (SELECT d_id FROM "channels" AS c INNER JOIN "session_listeners" AS sl ON c.c_id = sl.c_id)) 
                 OR (st.c_id IN (SELECT c_id FROM "session_listeners")))`;
@@ -105,7 +103,7 @@ async function getBusyChannels(dbName) {
   // Get channels which have received data in last 15 seconds from strength table 
   // On a currently streaming device
   // but not the channel being streamed
-  const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name FROM "strength" AS st INNER JOIN "channels" AS ch ON st.c_id = ch.c_id 
+  const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name, ch.d_id FROM "strength" AS st INNER JOIN "channels" AS ch ON st.c_id = ch.c_id 
                 WHERE st.s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME} AND 
                 ((d_id IN (SELECT d_id FROM "channels" AS c INNER JOIN "session_listeners" AS sl ON c.c_id = sl.c_id)) 
                 AND NOT (st.c_id IN (SELECT c_id FROM "session_listeners")))`;
@@ -117,7 +115,7 @@ async function getBusyChannels(dbName) {
 async function getOfflineChannels(dbName) {
   await recheckConnection(dbName);
   // Get channels which have not received any data in last 15 seconds
-  const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name FROM "channels" AS ch 
+  const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name, ch.d_id FROM "channels" AS ch 
                 WHERE ch.c_id NOT IN (SELECT c_id FROM "strength" 
                 WHERE s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME})`;
   
@@ -149,6 +147,7 @@ function getCondFromWhiteBlackList(requestObj) {
 function getCondStartEndTimes(requestObj) {
   let cond = "";
   if ("start-time" in requestObj) {
+    requestObj["start-time"] = Math.floor(new Date().getTime()/1000) - requestObj["start-time"];
     cond += ` AND s_sample_time >= ${requestObj["start-time"]}`
   }
   if ("end-time" in requestObj) {
@@ -188,6 +187,7 @@ async function getChannelUtilisation(requestObj, dbName) {
   await recheckConnection(dbName);
   let cond = getCondFromWhiteBlackList(requestObj);
   if ("start-time" in requestObj) {
+      requestObj["start-time"] = Math.floor(new Date().getTime()/1000) - requestObj["start-time"];
     cond += `AND (a_end_time IS NULL OR a_end_time >= ${requestObj["start-time"]})`
   }
   if ("end-time" in requestObj) {
@@ -271,41 +271,121 @@ async function updateChannelInfo(deviceId, freq, dbName) {
 async function processIncomingData(dataObj, dbName) {
   try{
     await recheckConnection(dbName);
-
+    let recentMin = `SELECT MAX(a_start_time) FROM "utilisation"`;
+    let results = (await client.query(recentMin)).rows;
     if ("address" in dataObj) {
       await updateDeviceInfo(dataObj, dbName);
     }
+    let startTime = [Math.floor(new Date().getTime()/1000), false];
     for (let frequency in dataObj.data) {
       const freqObj = dataObj.data[frequency];
       await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
       const channelId = (await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)).rows[0]["c_id"];
       if ("strength" in freqObj) {
         for (let timePeriod in freqObj.strength) {
+          startTime[0] = Math.min(startTime, timePeriod);
           const query = `INSERT INTO "strength" ("c_id", "s_sample_time", "s_strength")
                         VALUES (${channelId}, ${timePeriod}, ${freqObj.strength[timePeriod]})`
           await client.query(query);
         }
       }
       if ("usage" in freqObj) {
-        for (let timePeriod in freqObj.usage) {
-          let query = `INSERT INTO "utilisation" ("c_id", "a_start_time", "a_end_time")
-                        VALUES (${channelId}, ${freqObj.usage[timePeriod][0]}, ${freqObj.usage[timePeriod][1]})`
-          await client.query(query);
+        //start time
+        if (results.length === 1) {
+          if (results[0]["max"]) {
+            startTime = [results[0]["max"], true]
+          }
         }
+        let periodRecords = []
+        if (startTime < Math.floor(new Date().getTime()/1000)) {
+          periodRecords.push([startTime, null])
+        }
+        for (let timePeriod in freqObj.usage) {
+          //if timestamp is a start time
+          if (freqObj.usage[timePeriod][1]) {
+            //if no period records exist, or the most recent one has an end time
+            //if most recent period record ends in null, ignore the start time
+            if (periodRecords.length === 0 || periodRecords[periodRecords.length-1][1]) {
+                periodRecords.push([freqObj.usage[timePeriod][0], null]);
+            }
+          } else {
+            //the most recent period record does not have an end time
+            if (periodRecords.length >= 1 && !periodRecords[periodRecords.length-1][1]) {
+              periodRecords[periodRecords.length-1][1] = freqObj.usage[timePeriod][0]
+            }
+          }
+        }
+        let query = ""
+        for (let i = 0; i < periodRecords.length; i++) {
+          if (i === 0 && startTime[1]) {
+            query = `UPDATE "utilisation" SET a_end_time = ${periodRecords[0][1]} WHERE a_start_time = ${startTime[0]};`+ query
+            continue;
+          }
+          query += `INSERT INTO "utilisation" ("c_id", "a_start_time", "a_end_time") VALUES (${channelId}, ${periodRecords[i][0]}, ${periodRecords[i][1]});`;
+        }
+        await client.query(query);
       }
     }
-
     return "Successfully processed data"
-  }
-  catch(error){
+  }  catch(error) {
     throw error;
   }
 }
+
+async function generateUtilDataDump(requestObj, dbName) {
+  try{
+     await recheckConnection(dbName);
+    let cond = getCondFromWhiteBlackList(requestObj);
+    if ("start-time" in requestObj) {
+      requestObj["start-time"] = Math.floor(new Date().getTime()/1000) - requestObj["start-time"];
+      cond += `AND (a_end_time IS NULL OR a_end_time >= ${requestObj["start-time"]})`
+    }
+    if ("end-time" in requestObj) {
+      cond += `AND a_start_time <= ${requestObj["end-time"]}`;
+    }
+    let query = `SELECT c.d_id, c.c_name, c.c_freq, u.a_start_time, u.a_end_time, u.a_end_time-u.a_start_time
+                FROM "utilisation" AS u JOIN "channels" AS c ON c.c_id=u.c_id
+                WHERE c.c_id ${cond}
+                ORDER BY c.c_id, u.a_start_time`;
+    let res = await client.query(query);
+    let output = "Device Number, Channel Name, Channel Frequency, Transmission Start Time, Transmission End Time, Transmission Length";
+    for (const row of res.rows) {
+      output += "\n" + Object.values(row).toString();
+    }
+    return output;
+
+  } catch(error){
+    throw error;
+  }
+}
+
+async function generateStrengthDataDump(requestObj, dbName) {
+  try{
+    await recheckConnection(dbName);
+    let cond = getCondFromWhiteBlackList(requestObj)+getCondStartEndTimes(requestObj);
+    let query = `SELECT c.d_id, c.c_name, c.c_freq, s.s_sample_time, s.s_strength
+                 FROM "channels" AS c JOIN "strength" AS s ON s.c_id=c.c_id
+                WHERE s.c_id ${cond}
+                ORDER BY s.c_id, s.s_sample_time`;
+    let res = await client.query(query);
+    let output = "Device Number, Channel Name, Channel Frequency, Sample Time, Strength";
+    for (const row of res.rows) {
+      output += "\n" + Object.values(row).toString();
+    }
+    return output;
+
+  } catch(error){
+    throw error;
+  }
+}
+
 module.exports = {
   getAliveChannels,
   getOfflineChannels,
   getBusyChannels,
   getChannelStrength,
   getChannelUtilisation,
-  processIncomingData
+  processIncomingData,
+  generateStrengthDataDump,
+  generateUtilDataDump
 }
