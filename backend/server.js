@@ -15,7 +15,9 @@ const {
   getBusyChannels,
   getChannelStrength,
   getChannelUtilisation,
-  processIncomingData
+  processIncomingData,
+  generateStrengthDataDump,
+  generateUtilDataDump
 } = require('./model_utils.js');
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -248,6 +250,25 @@ app.get('/api/analytics/data', async (req, res) => {
   }
 });
 
+app.get('/api/strength-dump', async (req, res) => {
+  const sendObj = req.query;
+  let requestObj = {}
+  for (const elem in sendObj) {
+    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
+  }
+  const myFile = await generateStrengthDataDump(requestObj, "testdbmu");
+  res.attachment("strength-data.csv").send(myFile);
+});
+
+app.get('/api/util-dump', async (req, res) => {
+  const sendObj = req.query;
+  let requestObj = {}
+  for (const elem in sendObj) {
+    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
+  }
+  const myFile = await generateUtilDataDump(requestObj, "testdbmu");
+  res.attachment("util-data.csv").send(myFile);
+});
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
