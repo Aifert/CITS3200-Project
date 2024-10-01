@@ -386,34 +386,37 @@ def tune_SES_channels_to_rtl_power_output():
 # ...IF spectrum_decibel_datapoints[index_to_spectrum_decibel_datapoints] > or < relevant sliding_windows_thresholds_above_noise_floor_db
 # ...based on your current signal_is_currently_above_threshold, potentially generate a UtilizationState in utilization_states
 def generate_utilization_states():
-    for channel in SES_channels:
-        if(channel.index_to_spectrum_decibel_datapoints != -1):
-            #channel has data to test against
-            for temporal_sample in rtl_power_output_temporal_samples:
-                if(channel.signal_is_currently_above_threshold == None):
-                    #first data point assessment for this channel, should assign as per the first sample
-                    rtl_power_output_min_frequency_hz = rtl_power_output_temporal_samples[0].starting_frequency
-                    threshold_index_for_this_channel = int(((channel.frequency_hz + RTL_SDR_V4_tuning_hz) - rtl_power_output_min_frequency_hz) / sliding_windows_band_width_hz)
-                    threshold_for_this_channel = sliding_windows_thresholds_above_noise_floor_db[threshold_index_for_this_channel]
-                    signal_is_hot = False
-                    if(temporal_sample.spectrum_decibel_datapoints[channel.index_to_spectrum_decibel_datapoints] >= threshold_for_this_channel):
-                        signal_is_hot = True
-                    utilization_state = UtilizationState(temporal_sample.timestamp_unix, signal_is_hot)
-                    channel.utilization_states.append(utilization_state)
-                    channel.signal_is_currently_above_threshold = signal_is_hot
-                else:
-                    #test if we've had a flip in activity over the threshold, and record if so
-                    rtl_power_output_min_frequency_hz = rtl_power_output_temporal_samples[0].starting_frequency
-                    threshold_index_for_this_channel = int(((channel.frequency_hz + RTL_SDR_V4_tuning_hz) - rtl_power_output_min_frequency_hz) / sliding_windows_band_width_hz)
-                    threshold_for_this_channel = sliding_windows_thresholds_above_noise_floor_db[threshold_index_for_this_channel]
-                    signal_is_hot = False
-                    if(temporal_sample.spectrum_decibel_datapoints[channel.index_to_spectrum_decibel_datapoints] >= threshold_for_this_channel):
-                        signal_is_hot = True
-                    if(signal_is_hot != channel.signal_is_currently_above_threshold):
-                        #activity flipped, record
+    if(rtl_power_output_temporal_samples):
+        for channel in SES_channels:
+            if(channel.index_to_spectrum_decibel_datapoints != -1):
+                #channel has data to test against
+                for temporal_sample in rtl_power_output_temporal_samples:
+                    if(channel.signal_is_currently_above_threshold == None):
+                        #first data point assessment for this channel, should assign as per the first sample
+                        rtl_power_output_min_frequency_hz = rtl_power_output_temporal_samples[0].starting_frequency
+                        threshold_index_for_this_channel = int(((channel.frequency_hz + RTL_SDR_V4_tuning_hz) - rtl_power_output_min_frequency_hz) / sliding_windows_band_width_hz)
+                        threshold_for_this_channel = sliding_windows_thresholds_above_noise_floor_db[threshold_index_for_this_channel]
+                        signal_is_hot = False
+                        if(temporal_sample.spectrum_decibel_datapoints[channel.index_to_spectrum_decibel_datapoints] >= threshold_for_this_channel):
+                            signal_is_hot = True
                         utilization_state = UtilizationState(temporal_sample.timestamp_unix, signal_is_hot)
                         channel.utilization_states.append(utilization_state)
                         channel.signal_is_currently_above_threshold = signal_is_hot
+                    else:
+                        #test if we've had a flip in activity over the threshold, and record if so
+                        rtl_power_output_min_frequency_hz = rtl_power_output_temporal_samples[0].starting_frequency
+                        threshold_index_for_this_channel = int(((channel.frequency_hz + RTL_SDR_V4_tuning_hz) - rtl_power_output_min_frequency_hz) / sliding_windows_band_width_hz)
+                        threshold_for_this_channel = sliding_windows_thresholds_above_noise_floor_db[threshold_index_for_this_channel]
+                        signal_is_hot = False
+                        if(temporal_sample.spectrum_decibel_datapoints[channel.index_to_spectrum_decibel_datapoints] >= threshold_for_this_channel):
+                            signal_is_hot = True
+                        if(signal_is_hot != channel.signal_is_currently_above_threshold):
+                            #activity flipped, record
+                            utilization_state = UtilizationState(temporal_sample.timestamp_unix, signal_is_hot)
+                            channel.utilization_states.append(utilization_state)
+                            channel.signal_is_currently_above_threshold = signal_is_hot
+    else:
+        print(f"Warning: No utilization states generated as no data was recorded from the file {RTL_POWER_OUTPUT_FILE_NAME} generated by rtl_power.")
 
 # DEBUG method that does as its name suggests
 def print_which_channels_have_utilization():
@@ -424,6 +427,26 @@ def print_which_channels_have_utilization():
                 has_utilization = True
         if(has_utilization):
             print(f"{channel.name} has utilization!")
+
+# FOR EACH SESChannel IN SES_channels RECORD THE VERY LAST rtl_power_output_temporal_samples AT YOUR index_to_spectrum_decibel_datapoints
+# ...AS THE SignalStrengthSample ENTRY IN YOUR signal_strength_samples
+def record_signal_strength_samples():
+    if(rtl_power_output_temporal_samples):
+        for channel in SES_channels:
+            if(channel.index_to_spectrum_decibel_datapoints != -1):
+                #channel has data to test against
+                temporal_sample = rtl_power_output_temporal_samples[-1]
+                signal_strength_sample_db: float = temporal_sample.spectrum_decibel_datapoints[channel.index_to_spectrum_decibel_datapoints]
+                signal_strength_sample = SignalStrengthSample(temporal_sample.timestamp_unix, signal_strength_sample_db)
+                channel.signal_strength_samples.append(signal_strength_sample)
+    else:
+        print(f"Warning: No signal strength samples recorded as no data was recorded from the file {RTL_POWER_OUTPUT_FILE_NAME} generated by rtl_power.")
+
+# DEBUG method that does as its name suggests
+def print_signal_strength_samples_for_observed_channels():
+    for index, channel in enumerate(SES_channels):
+        for signal_strength in channel.signal_strength_samples:
+            print(f"{index}. {channel.name} at {signal_strength.timestamp_unix} has signal strength {signal_strength.decibel_sample}db.")
 
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
@@ -486,6 +509,8 @@ def main():
 
     # FOR EACH SESChannel IN SES_channels RECORD THE VERY LAST rtl_power_output_temporal_samples AT YOUR index_to_spectrum_decibel_datapoints
     # ...AS THE SignalStrengthSample ENTRY IN YOUR signal_strength_samples
+    record_signal_strength_samples()
+    print_signal_strength_samples_for_observed_channels() #DEBUG
 
     # EMPTY rtl_power_output_temporal_samples AND sliding_windows_thresholds_above_noise_floor_db NOW THAT PROCESSING IS DONE
 
