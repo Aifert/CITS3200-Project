@@ -255,7 +255,6 @@ app.get('/api/notification', async (req, res) => {
   for (const elem in sendObj) {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
   }
-  console.log(requestObj[1][0])
   res.send(await checkNotificationState(requestObj, "testdbmu"));
 });
 
