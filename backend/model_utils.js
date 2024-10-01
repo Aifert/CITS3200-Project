@@ -209,7 +209,6 @@ async function getChannelStrength(requestObj, dbName) {
 
 function calculateZoneUtilAvg(pairedValues, nowTime, sampleRate, currentZone) {
   let zoneTime = nowTime - currentZone * sampleRate; //"end-time" of this zone of length sampleRate
-  console.log(pairedValues, zoneTime)
   let zoneUpTime = 0; //holds the usage time across this zone
   if (!pairedValues[pairedValues.length-1][1]) {
     pairedValues[pairedValues.length-1][1] = nowTime;
@@ -470,14 +469,11 @@ async function checkNotificationState(requestObj, dbName) {
                   (SELECT c_id, MAX(s_sample_time) FROM "strength" WHERE s_sample_time >= ${nowTime-120} GROUP BY c_id)`;
     let res = await client.query(sQuery);
     let strengthLookUp = {}
-    console.log(res.rows)
     for (let r in res.rows) {
-      console.log(r)
       strengthLookUp[res.rows[r]["c_id"]] = res.rows[r]["s_strength"];
     }
     let output = {};
     for (let channel in requestObj) {
-      console.log(channel, strengthLookUp)
       output[channel] = {};
       if (channel in strengthLookUp) {
         output[channel]["strength"] = strengthLookUp[channel] >= requestObj[channel][0];
@@ -504,10 +500,8 @@ async function checkNotificationState(requestObj, dbName) {
     }
     for (let channel in requestObj) {
       const channelAvg = calculateZoneUtilAvg(uResults[channel].values, nowTime, requestObj[channel][2], 0);
-      console.log("CH", channel, channelAvg, requestObj[channel][2])
       output[channel]["util"]  = channelAvg >= requestObj[channel][1];
     }
-    console.log(output);
     return output;
   } catch(error) {
     throw error;
