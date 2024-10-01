@@ -321,7 +321,7 @@ def set_num_and_width_of_sliding_windows():
 
 # CALCULATE sliding_windows_thresholds_above_noise_floor_db THRESHOLDS FOR CHANNEL ACTIVITY
 # ...slide the windows along, for each movement collate a number of samples of SLIDING_WINDOWS_TARGET_NUM_SAMPLES_PER_AVERAGE and calculate a
-# ...(minimum_average_signal_strength + (associated_standard_deviation * K)) <-- K is a constant factor, we will use 2
+# ...(minimum_average_signal_strength + (associated_standard_deviation * K)) <-- K is a constant factor
 # ...once done sliding, the smallest of these values per window should become its sliding_windows_thresholds_above_noise_floor_db entry
 def set_sliding_windows_thesholds_above_noise_floor_db():
     if(rtl_power_output_temporal_samples):
@@ -448,6 +448,16 @@ def print_signal_strength_samples_for_observed_channels():
         for signal_strength in channel.signal_strength_samples:
             print(f"{index}. {channel.name} at {signal_strength.timestamp_unix} has signal strength {signal_strength.decibel_sample}db.")
 
+# EMPTY rtl_power_output_temporal_samples AND sliding_windows_thresholds_above_noise_floor_db,
+# ...AND RESET EACH CHANNEL'S signal_is_currently_above_threshold TO None NOW THAT PROCESSING IS DONE
+def reset_state_for_next_rtl_power_read():
+    global rtl_power_output_temporal_samples
+    global sliding_windows_thresholds_above_noise_floor_db
+    rtl_power_output_temporal_samples = []
+    sliding_windows_thresholds_above_noise_floor_db = []
+    for channel in SES_channels:
+        channel.signal_is_currently_above_threshold = None
+
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
 def main():
@@ -456,7 +466,7 @@ def main():
 
     # QUERY SERVER TO DETERMINE IF targeting_VHF (TODO, add to docs too)
 
-    # USE A KNOWN STRONG FREQUENCY TO SET RTL_SDR_V4_tuning_hz, IF RTL-SDR IS OUT OF TUNE (TODO, add to docs too)
+    # USE A KNOWN STRONG FREQUENCY TO SET RTL_SDR_V4_tuning_hz, IF RTL-SDR IS OUT OF TUNE (TODO, this is worked through the code but optional to implement)
 
     # READ SESChannelList.csv AND POPULATE SES_channels WITH CHANNELS WITHIN OUR RANGE (VHF, UHF, test) (SEE CONSTANTS FOR RANGES)
     # ...test for read failure
@@ -483,6 +493,9 @@ def main():
     # ...ensure there is at least 1Hz difference between min & max, else rtl_power will generate a file 0.5Gb large with a sample rate of 0Hz! Insert this 1Hz if it's needed.
     set_rtl_power_frequency_range()
 
+    # Hi Joseph! LOOP FROM HERE, AND USE min_rtl_power_frequency_hz AND max_rtl_power_frequency_hz AS YOUR rtl_power FREQUENCY RANGE
+    # ...AND USE int(min_distance_between_frequencies_hz * 0.5) AS YOUR BIN SIZE FOR rtl_power
+
     # READ rtl_power_output.csv AND POPULATE rtl_power_output_temporal_samples WITH ALL AVAILABLE TEMPORAL SAMPLES
     # ...test for read failure
     read_and_populate_rtl_power_output_temporal_samples()
@@ -492,7 +505,7 @@ def main():
 
     # CALCULATE sliding_windows_thresholds_above_noise_floor_db THRESHOLDS FOR CHANNEL ACTIVITY
     # ...slide the windows along, for each movement collate a number of samples of SLIDING_WINDOWS_TARGET_NUM_SAMPLES_PER_AVERAGE and calculate a
-    # ...(minimum_average_signal_strength + (associated_standard_deviation * K)) <-- K is a constant factor, we will use 2
+    # ...(minimum_average_signal_strength + (associated_standard_deviation * K)) <-- K is a constant factor
     # ...once done sliding, the smallest of these values per window should become its sliding_windows_thresholds_above_noise_floor_db entry
     set_sliding_windows_thesholds_above_noise_floor_db()
 
@@ -512,13 +525,20 @@ def main():
     record_signal_strength_samples()
     print_signal_strength_samples_for_observed_channels() #DEBUG
 
-    # EMPTY rtl_power_output_temporal_samples AND sliding_windows_thresholds_above_noise_floor_db NOW THAT PROCESSING IS DONE
+    # EMPTY rtl_power_output_temporal_samples AND sliding_windows_thresholds_above_noise_floor_db,
+    # ...AND RESET EACH CHANNEL'S signal_is_currently_above_threshold TO None NOW THAT PROCESSING IS DONE
+    reset_state_for_next_rtl_power_read()
 
     # FOR EACH SESChannel IN SES_channels REPRESENT IN JSON THE CONTENTS OF YOUR utilization_states AND signal_strength_samples
-    # ...AND UPLOAD IT TO THE SERVER AT POST /data
-    # ...upon successful upload, empty utilization_states and signal_strength_samples
+    # ...AND UPLOAD IT TO THE SERVER AT POST /data WITH THE CURRENT message_id
+    # ...upon successful upload, empty utilization_states and signal_strength_samples, and increment message_id
 
-    pass
+    # Hi Joseph! For threading & setting up a loop, note that the SESChannelList.csv should only be read once on start-up,
+    # ...and any updates to targeting_VHF would require re-reading SESChannelList.csv so changes to these require that the program restarts.
+    # ...What we're looping for is to get a new set of rtl_power_output_temporal_samples which we use to populate each channel's
+    # ...utilization_states AND signal_strength_samples (which are emptied upon successful upload to the server).
+
+    pass #DEBUG breakpoint handle
 
 if __name__ == "__main__":
     main()
