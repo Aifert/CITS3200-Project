@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement } from 'chart.js';
 import Link from 'next/link';
@@ -13,13 +13,12 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
-  const backendUrl =`${process.env.NEXT_PUBLIC_URL}:${process.env.NEXT_PUBLIC_BACKEND_PORT}` || 'http://localhost:9000/api/';
+  const backendUrl = `${process.env.NEXT_PUBLIC_URL}:${process.env.NEXT_PUBLIC_BACKEND_PORT}` || 'http://localhost:9000/api/';
 
-  console.log(backendUrl)
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const makeApiRequest = async (url, options = {}) => {
+  const makeApiRequest = useCallback(async (url, options = {}) => {
     if (!session || !session.accessToken) {
       setErrorMessage('No active session. Please log in.');
       router.push('/login');
@@ -33,7 +32,7 @@ const AnalyticsPage = () => {
     };
 
     try {
-      const response = await fetch(url, {credentials: 'include', ...options, headers });
+      const response = await fetch(url, { credentials: 'include', ...options, headers });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -43,7 +42,7 @@ const AnalyticsPage = () => {
       setErrorMessage(`API request failed: ${error.message}`);
       return null;
     }
-  };
+  }, [session, router]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -157,7 +156,7 @@ const AnalyticsPage = () => {
     };
 
     fetchChannelData();
-  }, []);
+  }, [status, router, backendUrl, makeApiRequest]);
 
   return (
     <div className="container mx-auto p-6">
