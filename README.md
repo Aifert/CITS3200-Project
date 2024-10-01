@@ -248,14 +248,14 @@ and the application should be available at `https://<your_server_ip>:3000`
 
 Our server is hosted on these credentials
 
-- IP : 20.213.23.98
+- IP : 20.191.210.182
 - Ports available : [3000, 4000, 9000]
 
 Sample request you can make to interact with webserver
 
-```https://20.213.23.98:9000```
+```https://20.191.210.182:9000```
 
-```https://20.213.23.98:3000/login```
+```https://20.191.210.182:3000/login```
 
 
 ## Instructions to start frontend is available in `frontend/README.md`
