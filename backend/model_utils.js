@@ -229,8 +229,6 @@ async function getChannelUtilisation(requestObj, dbName) {
   });
 
   return output;
-
-  return output;
 }
 
 async function isDeviceNew(deviceId, dbName) {
@@ -334,7 +332,7 @@ async function processIncomingData(dataObj, dbName) {
 
 async function generateUtilDataDump(requestObj, dbName) {
   try{
-     await recheckConnection(dbName);
+    await recheckConnection(dbName);
     let cond = getCondFromWhiteBlackList(requestObj);
     if ("start-time" in requestObj) {
       requestObj["start-time"] = Math.floor(new Date().getTime()/1000) - requestObj["start-time"];
@@ -379,6 +377,32 @@ async function generateStrengthDataDump(requestObj, dbName) {
   }
 }
 
+async function checkNotificationState(requestObj, dbName) {
+  try {
+    const nowTime = Math.floor(new Date().getTime()/1000);
+    await recheckConnection(dbName);
+    let sQuery = `SELECT c_id, s_strength FROM "strength"
+                  WHERE (c_id, s_sample_time) IN
+                  (SELECT c_id, MAX(s_sample_time) FROM "strength" WHERE s_sample_time >= ${nowTime-120} GROUP BY c_id)`;
+    let res = await client.query(query);
+
+    let strengthLookUp = {}
+
+    for (let r in res.rows) {
+      strengthLookUp[r["c_id"]] = r["s_strength"];
+    }
+    let output = {};
+    for (let channel in Object.keys(requestObj)) {
+      output[channel] = {};
+      if channel in strengthLookUp:
+        output[channel]["strength"] = strengthLookUp[channel] >= requestObj[channel][0];
+      else:
+        output[channel]["strength"] = null;
+    }
+
+
+}
+
 module.exports = {
   getAliveChannels,
   getOfflineChannels,
@@ -389,3 +413,6 @@ module.exports = {
   generateStrengthDataDump,
   generateUtilDataDump
 }
+
+
+
