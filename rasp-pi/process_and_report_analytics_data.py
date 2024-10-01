@@ -9,6 +9,7 @@ import uuid #for receiving MAC address of SoC to hash & send a portion of the di
 import hashlib #for hashing the MAC address of SoC, a portion of which will be sent as our soc-id
 import socket #for getting the IP address of the SoC, which will be sent to the server
 import json #for dumping a python dictionary into a json string with .dumps()
+import requests #for POSTing data to the server
 
 #component of SESChannel, represents a timestamp of a channel beginning use (start time) or ending use (stop time)
 class UtilizationState:
@@ -99,6 +100,8 @@ RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each 
 K: float = 5.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
 # ...raise this value to raise your squelch floor for activity!
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
+DATA_ENDPOINT_FOR_SERVER: str = '/data' #where we should POST the data we gather
+SERVER_ADDRESS: str = 'TODO' #server's URL
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
@@ -513,6 +516,28 @@ def prepare_channel_data() -> str:
     #print(json_string) #DEBUG
     return json_string
 
+# POST JSON DATA TO THE SERVER AT DATA_ENDPOINT_FOR_SERVER
+def upload_data(json_data_to_upload: str) -> bool:
+    try:
+        url = f"{SERVER_ADDRESS}{DATA_ENDPOINT_FOR_SERVER}"
+        #headers for the request
+        headers = {
+            "Content-Type": "application/json"
+        }
+        #POST the request
+        response = requests.post(url, data=json_data_to_upload, headers=headers)
+        #check if the request was successful
+        if response.status_code == 200:
+            print("Data uploaded successfully!")
+            return True
+        else:
+            print(f"Failed to upload data. Status code: {response.status_code}")
+            print(f"Response: {response.text}")
+            return False
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while uploading data: {e}")
+        return False
+
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
 def main():
@@ -593,14 +618,24 @@ def main():
 
     # FOR EACH SESChannel IN SES_channels WITH DATA, REPRESENT IN JSON THE CONTENTS OF YOUR utilization_states AND signal_strength_samples
     # ...AND INCLUDE message_id AND address AND soc-id METADATA
-    # ...AND UPLOAD IT TO THE SERVER AT POST /data
+    # ...THEN POST JSON DATA TO THE SERVER AT DATA_ENDPOINT_FOR_SERVER
     # ...upon successful upload, empty utilization_states and signal_strength_samples, and increment message_id
     json_data_to_upload = prepare_channel_data()
+    if(upload_data(json_data_to_upload)):
+        #empty channel data, and increment message_id
+        for channel in SES_channels:
+            channel.utilization_states = []
+            channel.signal_strength_samples = []
+    else:
+        #data failed to upload D:
+        pass
 
     # Hi Joseph! For threading & setting up a loop, note that the SESChannelList.csv should only be read once on start-up,
     # ...and any updates to targeting_VHF would require re-reading SESChannelList.csv so changes to these require that the program restarts.
     # ...What we're looping for is to get a new set of rtl_power_output_temporal_samples which we use to populate each channel's
     # ...utilization_states AND signal_strength_samples (which are emptied upon successful upload to the server).
+    # ...regarding uploading to the server, it's up to you how you want to handle re-attempting that, it currently just tries once, 
+    # ...by calling upload_data above this comment ^^ since it will need to abort in relationship to rtl_power's timing
 
     pass #DEBUG breakpoint handle
 
