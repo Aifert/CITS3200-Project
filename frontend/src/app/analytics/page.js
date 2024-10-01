@@ -13,12 +13,14 @@ const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
   const [timeScale, setTimeScale] = useState(86400);
-  const backendUrl = `${process.env.NEXT_PUBLIC_URL}:${process.env.NEXT_PUBLIC_BACKEND_PORT}` || 'http://localhost:9000/api/';
+  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}api/` || 'http://localhost:9000/api/';
 
   const { data: session, status } = useSession();
   const router = useRouter();
 
   const makeApiRequest = useCallback(async (url, options = {}) => {
+    console.log(`Making API request to: ${url}`); // Log the URL being called
+
     if (!session || !session.accessToken) {
       setErrorMessage('No active session. Please log in.');
       router.push('/login');
@@ -33,10 +35,15 @@ const AnalyticsPage = () => {
 
     try {
       const response = await fetch(url, { credentials: 'include', ...options, headers });
+      const responseData = await response.json();
+
       if (!response.ok) {
+        console.log(`Error Response:`, responseData); // Log error response if API request fails
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return await response.json();
+
+      console.log(`API Response Data from ${url}:`, responseData); // Log the returned data
+      return responseData;
     } catch (error) {
       console.error('API request failed:', error);
       setErrorMessage(`API request failed: ${error.message}`);
@@ -62,27 +69,33 @@ const AnalyticsPage = () => {
 
       try {
         const activeChannelsData = await makeApiRequest(`${backendUrl}active-channels`);
-        console.log('Active channels response:', activeChannelsData);
+        console.log('Active channels response:', activeChannelsData); // Log active channels data
+
+        // Check if activeChannelsData is valid
+        if (!activeChannelsData || (!activeChannelsData.active && !activeChannelsData.offline && !activeChannelsData.busy)) {
+          setErrorMessage('No active, offline, or busy channels found.');
+          return;
+        }
 
         if (activeChannelsData.active || activeChannelsData.offline || activeChannelsData.busy) {
           const allChannels = [
-            ...activeChannelsData.active.map(channel => ({ ...channel, status: 'Active' })),
-            ...activeChannelsData.offline.map(channel => ({ ...channel, status: 'Offline' })),
-            ...activeChannelsData.busy.map(channel => ({ ...channel, status: 'Busy' }))
+            ...activeChannelsData.active?.map(channel => ({ ...channel, status: 'Active' })) || [],
+            ...activeChannelsData.offline?.map(channel => ({ ...channel, status: 'Offline' })) || [],
+            ...activeChannelsData.busy?.map(channel => ({ ...channel, status: 'Busy' })) || [],
           ];
+
           const channelIds = allChannels.map(channel => channel['channel-id']);
 
-          const startTime = 86400;
           const queryString = new URLSearchParams({
             'start-time': timeScale, // Dynamic based on the selected time scale
             'whitelist': `[${channelIds.join(',')}]`
           }).toString();
 
           const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
-          console.log('Fetching analytics data from:', analyticsUrl);
+          console.log('Fetching analytics data from:', analyticsUrl); // Log the URL for analytics data
 
           const analyticsData = await makeApiRequest(analyticsUrl);
-          console.log('Analytics data response:', analyticsData);
+          console.log('Analytics data response:', analyticsData); // Log analytics data
 
           if (analyticsData) {
             const processedData = allChannels.map(channel => {
@@ -143,15 +156,15 @@ const AnalyticsPage = () => {
                 status: channel.status,
                 name: channel['channel-name'],
                 frequency: channel.frequency / 1e6,  // Convert frequency to MHz
-                utilization: hasUtilizationData ? analyticsForChannel?.utilisation?.average : 'No data',
-                strength: hasStrengthData ? analyticsForChannel?.strength?.average : 'No data',
+                utilization: hasUtilizationData ? (analyticsForChannel?.utilisation?.average?.toFixed(3) || 'No data') : 'No data',
+                strength: hasStrengthData ? (analyticsForChannel?.strength?.average?.toFixed(3) || 'No data') : 'No data',
                 dataUtilization,
                 dataStrength,
-                isFavorite: channel.isFavorite, 
+                isFavorite: channel.isFavorite,
                 id: channel['channel-id'],
               };
             });
-            console.log('Processed Data:', processedData);
+            console.log('Processed Data:', processedData); // Log processed data before setting state
             setChannelData(processedData);
           }
         } else {
@@ -164,7 +177,7 @@ const AnalyticsPage = () => {
     };
 
     fetchChannelData();
-  }, [timescale, status, router, backendUrl, makeApiRequesttimeScale]); // Re-fetch data when time scale changes
+  }, [timeScale, status, router, backendUrl, makeApiRequest]); // Re-fetch data when time scale changes
 
   // Function to toggle favorite status of a channel
   const toggleFavorite = (channelId) => {
@@ -225,10 +238,16 @@ const AnalyticsPage = () => {
               </button>
             </div>
             <div className="flex items-center justify-center border-r border-gray-300">
-              {channel.utilization}
+              <div>
+                <span>{channel.utilization}</span>
+                <p>Utilization</p>
+              </div>
             </div>
             <div className="flex items-center justify-center">
-              {channel.strength}
+              <div>
+                <span>{channel.strength}</span>
+                <p>Signal Strength (dBm)</p>
+              </div>
             </div>
           </div>
 
@@ -279,4 +298,3 @@ const AnalyticsPage = () => {
 };
 
 export default AnalyticsPage;
-
