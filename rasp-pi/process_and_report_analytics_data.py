@@ -626,6 +626,7 @@ def main():
         for channel in SES_channels:
             channel.utilization_states = []
             channel.signal_strength_samples = []
+        message_id += 1
     else:
         #data failed to upload D:
         pass
