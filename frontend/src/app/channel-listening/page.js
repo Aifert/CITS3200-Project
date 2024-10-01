@@ -33,6 +33,7 @@ const DashboardPage = () => {
       audioRef.current.volume = newValue / 100;
     }
   };
+  
 
   const handleStateClick = (channel) => {
     const selectedChannel = data.find(item => item.Channel === channel);
@@ -86,7 +87,7 @@ const DashboardPage = () => {
       <div className="dashboard-content" style={{ padding: '20px', height: 'calc(100vh - 50px)', overflowY: 'auto' }}>
         <br />
         <div style={{ padding: '20px' }}>
-        <DynamicChannels data={data} handleStateClick={handleStateClick} audioRef={audioRef} />
+        <DynamicChannels data={data} handleStateClick={handleStateClick} audioRef={audioRef} sliderValue={sliderValue}/>
 
         </div>
 

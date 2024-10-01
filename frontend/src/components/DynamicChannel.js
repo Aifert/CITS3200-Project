@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 
-const DynamicChannels = ({ data, handleStateClick, audioRef }) => {
+const DynamicChannels = ({ data, handleStateClick, audioRef, sliderValue }) => {
   const [sliderValues, setSliderValues] = useState(data.map(() => 50));
   const [isPlayingArray, setIsPlayingArray] = useState(data.map(() => false)); 
+
 
   const handleSliderChange = (e, index) => {
     const newSliderValues = [...sliderValues];
     newSliderValues[index] = e.target.value;
     setSliderValues(newSliderValues);
   
-    if (audioRef.current && isPlayingArray[index]) { 
-      audioRef.current.volume = newSliderValues[index] / 100;
+    if (audioRef.current && isPlayingArray[index]) {
+      audioRef.current.volume = (newSliderValues[index] / 100) * (sliderValue / 100); // row volume * master volume
     }
   };
   
@@ -26,14 +27,13 @@ const DynamicChannels = ({ data, handleStateClick, audioRef }) => {
     });
   
     if (!isCurrentlyPlaying && audioRef.current) {
-      audioRef.current.volume = sliderValues[index] / 100;
+      audioRef.current.volume = (sliderValues[index] / 100) * (sliderValue / 100); // row volume * master volume
       handleStateClick(channel); 
     } else {
       handleStateClick(channel); 
     }
   };
   
-
   const renderButton = (state, channel, index) => {
     return (
       <button
