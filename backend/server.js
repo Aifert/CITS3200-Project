@@ -222,7 +222,7 @@ app.get('/api/analytics/data', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
-    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
+    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
   }
   try{
     const strengthData = await getChannelStrength(requestObj)
