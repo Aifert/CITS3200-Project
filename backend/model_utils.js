@@ -1,7 +1,7 @@
 const { Client } = require('pg')
 const fs = require('fs');
 
-const ALIVETIME = 120;
+const ALIVETIME = 150;
 const STRENGTHMAX = -70.0;
 const STRENGTHMIN = -110;
 
@@ -464,32 +464,38 @@ async function checkNotificationState(requestObj, dbName) {
   try {
     const nowTime = Math.floor(new Date().getTime()/1000);
     await recheckConnection(dbName);
+    //If channel is alive, send the most recent strength reading
     let sQuery = `SELECT c_id, s_strength FROM "strength"
                   WHERE (c_id, s_sample_time) IN
-                  (SELECT c_id, MAX(s_sample_time) FROM "strength" WHERE s_sample_time >= ${nowTime-120} GROUP BY c_id)`;
+                  (SELECT c_id, MAX(s_sample_time) FROM "strength" WHERE s_sample_time >= ${nowTime-ALIVETIME} GROUP BY c_id)`;
     let res = await client.query(sQuery);
+
+    //Make object with channel id as key, and most recent strength value as the value
     let strengthLookUp = {}
     for (let r in res.rows) {
       strengthLookUp[res.rows[r]["c_id"]] = res.rows[r]["s_strength"];
     }
     let output = {};
+    //check for every channel
     for (let channel in requestObj) {
       output[channel] = {};
+      //If channel is alive it will have a lookup value
       if (channel in strengthLookUp) {
         output[channel]["strength"] = strengthLookUp[channel] >= requestObj[channel][0];
-      } else {
+      } else { //If not alive, send null
         output[channel]["strength"] = null;
       }
     }
-    let maxTimeAgo = 120;
+    let maxTimeAgo = 120; //Needed to ensure all values recieved in sql query
     for (channel in requestObj) {
       maxTimeAgo = Math.max(maxTimeAgo, requestObj[channel][2])
     }
-
+    //get all utilisation pairs within the maximum time ago
     let uQuery = `SELECT c_id, a_start_time, a_end_time FROM "utilisation"
                   WHERE a_end_time >= ${nowTime - maxTimeAgo} OR a_end_time is NULL
                   ORDER BY c_id, a_start_time`;
     res = await client.query(uQuery)
+    //Calculate like utilisationdata, but just for a single zone (0)
     let uResults = {};
     for (const row of res.rows) {
       if (!(row.c_id in uResults)) {
