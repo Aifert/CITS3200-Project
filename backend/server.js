@@ -17,7 +17,8 @@ const {
   getChannelUtilisation,
   processIncomingData,
   generateStrengthDataDump,
-  generateUtilDataDump
+  generateUtilDataDump,
+  checkNotificationState
 } = require('./model_utils.js');
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -218,9 +219,6 @@ app.get('/api/active-channels', async (req, res) => {
 });
 
 app.get('/api/analytics/data', async (req, res) => {
-  if (!is_populating) {
-    await singlePopulate();
-  }
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -251,6 +249,17 @@ app.get('/api/analytics/data', async (req, res) => {
   }
 });
 
+app.get('/api/notification', async (req, res) => {
+  const sendObj = req.query;
+  let requestObj = {}
+  for (const elem in sendObj) {
+    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
+  }
+  console.log(requestObj[1][0])
+  res.send(await checkNotificationState(requestObj, "testdbmu"));
+});
+
+//http://localhost:9000/api/notification?1=[-100, 5, 600]
 app.get('/api/strength-dump', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}

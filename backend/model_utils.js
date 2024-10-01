@@ -209,8 +209,11 @@ async function getChannelStrength(requestObj, dbName) {
 
 function calculateZoneUtilAvg(pairedValues, nowTime, sampleRate, currentZone) {
   let zoneTime = nowTime - currentZone * sampleRate; //"end-time" of this zone of length sampleRate
+  console.log(pairedValues, zoneTime)
   let zoneUpTime = 0; //holds the usage time across this zone
-
+  if (!pairedValues[pairedValues.length-1][1]) {
+    pairedValues[pairedValues.length-1][1] = nowTime;
+  }
   //pairedValues can be presumed to be sorted
   //while there are unfinished uptime pairs, and the last one fits within this zone at all
   while (pairedValues.length > 0 && pairedValues[pairedValues.length-1][1] > zoneTime-sampleRate) {
@@ -466,14 +469,15 @@ async function checkNotificationState(requestObj, dbName) {
                   WHERE (c_id, s_sample_time) IN
                   (SELECT c_id, MAX(s_sample_time) FROM "strength" WHERE s_sample_time >= ${nowTime-120} GROUP BY c_id)`;
     let res = await client.query(sQuery);
-
     let strengthLookUp = {}
-
+    console.log(res.rows)
     for (let r in res.rows) {
-      strengthLookUp[r["c_id"]] = r["s_strength"];
+      console.log(r)
+      strengthLookUp[res.rows[r]["c_id"]] = res.rows[r]["s_strength"];
     }
     let output = {};
     for (let channel in requestObj) {
+      console.log(channel, strengthLookUp)
       output[channel] = {};
       if (channel in strengthLookUp) {
         output[channel]["strength"] = strengthLookUp[channel] >= requestObj[channel][0];
@@ -499,9 +503,12 @@ async function checkNotificationState(requestObj, dbName) {
         uResults[row.c_id].values.push([row.a_start_time, row.a_end_time]);
     }
     for (let channel in requestObj) {
-      const channelAvg = calculateZoneUtilAve(output[channel].values, nowTime, requestObj[channel][2], 0);
+      const channelAvg = calculateZoneUtilAvg(uResults[channel].values, nowTime, requestObj[channel][2], 0);
+      console.log("CH", channel, channelAvg, requestObj[channel][2])
       output[channel]["util"]  = channelAvg >= requestObj[channel][1];
     }
+    console.log(output);
+    return output;
   } catch(error) {
     throw error;
   }
@@ -515,7 +522,8 @@ module.exports = {
   getChannelUtilisation,
   processIncomingData,
   generateStrengthDataDump,
-  generateUtilDataDump
+  generateUtilDataDump,
+  checkNotificationState
 }
 
 
