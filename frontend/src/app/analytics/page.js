@@ -157,7 +157,7 @@ const AnalyticsPage = () => {
     };
 
     fetchChannelData();
-  }, []);
+  }, [status, router, backendUrl, makeApiRequest]);
 
   return (
     <div className="container mx-auto p-6">
