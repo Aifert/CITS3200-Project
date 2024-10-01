@@ -176,8 +176,8 @@ test("Testing SDR Insertion", async () => {
     "data": {
       162475000: {
         "usage": [
-        [1724322719, 1724322724, false],
-        [1724322719, "NULL", true]
+        [1724322719, false],
+        [1724322719, true]
         ],
         "strength": {
           1724322719: -75.1,
@@ -186,7 +186,7 @@ test("Testing SDR Insertion", async () => {
       },
       163825000: {
         "usage": [
-        [1724322600, 1724322710, false]
+        [1724322600, true]
         ],
         "strength": {
           1724322600: -105.1,
@@ -204,7 +204,7 @@ test("Testing SDR Insertion", async () => {
   expect(deviceTable.length).toBe(1);
   expect(channelTable.length).toBe(2);
   expect(strengthTable.length).toBe(4);
-  expect(utilTable.length).toBe(3);
+  expect(utilTable.length).toBe(2);
   expect(deviceTable[0]["d_address"]).toBe("128.10.20.30");
   expect(deviceTable[0]["d_port"]).toBe(8080);
 
@@ -221,7 +221,7 @@ test("Testing SDR Insertion", async () => {
       },
       163825100: {
         "usage": [
-        [1724372600, 1724372710]
+        [1724372600, false]
         ],
         "strength": {
           1724372600: -106.2,
@@ -239,7 +239,7 @@ test("Testing SDR Insertion", async () => {
   expect(deviceTable2.length).toBe(1);
   expect(channelTable2.length).toBe(3);
   expect(strengthTable2.length).toBe(8);
-  expect(utilTable2.length).toBe(4);
+  expect(utilTable2.length).toBe(2);
   expect(deviceTable2[0]["d_address"]).toBe("127.10.20.30");
   expect(deviceTable2[0]["d_port"]).toBe(8980);
 

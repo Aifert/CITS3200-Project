@@ -41,6 +41,8 @@ When first loading/reloading/opening (TBD implementation), get a unique session-
 
 #### Responses Example
 
+	/api/active-channels
+
 	{
 		"code": 200,
 		"alive": [{
@@ -157,6 +159,8 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 
 #### Parameters Example
 
+	/api/analyics/data?black-list=[21892]&start-time=86400
+
 	{
 		"black-list": [21892],
 		"start-time": 86400
@@ -217,7 +221,7 @@ When requiring data \- either when initially requesting or when asking for perio
 Black list is efficient if one set of data is already received for a single analytics page
 While list is efficient if just one is wanted
 
-### GET /analytics/strength-dump
+### GET /api/analytics/strength-dump
 
 #### Parameters
 
@@ -230,10 +234,13 @@ While list is efficient if just one is wanted
 
 #### Parameters Example
 
+	/api/analyics/strength-dump?black-list=[21892]&start-time=86400
+
 	{
 		"black-list": [21892],
 		"start-time": 86400
 	}
+
 
 
 
@@ -258,6 +265,8 @@ When a user requests the data dump file for strength data \- it is to be created
 | end-time | Optional | Integer | Latest raw time (in seconds) that data should be requested until. If not included, assumed at late as possible |
 
 #### Parameters Example
+
+	/api/analyics/util-dump?black-list=[21892]&start-time=86400
 
 	{
 		"black-list": [21892],
