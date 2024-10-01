@@ -8,20 +8,31 @@ const DynamicChannels = ({ data, handleStateClick, audioRef }) => {
     const newSliderValues = [...sliderValues];
     newSliderValues[index] = e.target.value;
     setSliderValues(newSliderValues);
-    if (audioRef.current) {
+  
+    if (audioRef.current && isPlayingArray[index]) { 
       audioRef.current.volume = newSliderValues[index] / 100;
     }
   };
+  
 
   const handlePlayPauseClick = (index, channel, state) => {
-    const newIsPlayingArray = [...isPlayingArray];
-    newIsPlayingArray[index] = !newIsPlayingArray[index];
+    const isCurrentlyPlaying = isPlayingArray[index];
+  
+    const newIsPlayingArray = data.map((_, i) => i === index ? !isCurrentlyPlaying : false);
     setIsPlayingArray(newIsPlayingArray);
-
-    data[index].State = newIsPlayingArray[index] ? "Play" : "Pause";
-
-    handleStateClick(channel);
+  
+    data.forEach((item, i) => {
+      data[i].State = i === index ? (isCurrentlyPlaying ? "Pause" : "Play") : "Pause";
+    });
+  
+    if (!isCurrentlyPlaying && audioRef.current) {
+      audioRef.current.volume = sliderValues[index] / 100;
+      handleStateClick(channel); 
+    } else {
+      handleStateClick(channel); 
+    }
   };
+  
 
   const renderButton = (state, channel, index) => {
     return (
