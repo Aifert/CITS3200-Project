@@ -5,6 +5,10 @@ from typing import List, Dict #for providing type hints for lists & dictionaries
 from datetime import datetime #for conversion of timestamps to UNIX representation
 import time #for conversion of timestamps to UNIX representation
 import statistics #for calculating average & standard deviation
+import uuid #for receiving MAC address of SoC to hash & send a portion of the digest as our soc-id
+import hashlib #for hashing the MAC address of SoC, a portion of which will be sent as our soc-id
+import socket #for getting the IP address of the SoC, which will be sent to the server
+import json #for dumping a python dictionary into a json string with .dumps()
 
 #component of SESChannel, represents a timestamp of a channel beginning use (start time) or ending use (stop time)
 class UtilizationState:
@@ -94,6 +98,7 @@ NUM_RTL_POWER_CONTEXT_COLUMNS = 6
 RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each sample, rtl_power supports a minimum of 1sec
 K: float = 5.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
 # ...raise this value to raise your squelch floor for activity!
+DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
@@ -458,6 +463,56 @@ def reset_state_for_next_rtl_power_read():
     for channel in SES_channels:
         channel.signal_is_currently_above_threshold = None
 
+# GENERATES A soc-id VALUE TO SEND TO THE SERVER, A PORTION OF THE DIGEST OF OUR HASHED MAC ADDRESS
+def generate_soc_id() -> int:
+    #get the MAC address
+    mac = uuid.getnode()
+    #print(mac) #DEBUG
+    #hash the MAC address
+    hashed_mac = hashlib.sha256(str(mac).encode()).hexdigest()
+    #print(hashed_mac) #DEBUG
+    #take the first 10 characters of the hash
+    soc_id = int(hashed_mac[:10], 16)
+    #print(soc_id) #DEBUG
+    return soc_id
+
+# GENERATES A address VALUE TO SEND TO THE SERVER, OUR IP WITH A CONSTANT PORT AS IP:PORT
+def generate_address() -> str:
+    ip_address = socket.gethostbyname(socket.gethostname())
+    port = DEFAULT_PORT
+    address = f"{ip_address}:{port}"
+    #print(address) #DEBUG
+    return address
+
+# FOR EACH SESChannel IN SES_channels WITH DATA, REPRESENT IN JSON THE CONTENTS OF YOUR utilization_states AND signal_strength_samples
+# ...AND INCLUDE message_id AND address AND soc-id METADATA
+def prepare_channel_data() -> str:
+    soc_id: int = generate_soc_id()
+    address = generate_address()
+    channels_data = {}
+    for channel in SES_channels:
+        if(channel.utilization_states and channel.signal_strength_samples):
+            #only include channels that have data
+            channel_data = {
+                "usage": [],
+                "strength": {}
+            }
+            for utilization_state in channel.utilization_states:
+                channel_data["usage"].append([utilization_state.timestamp_unix, utilization_state.is_start_time])
+            for signal_strength_sample in channel.signal_strength_samples:
+                channel_data["strength"][signal_strength_sample.timestamp_unix] = signal_strength_sample.decibel_sample
+            channels_data[channel.frequency_hz] = channel_data
+    #prepare the final json_data
+    json_data = {
+        "soc-id": soc_id,
+        "address": address,
+        "message-id": message_id,
+        "data": channels_data
+    }
+    json_string = json.dumps(json_data)
+    #print(json_string) #DEBUG
+    return json_string
+
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
 def main():
@@ -495,6 +550,11 @@ def main():
 
     # Hi Joseph! LOOP FROM HERE, AND USE min_rtl_power_frequency_hz AND max_rtl_power_frequency_hz AS YOUR rtl_power FREQUENCY RANGE
     # ...AND USE int(min_distance_between_frequencies_hz * 0.5) AS YOUR BIN SIZE FOR rtl_power
+    # ...the other rtl_power parameters you can read about in README.md, I think gain should be reduced to 1db from 25db (set these as CONSTANTS)
+
+    # RUN rtl_power (TODO)
+
+    # QUERY SERVER TO DETERMINE ANY ADJUSTMENTS TO SQUELCH LEVEL VIA K (TODO, decent extra functionality but optional for now)
 
     # READ rtl_power_output.csv AND POPULATE rtl_power_output_temporal_samples WITH ALL AVAILABLE TEMPORAL SAMPLES
     # ...test for read failure
@@ -525,13 +585,17 @@ def main():
     record_signal_strength_samples()
     print_signal_strength_samples_for_observed_channels() #DEBUG
 
+    pass #DEBUG breakpoint handle
+
     # EMPTY rtl_power_output_temporal_samples AND sliding_windows_thresholds_above_noise_floor_db,
     # ...AND RESET EACH CHANNEL'S signal_is_currently_above_threshold TO None NOW THAT PROCESSING IS DONE
     reset_state_for_next_rtl_power_read()
 
-    # FOR EACH SESChannel IN SES_channels REPRESENT IN JSON THE CONTENTS OF YOUR utilization_states AND signal_strength_samples
-    # ...AND UPLOAD IT TO THE SERVER AT POST /data WITH THE CURRENT message_id
+    # FOR EACH SESChannel IN SES_channels WITH DATA, REPRESENT IN JSON THE CONTENTS OF YOUR utilization_states AND signal_strength_samples
+    # ...AND INCLUDE message_id AND address AND soc-id METADATA
+    # ...AND UPLOAD IT TO THE SERVER AT POST /data
     # ...upon successful upload, empty utilization_states and signal_strength_samples, and increment message_id
+    json_data_to_upload = prepare_channel_data()
 
     # Hi Joseph! For threading & setting up a loop, note that the SESChannelList.csv should only be read once on start-up,
     # ...and any updates to targeting_VHF would require re-reading SESChannelList.csv so changes to these require that the program restarts.
