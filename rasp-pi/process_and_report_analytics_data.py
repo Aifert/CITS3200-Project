@@ -1,10 +1,10 @@
 import csv #reading .csv files
 import os #providing directory that this script is in for opening files
-import math #infinite numbers
+import math #infinite numbers, ceiling function
 from typing import List, Dict #for providing type hints for lists & dictionaries
 from datetime import datetime #for conversion of timestamps to UNIX representation
 import time #for conversion of timestamps to UNIX representation
-import math #for ceiling function
+import statistics #for calculating average & standard deviation
 
 #component of SESChannel, represents a timestamp of a channel beginning use (start time) or ending use (stop time)
 class UtilizationState:
@@ -61,6 +61,18 @@ class RTLPowerOutputTemporalSample:
                 f"calculated_bin_size={self.calculated_bin_size}, starting_frequency={self.starting_frequency}, "
                 f"spectrum_decibel_datapoints={self.spectrum_decibel_datapoints})") #these str concatenate
 
+#a window slide, aiming for SLIDING_WINDOWS_TARGET_NUM_SAMPLES_PER_AVERAGE of samples, to use in calculating (average + standard_deviation) 
+#...signal strengths per frequency range to ultimately select a lowest from each collection of window_slides per window, 
+#...which becomes that frequency range's sliding_window_threshold_above_noise_floor_db
+class WindowSlide:
+    # CONSTRUCTOR
+    def __init__(self, samples: List[RTLPowerOutputTemporalSample]):
+        self.samples: List[RTLPowerOutputTemporalSample] = samples #samples in this WindowSlide, ideally SLIDING_WINDOWS_TARGET_NUM_SAMPLES_PER_AVERAGE of them
+
+    # REPORTING STATE AS STRING (debugging)
+    def __repr__(self) -> str:
+        return (f"samples={self.samples}")
+
 # CONSTANTS
 RTL_SDR_V4_RANGE_MIN_HZ: int = 24000000 #24MHz (represented in Hz)
 RTL_SDR_V4_RANGE_MAX_HZ: int = 1766000000 #1.766GHz (1766MHz) (represented in Hz)
@@ -71,13 +83,16 @@ UHF_RANGE_MAX_HZ: int = 3000000000 #3GHz (3000MHz) (represented in Hz)
 TEST_RANGE_MIN_HZ: int = 477087500 #CB channel 67
 TEST_RANGE_MAX_HZ: int = 477087500 #CB channel 67
 RANGE_DRIFT_OFFSET_HZ: int = 50000 #0.05MHz (represented in Hz), subtract from min_rtl_power_frequency_hz, add to max_rtl_power_frequency_hz
-SLIDING_WINDOWS_TEMPORAL_LENGTH_UNIX: int = 10 #window is sliding in 10 second intervals from the first temporal sample in rtl_power_output_temporal_samples
+SLIDING_WINDOWS_TARGET_NUM_SAMPLES_PER_AVERAGE: int = 10 #each sliding window is aiming to calculate averages for signal strength from 10 time samples from rtl_power_temporal_samples
 SLIDING_WINDOWS_BAND_SIZE_MAX_HZ: int = 2000000 #2MHz (represented in Hz), maximum size of sliding window bands
 SES_CHANNEL_LIST_FILE_NAME = 'SESChannelList.csv'
 SES_CHANNEL_FOLDER_NAME = 'SESChannelList'
 RTL_POWER_OUTPUT_FILE_NAME = 'rtl_power_output.csv'
 RTL_POWER_OUTPUT_FOLDER_NAME = 'rtl_powerOutput'
 NUM_RTL_POWER_CONTEXT_COLUMNS = 6
+RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each sample, rtl_power supports a minimum of 1sec
+K: float = 5.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
+# ...raise this value to raise your squelch floor for activity!
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
@@ -91,11 +106,11 @@ SES_channels: List[SESChannel] = [] #list of SES_channels, sorted by frequency, 
 SES_channels_index_lookup_dictionary: Dict[int, int] = {} #query a frequency and get an index to it in SES_channels, or None if it doesn't exist (use .get)
 RTL_SDR_V4_tuning_hz: int = 0 #if RTL-SDR is out of tune, its measurements will be adjusted by this value to align with SES_channels frequencies
 rtl_power_output_temporal_samples: List[RTLPowerOutputTemporalSample] = [] #samples moving forward in time, with the spectrum's decibel values per time slice (TODO, adjust docs as this is no longer a 2D array)
-num_sliding_windows: int #number of sliding windows (<= SLIDING_WINDOWS_BAND_SIZE_MAX_HZ each) to cover our analysis range
-# ...num_sliding_windows = math.ceil(range_hz / SLIDING_WINDOWS_BAND_SIZE_MAX_HZ)
+num_sliding_window_frequency_ranges: int #number of sliding window frequency ranges (<= SLIDING_WINDOWS_BAND_SIZE_MAX_HZ each) to cover our analysis range
+# ...num_sliding_window_frequency_ranges = math.ceil(range_hz / SLIDING_WINDOWS_BAND_SIZE_MAX_HZ)
 sliding_windows_band_width_hz: int #the actual band width of our sliding windows (<= SLIDING_WINDOWS_BAND_SIZE_MAX_HZ)
-# ...math.ceil(range_hz / num_sliding_windows)
-sliding_windows_thresholds_above_noise_floor_db: List[float] #threshold above which we consider channels in this window 'in use'
+# ...math.ceil(range_hz / num_sliding_window_frequency_ranges)
+sliding_windows_thresholds_above_noise_floor_db: List[float] = [] #threshold above which we consider channels in this window 'in use'
 # ...index into your appropriate sliding window threshold here with: 
 # ...int((channel_frequency_hz - min_rtl_power_frequency_hz) / sliding_windows_band_width_hz)
 message_id: int = 0 # tally for how many messages sent to the server while running, to send with each update, so DB knows if data has been lost since last period
@@ -288,20 +303,70 @@ def read_and_populate_rtl_power_output_temporal_samples():
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
-# CALCULATE num_sliding_windows AND sliding_windows_band_width_hz
+# CALCULATE num_sliding_window_frequency_ranges AND sliding_windows_band_width_hz
 def set_num_and_width_of_sliding_windows():
-    global num_sliding_windows #number of sliding windows (<= SLIDING_WINDOWS_BAND_SIZE_MAX_HZ each) to cover our analysis range
-    # ...num_sliding_windows = math.ceil(range_hz / SLIDING_WINDOWS_BAND_SIZE_MAX_HZ)
+    global num_sliding_window_frequency_ranges #number of sliding window frequency ranges (<= SLIDING_WINDOWS_BAND_SIZE_MAX_HZ each) to cover our analysis range
+    # ...num_sliding_window_frequency_ranges = math.ceil(range_hz / SLIDING_WINDOWS_BAND_SIZE_MAX_HZ)
     global sliding_windows_band_width_hz #the actual band width of our sliding windows (<= SLIDING_WINDOWS_BAND_SIZE_MAX_HZ)
-    # ...math.ceil(range_hz / num_sliding_windows)
+    # ...math.ceil(range_hz / num_sliding_window_frequency_ranges)
     if(rtl_power_output_temporal_samples):
         rtl_power_output_min_frequency_hz = rtl_power_output_temporal_samples[0].starting_frequency
         rtl_power_output_max_frequency_hz = rtl_power_output_min_frequency_hz + math.ceil(len(rtl_power_output_temporal_samples[0].spectrum_decibel_datapoints) * rtl_power_output_temporal_samples[0].calculated_bin_size) #(we don't use (num_datapoints - 1) because we want the upper end of the last bin)
         rtl_power_output_frequency_width_hz = rtl_power_output_max_frequency_hz - rtl_power_output_min_frequency_hz
-        num_sliding_windows = math.ceil(rtl_power_output_frequency_width_hz / SLIDING_WINDOWS_BAND_SIZE_MAX_HZ)
-        sliding_windows_band_width_hz = math.ceil(rtl_power_output_frequency_width_hz / num_sliding_windows)
+        num_sliding_window_frequency_ranges = math.ceil(rtl_power_output_frequency_width_hz / SLIDING_WINDOWS_BAND_SIZE_MAX_HZ)
+        sliding_windows_band_width_hz = math.ceil(rtl_power_output_frequency_width_hz / num_sliding_window_frequency_ranges)
+    else:
+        print(f"Warning: No sliding windows assigned as no data was recorded from the file {RTL_POWER_OUTPUT_FILE_NAME} generated by rtl_power.")
+
+# CALCULATE sliding_windows_thresholds_above_noise_floor_db THRESHOLDS FOR CHANNEL ACTIVITY
+# ...slide the windows along, for each movement collate a number of samples of SLIDING_WINDOWS_TARGET_NUM_SAMPLES_PER_AVERAGE and calculate a
+# ...(minimum_average_signal_strength + (associated_standard_deviation * K)) <-- K is a constant factor, we will use 2
+# ...once done sliding, the smallest of these values per window should become its sliding_windows_thresholds_above_noise_floor_db entry
+def set_sliding_windows_thesholds_above_noise_floor_db():
+    if(rtl_power_output_temporal_samples):
+        window_slides: List[WindowSlide] = []
+        window_slide_samples: List[RTLPowerOutputTemporalSample]  = []
+        # POPULATE window_slides WITH WINDOW SLIDES OF LENGTH SLIDING_WINDOWS_TARGET_NUM_SAMPLES_PER_AVERAGE 
+        # ...(only permit shorter if there is not enough data for even a single window length)
+        for temporal_sample in rtl_power_output_temporal_samples:
+            window_slide_samples.append(temporal_sample)
+            if(len(window_slide_samples) == SLIDING_WINDOWS_TARGET_NUM_SAMPLES_PER_AVERAGE):
+                window_slide = WindowSlide(window_slide_samples)
+                window_slides.append(window_slide)
+                window_slide_samples = []
+        if(window_slide_samples and not window_slides):
+            window_slide = WindowSlide(window_slide_samples)
+            window_slides.append(window_slide)
+        # ITERATE BY WINDOW FREQUENCY RANGE TO CALCULATE sliding_windows_thresholds_above_noise_floor_db PER RANGE
+        for i in range(0, num_sliding_window_frequency_ranges):
+            lowest_threshold_above_noise_floor_in_range: float = math.inf
+            for window_slide in window_slides:
+                samples_in_sliding_window_frequency_range_db: List[float] = []
+                for temporal_sample in window_slide.samples:
+                    for index, spectrum_decibel_datapoint in enumerate(temporal_sample.spectrum_decibel_datapoints):
+                        frequency_of_spectrum_decibel_datapoint = temporal_sample.starting_frequency + (index * temporal_sample.calculated_bin_size)
+                        rtl_power_output_min_frequency_hz = temporal_sample.starting_frequency
+                        #rtl_power_output_max_frequency_hz = rtl_power_output_min_frequency_hz + math.ceil(len(temporal_sample.spectrum_decibel_datapoints) * temporal_sample.calculated_bin_size) #(we don't use (num_datapoints - 1) because we want the upper end of the last bin)
+                        if(rtl_power_output_min_frequency_hz + (sliding_windows_band_width_hz * i) <= frequency_of_spectrum_decibel_datapoint
+                           and frequency_of_spectrum_decibel_datapoint <= rtl_power_output_min_frequency_hz + (sliding_windows_band_width_hz * (i + 1))):
+                            samples_in_sliding_window_frequency_range_db.append(spectrum_decibel_datapoint)
+                # CALCULATE POTENTIAL lowest_threshold_above_noise_floor_in_range
+                average_signal_strength = statistics.mean(samples_in_sliding_window_frequency_range_db)
+                associated_standard_deviation = statistics.stdev(samples_in_sliding_window_frequency_range_db)
+                potential_threshold_above_noise_floor_in_range = average_signal_strength + (associated_standard_deviation * K)
+                lowest_threshold_above_noise_floor_in_range = min(lowest_threshold_above_noise_floor_in_range, potential_threshold_above_noise_floor_in_range)
+            # ASSIGN LOWEST FOUND lowest_threshold_above_noise_floor_in_range FOR THIS WINDOW FREQUENCY RANGE TO sliding_windows_thresholds_above_noise_floor_db
+            sliding_windows_thresholds_above_noise_floor_db.append(lowest_threshold_above_noise_floor_in_range)
     else:
         print(f"Warning: No thresholds for activity calculated as no data was recorded from the file {RTL_POWER_OUTPUT_FILE_NAME} generated by rtl_power.")
+
+# TUNE SES_channels TO NEAREST rtl_power_output_temporal_samples' spectrum_decibel_datapoints INDEX
+# ...ACCOUNT FOR RTL_SDR_V4_tuning_hz OFFSET
+# ...set each SES_channels' index_to_spectrum_decibel_datapoints with this index
+def tune_SES_channels_to_rtl_power_output():
+    for channel in SES_channels:
+        channel.index_to_spectrum_decibel_datapoints: int #channel tuning to relevant rtl_power_output_temporal_samples' spectrum_decibel_datapoints index
+        
 
 # (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
 # ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
@@ -342,17 +407,19 @@ def main():
     # ...test for read failure
     read_and_populate_rtl_power_output_temporal_samples()
 
-    # CALCULATE num_sliding_windows AND sliding_windows_band_width_hz
+    # CALCULATE num_sliding_window_frequency_ranges AND sliding_windows_band_width_hz
     set_num_and_width_of_sliding_windows()
 
     # CALCULATE sliding_windows_thresholds_above_noise_floor_db THRESHOLDS FOR CHANNEL ACTIVITY
-    # ...slide the windows along, for each movement a distance of SLIDING_WINDOWS_TEMPORAL_LENGTH_UNIX calculate a
+    # ...slide the windows along, for each movement collate a number of samples of SLIDING_WINDOWS_TARGET_NUM_SAMPLES_PER_AVERAGE and calculate a
     # ...(minimum_average_signal_strength + (associated_standard_deviation * K)) <-- K is a constant factor, we will use 2
     # ...once done sliding, the smallest of these values per window should become its sliding_windows_thresholds_above_noise_floor_db entry
+    set_sliding_windows_thesholds_above_noise_floor_db()
 
     # TUNE SES_channels TO NEAREST rtl_power_output_temporal_samples' spectrum_decibel_datapoints INDEX
     # ...ACCOUNT FOR RTL_SDR_V4_tuning_hz OFFSET
     # ...set each SES_channels' index_to_spectrum_decibel_datapoints with this index
+    tune_SES_channels_to_rtl_power_output()
 
     # FOR EACH SESChannel IN SES_channels WALK THROUGH rtl_power_output_temporal_samples AT YOUR index_to_spectrum_decibel_datapoints
     # ...IF spectrum_decibel_datapoints[index_to_spectrum_decibel_datapoints] > or < relevant sliding_windows_thresholds_above_noise_floor_db
