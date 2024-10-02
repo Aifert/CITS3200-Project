@@ -161,7 +161,7 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 
 #### Parameters Example
 
-	/api/analyics/data?black-list=[21892]&start-time=86400&sample-rate=1800&avg-data=false
+	/api/analytics/data?blacklist=[21892]&start-time=86400&sample-rate=1800&avg-data=false
 
 	{
 		"black-list": [21892],
@@ -278,7 +278,7 @@ While list is efficient if just one is wanted
 
 #### Parameters Example
 
-	/api/analyics/strength-dump?black-list=[21892]&start-time=86400
+	/api/analytics/strength-dump?blacklist=[21892]&start-time=86400
 
 	{
 		"black-list": [21892],
@@ -310,7 +310,7 @@ When a user requests the data dump file for strength data \- it is to be created
 
 #### Parameters Example
 
-	/api/analyics/util-dump?black-list=[21892]&start-time=86400
+	/api/analytics/util-dump?blacklist=[21892]&start-time=86400
 
 	{
 		"black-list": [21892],
