@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const dotenv = require('dotenv');
+const { decode } = require('next-auth/jwt');
+const cookieParser = require('cookie-parser');
 const {
   startMonitor,
   stopMonitor,
@@ -13,20 +15,56 @@ const {
   getBusyChannels,
   getChannelStrength,
   getChannelUtilisation,
-  processIncomingData
+  processIncomingData,
+  generateStrengthDataDump,
+  generateUtilDataDump
 } = require('./model_utils.js');
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 9000;
 const FRONTEND_URL = "http://frontend"
 const FRONTEND_PORT = 3000;
 const SDR_URL = "http://sdr"
-const SDR_PORT = 4000;
+const SDR_PORT = 4000 + "/";
+const PUBLIC_FRONTEND_URL = `${process.env.NEXT_PUBLIC_URL}:${process.env.NEXT_PUBLIC_FRONTEND_PORT}` || 'http://localhost:3000';
+const PUBLIC_SDR_URL = `${process.env.NEXT_PUBLIC_URL}:${process.env.NEXT_PUBLIC_SDR_PORT}` || 'http://localhost:4000/api/';
 
 let is_populating = false;
 
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+app.use(cors({
+  origin: PUBLIC_FRONTEND_URL,
+  credentials: true,
+}));
+
+app.use(cookieParser());
+
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies['next-auth.session-token'];
+
+  if (token) {
+    try {
+      const secret = process.env.NEXTAUTH_SECRET;
+      const decoded = await decode({ token, secret });
+      if (decoded) {
+        req.user = decoded;
+        next();
+      } else {
+        throw new Error('Failed to decode token');
+      }
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      res.status(403).json({ error: 'Invalid token' });
+    }
+  } else {
+    const requestedUrl = req.originalUrl;
+    return res.redirect(`${PUBLIC_FRONTEND_URL}/login?requestedUrl=${encodeURIComponent(requestedUrl)}&port=${PORT}`);
+  }
+};
+
+app.use('/api', verifyToken);
 
 async function singlePopulate() {
     const nowTime = Math.floor(new Date().getTime()/1000);
@@ -60,9 +98,6 @@ async function populateTestData() {
     }
   }
 }
-
-
-app.use(cors());
 
 app.use(express.json({
   verify: (req, res, buf) => {
@@ -166,6 +201,7 @@ app.get('/api/monitor-channels/stop', async (req, res) => {
 
 app.get('/api/active-channels', async (req, res) => {
   try{
+    console.log('getting active channels')
     let returnVal = {}
     returnVal["active"] = await getAliveChannels();
     returnVal["busy"] = await getBusyChannels();
@@ -215,6 +251,25 @@ app.get('/api/analytics/data', async (req, res) => {
   }
 });
 
+app.get('/api/strength-dump', async (req, res) => {
+  const sendObj = req.query;
+  let requestObj = {}
+  for (const elem in sendObj) {
+    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
+  }
+  const myFile = await generateStrengthDataDump(requestObj, "testdbmu");
+  res.attachment("strength-data.csv").send(myFile);
+});
+
+app.get('/api/util-dump', async (req, res) => {
+  const sendObj = req.query;
+  let requestObj = {}
+  for (const elem in sendObj) {
+    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
+  }
+  const myFile = await generateUtilDataDump(requestObj, "testdbmu");
+  res.attachment("util-data.csv").send(myFile);
+});
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
