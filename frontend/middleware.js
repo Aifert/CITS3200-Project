@@ -2,23 +2,43 @@ import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
 export async function middleware(req) {
-  console.log('Middleware triggered for path:', req.nextUrl.pathname);
-
-  // Get the token from the request to check if the user is authenticated
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const { pathname } = req.nextUrl;
 
-  // If the user is not authenticated and tries to access a protected route, redirect to login
-  if (!token) {
-    console.log('No token found, redirecting to login...');
-    return NextResponse.redirect(new URL('/login', req.url));
+  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth')) {
+    return NextResponse.next();
   }
 
-  // Allow the request if the user is authenticated or if it's a public route
+  if (pathname.startsWith('/api/')) {
+    if (token) {
+      return NextResponse.next();
+    } else {
+      return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
+  if (!token) {
+    const loginUrl = new URL('/login', req.url);
+
+    loginUrl.searchParams.set('requestedUrl', encodeURIComponent(pathname));
+
+    console.log(`Redirecting to login. RequestedUrl:`, loginUrl.searchParams.get('requestedUrl'));
+    return NextResponse.redirect(loginUrl);
+  }
+
   return NextResponse.next();
 }
 
-// This config defines which routes the middleware should apply to
 export const config = {
-  matcher: ['/dashboard/:path*'],  // Apply to dashboard routes
+  matcher: [
+    '/api/:path*',
+    '/dashboard/:path*',
+    '/analytics/:path*',
+    '/channel-listening/:path*',
+    '/api/auth/:path*',
+    '/sdr_api/:path*'
+  ],
 };

@@ -41,6 +41,8 @@ When first loading/reloading/opening (TBD implementation), get a unique session-
 
 #### Responses Example
 
+	/api/active-channels
+
 	{
 		"code": 200,
 		"alive": [{
@@ -157,6 +159,8 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 
 #### Parameters Example
 
+	/api/analyics/data?black-list=[21892]&start-time=86400
+
 	{
 		"black-list": [21892],
 		"start-time": 86400
@@ -217,25 +221,65 @@ When requiring data \- either when initially requesting or when asking for perio
 Black list is efficient if one set of data is already received for a single analytics page
 While list is efficient if just one is wanted
 
-### GET /analytics/data-dump
+### GET /api/analytics/strength-dump
 
-#### Responses Parameters
+#### Parameters
 
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
-| code | Required | Integer | HTTP response code |
-| errors | Optional | List\[String\] | If response is not 2xx, error messages are here |
-| file | Optional | File | Analytics data for a single frequency |
+| white-list | Optional | List\[Integer\] | If used, only get data for these channels |
+| black-list | Optional | List\[Integer\] | If used, return data for all channels except these ones.Only one of white or black list should be included |
+| start-time | Required | Integer | Length of time ago (in seconds) to request data for |
+| end-time | Optional | Integer | Latest raw time (in seconds) that data should be requested until. If not included, assumed at late as possible |
 
-\*See below for example structure
+#### Parameters Example
 
-#### Responses Example
+	/api/analyics/strength-dump?black-list=[21892]&start-time=86400
 
 	{
-		"code": 200,
-		"file: ___
+		"black-list": [21892],
+		"start-time": 86400
 	}
+
+
+
+
+
+#### Responses 
+
+Respond will download a file "strength-data.csv" from the browser
 
 #### When to Use
 
-When a user requests the data dump file \- it is to be created on the web server and passed to the web interface by this request.
+When a user requests the data dump file for strength data \- it is to be created on the web server and passed to the web interface by this request.
+
+### GET /analytics/util-dump
+
+#### Parameters
+
+| Name | Type | Data Type | Description |
+| :---- | :---- | :---- | :---- |
+| white-list | Optional | List\[Integer\] | If used, only get data for these channels |
+| black-list | Optional | List\[Integer\] | If used, return data for all channels except these ones.Only one of white or black list should be included |
+| start-time | Required | Integer | Length of time ago (in seconds) to request data for |
+| end-time | Optional | Integer | Latest raw time (in seconds) that data should be requested until. If not included, assumed at late as possible |
+
+#### Parameters Example
+
+	/api/analyics/util-dump?black-list=[21892]&start-time=86400
+
+	{
+		"black-list": [21892],
+		"start-time": 86400
+	}
+
+
+
+
+#### Responses 
+
+Respond will download a file "util-data.csv" from the browser
+
+#### When to Use
+
+When a user requests the data dump file for utilisation data \- it is to be created on the web server and passed to the web interface by this request.
