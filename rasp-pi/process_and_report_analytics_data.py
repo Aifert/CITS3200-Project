@@ -100,8 +100,8 @@ RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each 
 K: float = 5.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
 # ...raise this value to raise your squelch floor for activity!
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
-DATA_ENDPOINT_FOR_SERVER: str = '/data' #where we should POST the data we gather
-SERVER_ADDRESS: str = 'TODO' #server's URL
+DATA_ENDPOINT_FOR_SERVER: str = '/api/data' #where we should POST the data we gather
+SERVER_ADDRESS: str = 'localhost:9000' #server's URL
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
@@ -519,6 +519,8 @@ def prepare_channel_data() -> str:
 # POST JSON DATA TO THE SERVER AT DATA_ENDPOINT_FOR_SERVER
 def upload_data(json_data_to_upload: str) -> bool:
     try:
+        print(json_data_to_upload)
+        """
         url = f"{SERVER_ADDRESS}{DATA_ENDPOINT_FOR_SERVER}"
         #headers for the request
         headers = {
@@ -534,6 +536,7 @@ def upload_data(json_data_to_upload: str) -> bool:
             print(f"Failed to upload data. Status code: {response.status_code}")
             print(f"Response: {response.text}")
             return False
+        """
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while uploading data: {e}")
         return False
