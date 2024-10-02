@@ -73,12 +73,12 @@ async function singlePopulate() {
       "address": "127.10.20.30:8980",
       "data": {
         467687500: {
-          "usage": Math.random() > 0.7 ? [[nowTime-5, nowTime]] : [],
+          "usage": Math.random() > 0.7 ? [[nowTime-5, "true"], [nowTime, "false"]] : [],
           "strength": {
           }
         },
         457712500: {
-          "usage": Math.random() > 0.7 ? [[nowTime-5, nowTime]] : [],
+          "usage": Math.random() > 0.7 ? [[nowTime-5, "true"], [nowTime, "false"]] : [],
           "strength": {
           }
         }
