@@ -1,8 +1,8 @@
 const axios = require('axios');
 
-async function startMonitor(SDR_URL, SDR_PORT, params) {
+async function startMonitorRadio(SDR_URL, SDR_PORT, params) {
   try {
-    const response = await axios.get(`${SDR_URL}:${SDR_PORT}/monitor/${params}`,{
+    const response = await axios.get(`${SDR_URL}:${SDR_PORT}/tune/${params}`,{
       responseType: 'stream',
       insecureHTTPParser: true,
     });
@@ -13,11 +13,37 @@ async function startMonitor(SDR_URL, SDR_PORT, params) {
   }
 }
 
+async function startMonitorMP3(SDR_URL, params) {
+  const queryParams = Object.entries(params)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+  const paramsStr = queryParams ? `?${queryParams}` : '';
+
+  try {
+    const tuneResponse = await axios.get(`${SDR_URL}tune${paramsStr}`);
+
+    if (tuneResponse.status === 200){
+      const streamResponse = await axios.get(`${SDR_URL}stream`, {
+        responseType: 'stream',
+        insecureHTTPParser: true,
+      });
+
+      return streamResponse.data;
+    }
+    else{
+      throw new Error('Error tuning to frequency');
+    }
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
+
 async function stopMonitor(SDR_URL, SDR_PORT){
     try {
-        await axios.get(`${SDR_URL}:${SDR_PORT}/monitor/stop`, {
-          insecureHTTPParser: true
-        });
+      console.log(`${SDR_URL}:${SDR_PORT}/api/monitor/stop`);
+      await axios.get(`${SDR_URL}:${SDR_PORT}/api/monitor/stop`, {
+        insecureHTTPParser: true
+      });
     } catch (error) {
         throw new Error(error.message);
     }
@@ -36,7 +62,7 @@ function decideMonitorMode(session_id, channel_id, frequency){
 }
 
 module.exports = {
-  startMonitor,
+  startMonitorMP3,
   stopMonitor,
   decideMonitorMode
 }
