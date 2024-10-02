@@ -102,7 +102,8 @@ const AnalyticsPage = () => {
 
       const queryString = new URLSearchParams({
         'start-time': timeScale,
-        'sample-rate': sampleRate, 
+        'sample-rate': sampleRate,
+        'avg-data': true, 
         'whitelist': `[${channelIds.join(',')}]`
       }).toString();
 
@@ -116,7 +117,13 @@ const AnalyticsPage = () => {
         const channelId = channel['channel-id'];
         const analyticsForChannel = analyticsData?.[channelId] || {};
         const strengthData = analyticsForChannel?.strength?.values || {};
-        const utilisationData = analyticsForChannel?.utilisation?.values || [];
+        const utilisationData = analyticsForChannel?.utilisation?.zones || [];
+
+        const utilisationArray = Object.values(utilisationData).map(val => val ?? null);
+        const utilisationLabels = Object.keys(utilisationData);
+        const formattedutilisationLabels = utilisationLabels.map((label, index) => {
+          return formatTimeLabelDirectly(index, timeScales[selectedTimeScale].sampleRate);
+        });
 
         const strengthArray = Object.values(strengthData).map(val => val ?? null);
         const strengthLabels = Object.keys(strengthData);
@@ -124,18 +131,12 @@ const AnalyticsPage = () => {
           return formatTimeLabelDirectly(index, timeScales[selectedTimeScale].sampleRate);
         });
 
-        const utilizationLabels = utilisationData.map(util => {
-          const startTime = new Date(util[0] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          const endTime = new Date(util[1] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          return `${startTime} - ${endTime}`;
-        });
-
-        const dataUtilization = utilisationData.length
+        const dataUtilisation = utilisationArray.length
           ? {
-              labels: utilizationLabels,
+              labels: formattedutilisationLabels.reverse(),
               datasets: [{
-                label: 'Utilization Over Time',
-                data: utilisationData.map(util => util[1] - util[0]),
+                label: 'Utilisation Over Time',
+                data: utilisationArray.reverse(),
                 borderColor: 'rgb(75, 192, 192)',
                 tension: 0.1,
               }],
@@ -158,9 +159,9 @@ const AnalyticsPage = () => {
           status: channel.status,
           name: channel['channel-name'],
           frequency: channel.frequency / 1e6,  // Convert frequency to MHz
-          utilization: analyticsForChannel?.utilisation?.average ? analyticsForChannel?.utilisation?.average.toFixed(3) : 'No data',
+          utilisation: analyticsForChannel?.utilisation?.average ? analyticsForChannel?.utilisation?.average.toFixed(3) : 'No data',
           strength: analyticsForChannel?.strength?.average ? analyticsForChannel?.strength?.average.toFixed(3) : 'No data',
-          dataUtilization,
+          dataUtilisation,
           dataStrength,
           isFavorite: channel.isFavorite,
           id: channel['channel-id'],
@@ -233,8 +234,9 @@ const AnalyticsPage = () => {
               </button>
             </div>
             <div className="flex items-center justify-center border-r border-gray-300">
-              <span>{channel.utilization}</span>
-              <p>Utilization</p>
+              {console.log('Channel Utilisation:', channel.utilisation)}
+              <span>{channel.utilisation}</span>
+              <p>Utilisation</p>
             </div>
             <div className="flex items-center justify-center">
               <span>{channel.strength}</span>
@@ -244,12 +246,33 @@ const AnalyticsPage = () => {
 
           {/* Second Row: Graphs */}
           <div className="grid grid-cols-2 gap-4 p-4 bg-white">
-            {/* Utilization Over Time Graph */}
+            {/* Utilisation Over Time Graph */}
             <div>
-              {typeof channel.dataUtilization === 'string' ? (
-                <p>{channel.dataUtilization}</p>
+              {typeof channel.dataUtilisation === 'string' ? (
+                <p>{channel.dataUtilisation}</p>
               ) : (
-                <Line data={channel.dataUtilization} options={{ maintainAspectRatio: false }} />
+                <Line 
+                  data={channel.dataUtilisation} 
+                  options={{ 
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        min: 0,
+                        max: 100,
+                        title: {
+                          display: true,
+                          text: 'Utilisation (%)',
+                        },
+                      },
+                      x: {
+                        title: {
+                          display: true,
+                          text: 'Time Ago',
+                        },
+                      },
+                    }, 
+                  }} 
+                />
               )}
             </div>
             {/* Strength Over Time Graph */}
@@ -267,7 +290,7 @@ const AnalyticsPage = () => {
                         max: -70,
                         title: {
                           display: true,
-                          text: 'Signal Strength (dBm)',
+                          text: 'Strength (dBm)',
                         },
                       },
                       x: {
