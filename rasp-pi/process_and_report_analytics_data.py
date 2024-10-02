@@ -10,6 +10,9 @@ import hashlib #for hashing the MAC address of SoC, a portion of which will be s
 import socket #for getting the IP address of the SoC, which will be sent to the server
 import json #for dumping a python dictionary into a json string with .dumps()
 import requests #for POSTing data to the server
+import threading #for running rtl_power in parallel
+import subprocess #for spawning rtl power
+import shutil #for copying csv files
 
 #component of SESChannel, represents a timestamp of a channel beginning use (start time) or ending use (stop time)
 class UtilizationState:
@@ -94,6 +97,7 @@ SLIDING_WINDOWS_BAND_SIZE_MAX_HZ: int = 2000000 #2MHz (represented in Hz), maxim
 SES_CHANNEL_LIST_FILE_NAME = 'SESChannelList.csv'
 SES_CHANNEL_FOLDER_NAME = 'SESChannelList'
 RTL_POWER_OUTPUT_FILE_NAME = 'rtl_power_output.csv'
+RTL_POWER_IN_PROGRESS_FILE_NAME = 'rtl_power_in_progress.csv'
 RTL_POWER_OUTPUT_FOLDER_NAME = 'rtl_powerOutput'
 NUM_RTL_POWER_CONTEXT_COLUMNS = 6
 RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each sample, rtl_power supports a minimum of 1sec
@@ -434,7 +438,8 @@ def print_which_channels_have_utilization():
             if(utilization_state.is_start_time):
                 has_utilization = True
         if(has_utilization):
-            print(f"{channel.name} has utilization!")
+            pass
+            #print(f"{channel.name} has utilization!")
 
 # FOR EACH SESChannel IN SES_channels RECORD THE VERY LAST rtl_power_output_temporal_samples AT YOUR index_to_spectrum_decibel_datapoints
 # ...AS THE SignalStrengthSample ENTRY IN YOUR signal_strength_samples
@@ -519,7 +524,6 @@ def prepare_channel_data() -> str:
 # POST JSON DATA TO THE SERVER AT DATA_ENDPOINT_FOR_SERVER
 def upload_data(json_data_to_upload: str) -> bool:
     try:
-        print(json_data_to_upload)
         """
         url = f"{SERVER_ADDRESS}{DATA_ENDPOINT_FOR_SERVER}"
         #headers for the request
@@ -541,10 +545,16 @@ def upload_data(json_data_to_upload: str) -> bool:
         print(f"An error occurred while uploading data: {e}")
         return False
 
-# (WORK IN PROGRESS) DOESN'T RUN rtl_power YET OR RERUN rtl_power WITH THREADING
-# ...aka works on a static pre-generated data file without temporal or threading aspects (TODO)
-def main():
-    #python global statements (for assigning to our global variables)
+def run_rtl_power():
+    # Hi Joseph! LOOP FROM HERE, AND USE min_rtl_power_frequency_hz AND max_rtl_power_frequency_hz AS YOUR rtl_power FREQUENCY RANGE
+    # ...AND USE int(min_distance_between_frequencies_hz * 0.5) AS YOUR BIN SIZE FOR rtl_power
+    # ...the other rtl_power parameters you can read about in README.md, I think gain should be reduced to 1db from 25db (set these as CONSTANTS)
+
+    # RUN rtl_power (TODO)
+    subprocess.run(["rtl_power", "-f 161.0125M:165.238M:6250", "-d 0", "-g 25", "-i 1", "-e 60", RTL_POWER_IN_PROGRESS_FILE_NAME])
+
+
+def parse_SES_channels():
     global SES_channels
 
     # QUERY SERVER TO DETERMINE IF targeting_VHF (TODO, add to docs too)
@@ -576,11 +586,11 @@ def main():
     # ...ensure there is at least 1Hz difference between min & max, else rtl_power will generate a file 0.5Gb large with a sample rate of 0Hz! Insert this 1Hz if it's needed.
     set_rtl_power_frequency_range()
 
-    # Hi Joseph! LOOP FROM HERE, AND USE min_rtl_power_frequency_hz AND max_rtl_power_frequency_hz AS YOUR rtl_power FREQUENCY RANGE
-    # ...AND USE int(min_distance_between_frequencies_hz * 0.5) AS YOUR BIN SIZE FOR rtl_power
-    # ...the other rtl_power parameters you can read about in README.md, I think gain should be reduced to 1db from 25db (set these as CONSTANTS)
+def main():
+    #python global statements (for assigning to our global variables)
+    global SES_channels
+    parse_SES_channels() #Just so the data structures get cleared nicely, and its a quick operation, do it again
 
-    # RUN rtl_power (TODO)
 
     # QUERY SERVER TO DETERMINE ANY ADJUSTMENTS TO SQUELCH LEVEL VIA K (TODO, decent extra functionality but optional for now)
 
@@ -643,5 +653,24 @@ def main():
 
     pass #DEBUG breakpoint handle
 
+def copy_new_csv_data():
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    full_path_to_rtl_power_output = os.path.join(current_directory + '/' + RTL_POWER_OUTPUT_FOLDER_NAME, RTL_POWER_OUTPUT_FILE_NAME)
+    full_path_to_rtl_power_in_progress = os.path.join(current_directory + '/' + RTL_POWER_OUTPUT_FOLDER_NAME, RTL_POWER_IN_PROGRESS_FILE_NAME)
+    shutil.copyfile(full_path_to_rtl_power_in_progress, full_path_to_rtl_power_output)
+
 if __name__ == "__main__":
-    main()
+    first_time = False #So we don't parse the file on the first run
+    while True:
+        t1 = threading.Thread(target=main)
+        if not first_time:
+            first_time = True
+            t1 = threading.Thread(target=print, args=("SKIPPING",))
+        t2 = threading.Thread(target=run_rtl_power)
+        t2.start()
+        t1.start()
+
+        t1.join()
+        t2.join()
+
+        copy_new_csv_data()
