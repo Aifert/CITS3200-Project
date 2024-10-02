@@ -12,11 +12,17 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [timeScale, setTimeScale] = useState(86400);
+  const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours'); // Default to '24 hours'
   const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}api/` || 'http://localhost:9000/api/';
 
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  const timeScales = {
+    '24 hours': { timeScale: 86400, sampleRate: 1800 },
+    '7 days': { timeScale: 86400 * 7, sampleRate: 43200 },
+    '30 days': { timeScale: 86400 * 30, sampleRate: 86400 }
+  };
 
   const makeApiRequest = useCallback(async (url, options = {}) => {
     console.log(`Making API request to: ${url}`); // Log the URL being called
@@ -57,13 +63,9 @@ const AnalyticsPage = () => {
     }
   }, [status, router]);
 
-  const timeScales = {
-    '24 hours': 86400,
-    '7 days': 86400 * 7,
-    '30 days': 86400 * 30,
-  };
-
   useEffect(() => {
+    const { timeScale, sampleRate } = timeScales[selectedTimeScale]; // Get timeScale and sampleRate from the selected time scale
+
     const fetchChannelData = async () => {
       if (status !== 'authenticated') return;
 
@@ -71,105 +73,88 @@ const AnalyticsPage = () => {
         const activeChannelsData = await makeApiRequest(`${backendUrl}active-channels`);
         console.log('Active channels response:', activeChannelsData); // Log active channels data
 
-        // Check if activeChannelsData is valid
         if (!activeChannelsData || (!activeChannelsData.active && !activeChannelsData.offline && !activeChannelsData.busy)) {
           setErrorMessage('No active, offline, or busy channels found.');
           return;
         }
 
-        if (activeChannelsData.active || activeChannelsData.offline || activeChannelsData.busy) {
-          const allChannels = [
-            ...activeChannelsData.active?.map(channel => ({ ...channel, status: 'Active' })) || [],
-            ...activeChannelsData.offline?.map(channel => ({ ...channel, status: 'Offline' })) || [],
-            ...activeChannelsData.busy?.map(channel => ({ ...channel, status: 'Busy' })) || [],
-          ];
+        const allChannels = [
+          ...activeChannelsData.active?.map(channel => ({ ...channel, status: 'Active' })) || [],
+          ...activeChannelsData.offline?.map(channel => ({ ...channel, status: 'Offline' })) || [],
+          ...activeChannelsData.busy?.map(channel => ({ ...channel, status: 'Busy' })) || [],
+        ];
 
-          const channelIds = allChannels.map(channel => channel['channel-id']);
+        const channelIds = allChannels.map(channel => channel['channel-id']);
 
-          const queryString = new URLSearchParams({
-            'start-time': timeScale, // Dynamic based on the selected time scale
-            'whitelist': `[${channelIds.join(',')}]`
-          }).toString();
+        const queryString = new URLSearchParams({
+          'start-time': timeScale,
+          'sample-rate': sampleRate, 
+          'whitelist': `[${channelIds.join(',')}]`
+        }).toString();
 
-          const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
-          console.log('Fetching analytics data from:', analyticsUrl); // Log the URL for analytics data
+        const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
+        console.log('Fetching analytics data from:', analyticsUrl); // Log the URL for analytics data
 
-          const analyticsData = await makeApiRequest(analyticsUrl);
-          console.log('Analytics data response:', analyticsData); // Log analytics data
+        const analyticsData = await makeApiRequest(analyticsUrl);
+        console.log('Analytics data response:', analyticsData); // Log analytics data
 
-          if (analyticsData) {
-            const processedData = allChannels.map(channel => {
-              const channelId = channel['channel-id'];
-              const analyticsForChannel = analyticsData?.[channelId] || {};  
-              const strengthData = analyticsForChannel?.strength?.values || {};  
-              const utilisationData = analyticsForChannel?.utilisation?.values || [];  
+        const processedData = allChannels.map(channel => {
+          const channelId = channel['channel-id'];
+          const analyticsForChannel = analyticsData?.[channelId] || {};
+          const strengthData = analyticsForChannel?.strength?.values || {};
+          const utilisationData = analyticsForChannel?.utilisation?.values || [];
 
-              // Check if data exists for the channel
-              const hasStrengthData = Object.keys(strengthData).length > 0;
-              const hasUtilizationData = utilisationData.length > 0;
+          // Convert strength data to an array and handle null values
+          const strengthArray = Object.values(strengthData).map(val => val ?? -110);
 
-              // Get the last timestamp for relative time calculation
-              const lastTimestamp = hasStrengthData
-                ? Math.max(...Object.keys(strengthData).map(Number))
-                : null;
+          // Use the keys from the strength data object as x-axis labels
+          const strengthLabels = Object.keys(strengthData);
 
-              // Convert timestamps for strength graph into relative time
-              const strengthLabels = hasStrengthData
-                ? Object.keys(strengthData).map(timestamp => {
-                    const deltaSeconds = lastTimestamp - timestamp;  // Time difference in seconds
-                    return `${deltaSeconds}`;
-                  })
-                : [];
+          const utilizationLabels = utilisationData.map(util => {
+            const startTime = new Date(util[0] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const endTime = new Date(util[1] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `${startTime} - ${endTime}`;
+          });
 
-              const utilizationLabels = utilisationData.map(util => {
-                const startTime = new Date(util[0] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const endTime = new Date(util[1] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                return `${startTime} - ${endTime}`; 
-              });
+          const dataUtilization = utilisationData.length
+            ? {
+                labels: utilizationLabels,
+                datasets: [{
+                  label: 'Utilization Over Time',
+                  data: utilisationData.map(util => util[1] - util[0]),
+                  borderColor: 'rgb(75, 192, 192)',
+                  tension: 0.1,
+                }],
+              }
+            : 'No data';
 
-              // Create data for graphs
-              const dataUtilization = hasUtilizationData
-                ? {
-                    labels: utilizationLabels,
-                    datasets: [{
-                      label: 'Utilization Over Time',
-                      data: utilisationData.map(util => util[1] - util[0]), // Placeholder random data for utilization (duration)
-                      borderColor: 'rgb(75, 192, 192)',
-                      tension: 0.1,
-                    }],
-                  }
-                : 'No data';
+          const dataStrength = strengthArray.length
+            ? {
+                labels: strengthLabels, // Use keys as x-axis labels
+                datasets: [{
+                  label: 'Strength Over Time (dBm)',
+                  data: strengthArray,
+                  borderColor: 'rgb(255, 99, 132)',
+                  tension: 0.1,
+                }],
+              }
+            : 'No data';
 
-              const dataStrength = hasStrengthData
-                ? {
-                    labels: strengthLabels, 
-                    datasets: [{
-                      label: 'Strength Over Time (dBm)',
-                      data: Object.values(strengthData),
-                      borderColor: 'rgb(255, 99, 132)',
-                      tension: 0.1,
-                    }],
-                  }
-                : 'No data';
+          return {
+            status: channel.status,
+            name: channel['channel-name'],
+            frequency: channel.frequency / 1e6,  // Convert frequency to MHz
+            utilization: analyticsForChannel?.utilisation?.average ? analyticsForChannel?.utilisation?.average.toFixed(3) : 'No data',
+            strength: analyticsForChannel?.strength?.average ? analyticsForChannel?.strength?.average.toFixed(3) : 'No data',
+            dataUtilization,
+            dataStrength,
+            isFavorite: channel.isFavorite,
+            id: channel['channel-id'],
+          };
+        });
+        console.log('Processed Data:', processedData); // Log processed data before setting state
+        setChannelData(processedData);
 
-              return {
-                status: channel.status,
-                name: channel['channel-name'],
-                frequency: channel.frequency / 1e6,  // Convert frequency to MHz
-                utilization: hasUtilizationData ? (analyticsForChannel?.utilisation?.average?.toFixed(3) || 'No data') : 'No data',
-                strength: hasStrengthData ? (analyticsForChannel?.strength?.average?.toFixed(3) || 'No data') : 'No data',
-                dataUtilization,
-                dataStrength,
-                isFavorite: channel.isFavorite,
-                id: channel['channel-id'],
-              };
-            });
-            console.log('Processed Data:', processedData); // Log processed data before setting state
-            setChannelData(processedData);
-          }
-        } else {
-          setErrorMessage('No active channels found');
-        }
       } catch (error) {
         console.error('Fetch error:', error);
         setErrorMessage('Fetch error: ' + error.message);
@@ -177,7 +162,7 @@ const AnalyticsPage = () => {
     };
 
     fetchChannelData();
-  }, [timeScale, status, router, backendUrl, makeApiRequest]); // Re-fetch data when time scale changes
+  }, [selectedTimeScale, status, router, backendUrl, makeApiRequest]); // Re-fetch data when time scale changes
 
   // Function to toggle favorite status of a channel
   const toggleFavorite = (channelId) => {
@@ -204,12 +189,12 @@ const AnalyticsPage = () => {
       <div className="mb-6">
         <label className="mr-2">Select Time Scale:</label>
         <select
-          value={timeScale}
-          onChange={e => setTimeScale(Number(e.target.value))} // Update the time scale
+          value={selectedTimeScale}
+          onChange={e => setSelectedTimeScale(e.target.value)} // Update the time scale
           className="p-2 border border-gray-300 rounded"
         >
-          {Object.entries(timeScales).map(([label, value]) => (
-            <option key={value} value={value}>
+          {Object.keys(timeScales).map(label => (
+            <option key={label} value={label}>
               {label}
             </option>
           ))}
@@ -238,16 +223,10 @@ const AnalyticsPage = () => {
               </button>
             </div>
             <div className="flex items-center justify-center border-r border-gray-300">
-              <div>
-                <span>{channel.utilization}</span>
-                <p>Utilization</p>
-              </div>
+              {channel.utilization}
             </div>
             <div className="flex items-center justify-center">
-              <div>
-                <span>{channel.strength}</span>
-                <p>Signal Strength (dBm)</p>
-              </div>
+              {channel.strength}
             </div>
           </div>
 
@@ -282,7 +261,7 @@ const AnalyticsPage = () => {
                       x: {
                         title: {
                           display: true,
-                          text: 'Time (relative, seconds ago)',
+                          text: 'Data Point',
                         },
                       },
                     },
