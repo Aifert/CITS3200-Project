@@ -153,17 +153,21 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
 | white-list | Optional | List\[Integer\] | If used, only get data for these channels |
-| black-list | Optional | List\[Integer\] | If used, return data for all channels except these ones.Only one of white or black list should be included |
+| black-list | Optional | List\[Integer\] | If used, return data for all channels except these ones. Only one of white or black list should be included |
 | start-time | Required | Integer | Length of time ago (in seconds) to request data for |
 | end-time | Optional | Integer | Latest raw time (in seconds) that data should be requested until. If not included, assumed at late as possible |
+| sample-rate | Optional | Integer | Length of time to merge into a single average datapoint. Default is daily |
+| avg-data | optional | Boolean | Whether or not to calculate utilisation averages for this time period, instead of uptime pairs. Default is false |
 
 #### Parameters Example
 
-	/api/analyics/data?black-list=[21892]&start-time=86400
+	/api/analyics/data?black-list=[21892]&start-time=86400&sample-rate=1800&avg-data=false
 
 	{
 		"black-list": [21892],
-		"start-time": 86400
+		"start-time": 86400,
+		"sample-rate": 1800,
+		"avg-data": false
 	}
 
 #### Responses Parameters
@@ -178,14 +182,16 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 
 #### Responses Example
 
+For avg-data = false:
+
 	{
 		"code": 200,
 		"data": {
 			21892: {
 				"strength": {
 					"values": {
-						1724322719: -80.3,
-						1724322724: -85.5
+						0: -80.3,
+						1: -85.5
 					},
 					"average": -82.7
 				},
@@ -200,8 +206,8 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 			192838: {
 				"strength": {
 					"values" : {
-						1724322720: -100.6,
-						1724322725: -90.65
+						0: -100.6,
+						1: -90.65
 					},
 					"average": -95.63
 				},
@@ -215,6 +221,44 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 		}
 	}
 
+For avg-data = true:
+
+	{
+		"code": 200,
+		"data": {
+			21892: {
+				"strength": {
+					"values": {
+						0: -80.3,
+						1: -85.5
+					},
+					"average": -82.7
+				},
+				"utilisation": {
+					"zones" : {
+						0: 53.333,
+						1: 100.0
+					"average": 79.54
+				}
+			}
+			192838: {
+				"strength": {
+					"values" : {
+						0: -100.6,
+						1: -90.65
+					},
+					"average": -95.63
+				},
+				"utilisation": {
+					"values": {
+						0: 16.66,
+						1: 0.0
+					},
+					"average": 100.0
+				}
+			}
+		}
+	}
 #### When to Use
 
 When requiring data \- either when initially requesting or when asking for periodic updates \- for a specific list or for all of the channels.
@@ -240,9 +284,6 @@ While list is efficient if just one is wanted
 		"black-list": [21892],
 		"start-time": 86400
 	}
-
-
-
 
 
 #### Responses 
@@ -283,3 +324,43 @@ Respond will download a file "util-data.csv" from the browser
 #### When to Use
 
 When a user requests the data dump file for utilisation data \- it is to be created on the web server and passed to the web interface by this request.
+
+## HTTP from Front-end → WebServer Notifications
+
+### GET api/notification
+
+#### Parameters
+
+| Name | Type | Data Type | Description |
+| :---- | :---- | :---- | :---- |
+| channel_id | Required | Integer: List\[Integer\] | A set of 3 query values per specified channel|
+
+#### Parameters Example
+
+	/api/notification?21892=[-100, 5, 3600]&2098=[-110, 20, 86400]
+
+	{
+		21892: [-100, 5, 3600], //Index 0 is Strength cut off for a notification.
+		2098: [-110, 20, 86400] //Index 1 is % cur off for utilisation, Index 2 is time period to measure % over
+	}
+
+#### Responses Parameters
+
+| Name | Type | Data Type | Description |
+| :---- | :---- | :---- | :---- |
+| strength | Required | Boolean | True if is above threshold, False if below, null if not alive |
+| util | Required | Boolean | True if is above threshold, False if below |
+
+
+\*See below for example structure
+
+#### Responses Example
+
+	{
+		"strength": true,
+		"util": false
+	}
+
+#### When to Use
+
+Is designed to be queried once a minute, with information about the states of the requested notifications. The front-end should display a notification whenever the booleans change
