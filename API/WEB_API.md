@@ -286,9 +286,6 @@ While list is efficient if just one is wanted
 	}
 
 
-
-
-
 #### Responses 
 
 Respond will download a file "strength-data.csv" from the browser
@@ -327,3 +324,43 @@ Respond will download a file "util-data.csv" from the browser
 #### When to Use
 
 When a user requests the data dump file for utilisation data \- it is to be created on the web server and passed to the web interface by this request.
+
+## HTTP from Front-end → WebServer Notifications
+
+### GET api/notification
+
+#### Parameters
+
+| Name | Type | Data Type | Description |
+| :---- | :---- | :---- | :---- |
+| channel_id | Required | Integer: List\[Integer\] | A set of 3 query values per specified channel|
+
+#### Parameters Example
+
+	/api/notification?21892=[-100, 5, 3600]&2098=[-110, 20, 86400]
+
+	{
+		21892: [-100, 5, 3600], //Index 0 is Strength cut off for a notification.
+		2098: [-110, 20, 86400] //Index 1 is % cur off for utilisation, Index 2 is time period to measure % over
+	}
+
+#### Responses Parameters
+
+| Name | Type | Data Type | Description |
+| :---- | :---- | :---- | :---- |
+| strength | Required | Boolean | True if is above threshold, False if below, null if not alive |
+| util | Required | Boolean | True if is above threshold, False if below |
+
+
+\*See below for example structure
+
+#### Responses Example
+
+	{
+		"strength": true,
+		"util": false
+	}
+
+#### When to Use
+
+Is designed to be queried once a minute, with information about the states of the requested notifications. The front-end should display a notification whenever the booleans change
