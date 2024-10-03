@@ -15,7 +15,10 @@ const {
   getBusyChannels,
   getChannelStrength,
   getChannelUtilisation,
-  processIncomingData
+  processIncomingData,
+  generateStrengthDataDump,
+  generateUtilDataDump,
+  checkNotificationState
 } = require('./model_utils.js');
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -214,13 +217,10 @@ app.get('/api/active-channels', async (req, res) => {
 });
 
 app.get('/api/analytics/data', async (req, res) => {
-  if (!is_populating) {
-    await singlePopulate();
-  }
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
-    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
+    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
   }
   try{
     const strengthData = await getChannelStrength(requestObj)
@@ -247,6 +247,35 @@ app.get('/api/analytics/data', async (req, res) => {
   }
 });
 
+app.get('/api/notification', async (req, res) => {
+  const sendObj = req.query;
+  let requestObj = {}
+  for (const elem in sendObj) {
+    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
+  }
+  res.send(await checkNotificationState(requestObj, "testdbmu"));
+});
+
+//http://localhost:9000/api/notification?1=[-100, 5, 600]
+app.get('/api/strength-dump', async (req, res) => {
+  const sendObj = req.query;
+  let requestObj = {}
+  for (const elem in sendObj) {
+    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
+  }
+  const myFile = await generateStrengthDataDump(requestObj, "testdbmu");
+  res.attachment("strength-data.csv").send(myFile);
+});
+
+app.get('/api/util-dump', async (req, res) => {
+  const sendObj = req.query;
+  let requestObj = {}
+  for (const elem in sendObj) {
+    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
+  }
+  const myFile = await generateUtilDataDump(requestObj, "testdbmu");
+  res.attachment("util-data.csv").send(myFile);
+});
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
