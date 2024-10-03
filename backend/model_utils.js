@@ -178,7 +178,8 @@ async function getChannelStrength(requestObj, dbName) {
               WHERE c_id ${cond} GROUP BY c_id`;
   let aveStrength = await client.query(query2);
 
-  let maxZone = 24*60*60*30/sampleRate;
+const SECONDS_IN_A_DAY = 86400;
+let maxZone = SECONDS_IN_A_DAY / sampleRate;
   let minZone = 0
 
    if ("start-time" in requestObj) {
