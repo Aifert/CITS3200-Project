@@ -104,8 +104,8 @@ RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each 
 K: float = 5.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
 # ...raise this value to raise your squelch floor for activity!
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
-DATA_ENDPOINT_FOR_SERVER: str = '/api/data' #where we should POST the data we gather
-SERVER_ADDRESS: str = 'localhost:9000' #server's URL
+DATA_ENDPOINT_FOR_SERVER: str = '/apioverride/data' #where we should POST the data we gather
+SERVER_ADDRESS: str = 'http://localhost:9000' #server's URL
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
@@ -524,7 +524,6 @@ def prepare_channel_data() -> str:
 # POST JSON DATA TO THE SERVER AT DATA_ENDPOINT_FOR_SERVER
 def upload_data(json_data_to_upload: str) -> bool:
     try:
-        """
         url = f"{SERVER_ADDRESS}{DATA_ENDPOINT_FOR_SERVER}"
         #headers for the request
         headers = {
@@ -540,7 +539,6 @@ def upload_data(json_data_to_upload: str) -> bool:
             print(f"Failed to upload data. Status code: {response.status_code}")
             print(f"Response: {response.text}")
             return False
-        """
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while uploading data: {e}")
         return False
@@ -551,7 +549,8 @@ def run_rtl_power():
     # ...the other rtl_power parameters you can read about in README.md, I think gain should be reduced to 1db from 25db (set these as CONSTANTS)
 
     # RUN rtl_power (TODO)
-    subprocess.run(["rtl_power", "-f 161.0125M:165.238M:6250", "-d 0", "-g 25", "-i 1", "-e 60", RTL_POWER_OUTPUT_FOLDER_NAME+"/"+RTL_POWER_IN_PROGRESS_FILE_NAME])
+    subprocess.run(["python3", "rtl_power_sim.py"])
+    #subprocess.run(["rtl_power", "-f 161.0125M:165.238M:6250", "-d 0", "-g 25", "-i 1", "-e 60", RTL_POWER_OUTPUT_FOLDER_NAME+"/"+RTL_POWER_IN_PROGRESS_FILE_NAME])
 
 
 def parse_SES_channels():
