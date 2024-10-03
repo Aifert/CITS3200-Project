@@ -12,7 +12,7 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip)
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours'); // Default to '24 hours'
+  const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
   const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}api/` || 'http://localhost:9000/api/';
 
   const { data: session, status } = useSession();
@@ -29,24 +29,22 @@ const AnalyticsPage = () => {
   };
   
   const formatTimeLabelDirectly = (index, sampleRate) => {
-    // Calculate the number of seconds ago based on the sample rate and index
     const secondsAgo = sampleRate * (index + 1);
     
-    // Convert seconds into human-readable format with decimal precision
     if (secondsAgo >= 86400) {
-      const daysAgo = (secondsAgo / 86400).toFixed(2); // Get days with up to 2 decimal places
+      const daysAgo = (secondsAgo / 86400).toFixed(2);
       return `${daysAgo} day(s)`;
     } else if (secondsAgo >= 3600) {
-      const hoursAgo = (secondsAgo / 3600).toFixed(2); // Get hours with up to 2 decimal places
+      const hoursAgo = (secondsAgo / 3600).toFixed(2); 
       return `${hoursAgo} hour(s)`;
     } else {
-      const minutesAgo = (secondsAgo / 60).toFixed(2); // Get minutes with up to 2 decimal places
+      const minutesAgo = (secondsAgo / 60).toFixed(2); 
       return `${minutesAgo} minute(s)`;
     }
   };
 
   const makeApiRequest = useCallback(async (url, options = {}) => {
-    console.log(`Making API request to: ${url}`); // Log the URL being called
+    console.log(`Making API request to: ${url}`); 
 
     if (!session || !session.accessToken) {
       setErrorMessage('No active session. Please log in.');
@@ -65,11 +63,11 @@ const AnalyticsPage = () => {
       const responseData = await response.json();
 
       if (!response.ok) {
-        console.log(`Error Response:`, responseData); // Log error response if API request fails
+        console.log(`Error Response:`, responseData); 
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.log(`API Response Data from ${url}:`, responseData); // Log the returned data
+      console.log(`API Response Data from ${url}:`, responseData); 
       return responseData;
     } catch (error) {
       console.error('API request failed:', error);
@@ -79,13 +77,13 @@ const AnalyticsPage = () => {
   }, [session, router]);
 
   const fetchChannelData = useCallback(async () => {
-    const { timeScale, sampleRate } = timeScales[selectedTimeScale]; // Get timeScale and sampleRate from the selected time scale
+    const { timeScale, sampleRate } = timeScales[selectedTimeScale];
 
     if (status !== 'authenticated') return;
 
     try {
       const activeChannelsData = await makeApiRequest(`${backendUrl}active-channels`);
-      console.log('Active channels response:', activeChannelsData); // Log active channels data
+      console.log('Active channels response:', activeChannelsData);
 
       if (!activeChannelsData || (!activeChannelsData.active && !activeChannelsData.offline && !activeChannelsData.busy)) {
         setErrorMessage('No active, offline, or busy channels found.');
@@ -108,10 +106,10 @@ const AnalyticsPage = () => {
       }).toString();
 
       const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
-      console.log('Fetching analytics data from:', analyticsUrl); // Log the URL for analytics data
+      console.log('Fetching analytics data from:', analyticsUrl); 
 
       const analyticsData = await makeApiRequest(analyticsUrl);
-      console.log('Analytics data response:', analyticsData); // Log analytics data
+      console.log('Analytics data response:', analyticsData);
 
       const processedData = allChannels.map(channel => {
         const channelId = channel['channel-id'];
@@ -145,10 +143,10 @@ const AnalyticsPage = () => {
 
         const dataStrength = strengthArray.length
           ? {
-              labels: formattedStrengthLabels.reverse(), // Reverse the labels for the x-axis
+              labels: formattedStrengthLabels.reverse(), 
               datasets: [{
                 label: 'Strength Over Time (dBm)',
-                data: strengthArray.reverse(), // Reverse the data array so that it matches the reversed labels
+                data: strengthArray.reverse(),
                 borderColor: 'rgb(255, 99, 132)',
                 tension: 0.1,
               }],
@@ -158,7 +156,7 @@ const AnalyticsPage = () => {
         return {
           status: channel.status,
           name: channel['channel-name'],
-          frequency: channel.frequency / 1e6,  // Convert frequency to MHz
+          frequency: channel.frequency / 1e6,
           utilisation: analyticsForChannel?.utilisation?.average ? analyticsForChannel?.utilisation?.average.toFixed(3) : 'No data',
           strength: analyticsForChannel?.strength?.average ? analyticsForChannel?.strength?.average.toFixed(3) : 'No data',
           dataUtilisation,
@@ -167,7 +165,7 @@ const AnalyticsPage = () => {
           id: channel['channel-id'],
         };
       });
-      console.log('Processed Data:', processedData); // Log processed data before setting state
+      console.log('Processed Data:', processedData);
       setChannelData(processedData);
 
     } catch (error) {
@@ -177,18 +175,22 @@ const AnalyticsPage = () => {
   }, [selectedTimeScale, status, backendUrl, makeApiRequest]);
 
   useEffect(() => {
-    fetchChannelData(); // Initial fetch
+    fetchChannelData();
 
     const { sampleRate } = timeScales[selectedTimeScale];
-
-    // Set up an interval to refetch data based on the sampleRate
     const intervalId = setInterval(() => {
       fetchChannelData();
-    }, sampleRate * 1000); // Convert sampleRate (seconds) to milliseconds
+    }, sampleRate * 1000); 
 
-    return () => clearInterval(intervalId); // Clean up the interval when the component unmounts or dependencies change
+    return () => clearInterval(intervalId);
   }, [selectedTimeScale, fetchChannelData]);
 
+  const downloadData = (channelId, dataType, type) => {
+    const { timeScale } = timeScales[selectedTimeScale];
+    const list = channelId ? `[${channelId}]` : '[]'; 
+    const url = `${backendUrl}analytics/${dataType}-dump?${type}=${list}&start-time=${timeScale}`;
+    window.location.href = url;
+  };
 
   return (
     <div className="container mx-auto p-6">
@@ -212,6 +214,16 @@ const AnalyticsPage = () => {
         </select>
       </div>
 
+      <button 
+        onClick={() => {
+          downloadData(null, 'strength', 'blacklist');
+          downloadData(null, 'util', 'blacklist');
+        }} 
+        className="ml-2 text-blue-600"
+      >
+        <i className="fas fa-download"></i> Download All
+      </button>
+
       {channelData.map((channel, index) => (
         <div key={index} className="mb-10">
           {/* First Row: Channel Information */}
@@ -234,13 +246,16 @@ const AnalyticsPage = () => {
               </button>
             </div>
             <div className="flex items-center justify-center border-r border-gray-300">
-              {console.log('Channel Utilisation:', channel.utilisation)}
-              <span>{channel.utilisation}</span>
-              <p>Utilisation</p>
+              <span>Utilisation: {channel.utilisation}</span>
+              <button onClick={() => downloadData(channel.id, 'util', 'whitelist')} className="ml-2 text-blue-600">
+                <i className="fas fa-download"></i>
+              </button>
             </div>
             <div className="flex items-center justify-center">
-              <span>{channel.strength}</span>
-              <p>Strength (dBm)</p>
+              <span>Strength: {channel.strength}</span>
+              <button onClick={() => downloadData(channel.id, 'strength', 'whitelist')} className="ml-2 text-blue-600">
+                <i className="fas fa-download"></i>
+              </button>
             </div>
           </div>
 
@@ -300,15 +315,15 @@ const AnalyticsPage = () => {
                         },
                       },
                     },
-                    spanGaps: true, // Span gaps for null values
+                    spanGaps: true,
                     segment: {
                       borderDash: (ctx) => {
-                        const value = ctx.p1.parsed.y === null || ctx.p0.parsed.y === null;  // Check if the segment involves a null value
-                        return value ? [6, 6] : undefined;  // Dotted line for null segments
+                        const value = ctx.p1.parsed.y === null || ctx.p0.parsed.y === null;
+                        return value ? [6, 6] : undefined;
                       },
                       borderColor: (ctx) => {
                         const value = ctx.p1.parsed.y === null || ctx.p0.parsed.y === null;
-                        return value ? 'rgba(255, 99, 132, 0.5)' : 'rgb(255, 99, 132)';  // Light color for dotted line, normal for solid line
+                        return value ? 'rgba(255, 99, 132, 0.5)' : 'rgb(255, 99, 132)';
                       },
                     },
                     plugins: {
@@ -316,7 +331,6 @@ const AnalyticsPage = () => {
                         enabled: true,
                         callbacks: {
                           label: function(context) {
-                            // Display the y value of the hovered point
                             return `Value: ${context.raw}`;
                           },
                         },
