@@ -1,17 +1,17 @@
 "use client";
 
 import { signIn, useSession } from "next-auth/react";
-import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, Suspense } from "react";
+import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const URL = process.env.NEXT_PUBLIC_URL|| 'http://localhost';
+    const URL = process.env.NEXT_PUBLIC_URL || 'http://localhost';
 
     useEffect(() => {
         if (status === 'authenticated') {
+            const searchParams = new URLSearchParams(window.location.search);
             const requestedUrl = searchParams.get('requestedUrl');
             const port = searchParams.get('port') || '3000';
             if (requestedUrl) {
@@ -22,13 +22,14 @@ const LoginPage = () => {
                 router.push('/dashboard');
             }
         }
-    }, [status, router, searchParams, URL]);
+    }, [status, router, URL]);
 
     if (status === 'loading') {
         return <p>Loading...</p>;
     }
 
     const handleSignIn = async () => {
+        const searchParams = new URLSearchParams(window.location.search);
         const requestedUrl = searchParams.get('requestedUrl');
         const port = searchParams.get('port') || '3000';
         const callbackUrl = requestedUrl
@@ -60,4 +61,10 @@ const LoginPage = () => {
     );
 };
 
-export default LoginPage;
+const LoginPageWrapper = () => (
+    <Suspense fallback={<p>Loading...</p>}>
+        <LoginPage />
+    </Suspense>
+);
+
+export default LoginPageWrapper;
