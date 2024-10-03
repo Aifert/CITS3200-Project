@@ -127,6 +127,7 @@ sliding_windows_thresholds_above_noise_floor_db: List[float] = [] #threshold abo
 # ...index into your appropriate sliding window threshold here with: 
 # ...int((channel_frequency_hz - min_rtl_power_frequency_hz) / sliding_windows_band_width_hz)
 message_id: int = 0 # tally for how many messages sent to the server while running, to send with each update, so DB knows if data has been lost since last period
+data_queue = [] #queue for data strings that need to be sent to the web server
 
 # FUNCTIONS
 
@@ -523,22 +524,27 @@ def prepare_channel_data() -> str:
 
 # POST JSON DATA TO THE SERVER AT DATA_ENDPOINT_FOR_SERVER
 def upload_data(json_data_to_upload: str) -> bool:
+    global data_queue
+    data_queue.append(json_data_to_uploadn)
     try:
-        url = f"{SERVER_ADDRESS}{DATA_ENDPOINT_FOR_SERVER}"
-        #headers for the request
-        headers = {
-            "Content-Type": "application/json"
-        }
-        #POST the request
-        response = requests.post(url, data=json_data_to_upload, headers=headers)
-        #check if the request was successful
-        if response.status_code == 200:
-            print("Data uploaded successfully!")
-            return True
-        else:
-            print(f"Failed to upload data. Status code: {response.status_code}")
-            print(f"Response: {response.text}")
+        while len(data_queue) > 0:
+            next_data = data_queue[0]
+            url = f"{SERVER_ADDRESS}{DATA_ENDPOINT_FOR_SERVER}"
+            #headers for the request
+            headers = {
+                "Content-Type": "application/json"
+            }
+            #POST the request
+            response = requests.post(url, data=next_data, headers=headers)
+            #check if the request was successful
+            if response.status_code == 200:
+                print("Data uploaded successfully!")
+                data_queue.pop(0)
+            else:
+                print(f"Failed to upload data. Status code: {response.status_code}")
+                print(f"Response: {response.text}")
             return False
+        return True
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while uploading data: {e}")
         return False
