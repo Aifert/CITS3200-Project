@@ -277,6 +277,7 @@ async function processIncomingData(dataObj, dbName) {
       await updateDeviceInfo(dataObj, dbName);
     }
     let startTime = [Math.floor(new Date().getTime()/1000), false];
+    console.log(dataObj.data)
     for (let frequency in dataObj.data) {
       const freqObj = dataObj.data[frequency];
       await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
