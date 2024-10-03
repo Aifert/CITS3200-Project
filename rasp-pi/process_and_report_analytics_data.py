@@ -104,7 +104,7 @@ RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each 
 K: float = 5.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
 # ...raise this value to raise your squelch floor for activity!
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
-DATA_ENDPOINT_FOR_SERVER: str = '/apioverride/data' #where we should POST the data we gather
+DATA_ENDPOINT_FOR_SERVER: str = '/upload/data' #where we should POST the data we gather
 SERVER_ADDRESS: str = 'http://localhost:9000' #server's URL
 
 # GLOBAL VARIABLES

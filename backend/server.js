@@ -283,7 +283,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
 });
 
-app.post('/apioverride/data', async (req, res) => {
+app.post('/upload/data', async (req, res) => {
   try{
     console.log(req.body)
     const response = await processIncomingData(req.body, "mydb");
