@@ -37,7 +37,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func redirectToLogin(w http.ResponseWriter, r *http.Request) {
     nextAuthUrl := os.Getenv("NEXTAUTH_URL")
-    loginURL := fmt.Sprintf("%s/login?requestedUrl=%s&port=8001", nextAuthUrl, url.QueryEscape(r.URL.String()))
+    loginURL := fmt.Sprintf("%s/login?requestedUrl=%s&port=4001", nextAuthUrl, url.QueryEscape(r.URL.String()))
     http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
 }
 
