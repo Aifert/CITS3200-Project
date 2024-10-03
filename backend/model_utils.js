@@ -371,8 +371,6 @@ async function processIncomingData(dataObj, dbName) {
         }
       }
       if ("usage" in freqObj) {
-        if (frequency != 67687500) {
-        }
         //start time
         for (let r in results) {
           if (r["c_id"] == freqObj) {
@@ -385,7 +383,7 @@ async function processIncomingData(dataObj, dbName) {
         }
         for (let timePeriod in freqObj.usage) {
           //if timestamp is a start time
-          if (freqObj.usage[timePeriod][1] == "true") {
+          if (freqObj.usage[timePeriod][1] == "true" || freqObj.usage[timePeriod][1] === true) {
             //if no period records exist, or the most recent one has an end time
             //if most recent period record ends in null, ignore the start time
             if (periodRecords.length === 0 || periodRecords[periodRecords.length-1][1]) {

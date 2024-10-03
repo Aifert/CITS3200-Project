@@ -105,7 +105,7 @@ K: float = 5.0 #multiplier for associated_standard_deviation calculation when se
 # ...raise this value to raise your squelch floor for activity!
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
 DATA_ENDPOINT_FOR_SERVER: str = '/upload/data' #where we should POST the data we gather
-SERVER_ADDRESS: str = 'http://localhost:9000' #server's URL
+SERVER_ADDRESS: str = 'https://20.191.210.182:9000' #server's URL
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
