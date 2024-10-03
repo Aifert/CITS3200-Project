@@ -18,7 +18,7 @@ let client = new Client({
       });
 
 
-async function connectToDatabase(dbName = "testdbmu", isNew = false) {
+async function connectToDatabase(dbName = "mydb", isNew = false) {
   const maxRetries = 10;
   let retries = 0;
   isConnecting = true;
@@ -52,7 +52,7 @@ async function connectToDatabase(dbName = "testdbmu", isNew = false) {
   }
 }
 
-async function recheckConnection(dbName = "testdbmu") {
+async function recheckConnection(dbName = "mydb") {
   let isNew = false;
   if (!hasEverConnected) {
     await client.connect();
@@ -358,7 +358,6 @@ async function processIncomingData(dataObj, dbName) {
       await updateDeviceInfo(dataObj, dbName);
     }
     let startTime = [Math.floor(new Date().getTime()/1000), false];
-    console.log(dataObj.data)
     for (let frequency in dataObj.data) {
       const freqObj = dataObj.data[frequency];
       await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
@@ -373,7 +372,6 @@ async function processIncomingData(dataObj, dbName) {
       }
       if ("usage" in freqObj) {
         if (frequency != 67687500) {
-          console.log("HI", frequency)
         }
         //start time
         for (let r in results) {
