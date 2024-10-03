@@ -352,7 +352,7 @@ async function updateChannelInfo(deviceId, freq, dbName) {
 async function processIncomingData(dataObj, dbName) {
   try{
     await recheckConnection(dbName);
-    let recentMin = `SELECT MAX(a_start_time) FROM "utilisation"`;
+    let recentMin = `SELECT c_id, MAX(a_start_time) FROM "utilisation" WHERE a_end_time IS NULL GROUP BY c_id`;
     let results = (await client.query(recentMin)).rows;
     if ("address" in dataObj) {
       await updateDeviceInfo(dataObj, dbName);
@@ -372,10 +372,13 @@ async function processIncomingData(dataObj, dbName) {
         }
       }
       if ("usage" in freqObj) {
+        if (frequency != 67687500) {
+          console.log("HI", frequency)
+        }
         //start time
-        if (results.length === 1) {
-          if (results[0]["max"]) {
-            startTime = [results[0]["max"], true]
+        for (let r in results) {
+          if (r["c_id"] == freqObj) {
+            startTime = [r["max"], true]
           }
         }
         let periodRecords = []
@@ -384,7 +387,7 @@ async function processIncomingData(dataObj, dbName) {
         }
         for (let timePeriod in freqObj.usage) {
           //if timestamp is a start time
-          if (freqObj.usage[timePeriod][1]) {
+          if (freqObj.usage[timePeriod][1] == "true") {
             //if no period records exist, or the most recent one has an end time
             //if most recent period record ends in null, ignore the start time
             if (periodRecords.length === 0 || periodRecords[periodRecords.length-1][1]) {
@@ -400,7 +403,7 @@ async function processIncomingData(dataObj, dbName) {
         let query = ""
         for (let i = 0; i < periodRecords.length; i++) {
           if (i === 0 && startTime[1]) {
-            query = `UPDATE "utilisation" SET a_end_time = ${periodRecords[0][1]} WHERE a_start_time = ${startTime[0]};`+ query
+            query = `UPDATE "utilisation" SET a_end_time = ${periodRecords[0][1]} WHERE c_id = ${channelId} AND a_start_time = ${startTime[0]};`+ query
             continue;
           }
           query += `INSERT INTO "utilisation" ("c_id", "a_start_time", "a_end_time") VALUES (${channelId}, ${periodRecords[i][0]}, ${periodRecords[i][1]});`;
