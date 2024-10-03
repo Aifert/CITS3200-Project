@@ -480,7 +480,7 @@ def generate_soc_id() -> int:
     hashed_mac = hashlib.sha256(str(mac).encode()).hexdigest()
     #print(hashed_mac) #DEBUG
     #take the first 10 characters of the hash
-    soc_id = int(hashed_mac[:10], 16)
+    soc_id = int(hashed_mac[:8], 16)
     #print(soc_id) #DEBUG
     return soc_id
 
@@ -634,6 +634,7 @@ def main():
     # ...upon successful upload, empty utilization_states and signal_strength_samples, and increment message_id
     json_data_to_upload = prepare_channel_data()
     if(upload_data(json_data_to_upload)):
+        global message_id
         #empty channel data, and increment message_id
         for channel in SES_channels:
             channel.utilization_states = []
