@@ -439,8 +439,7 @@ def print_which_channels_have_utilization():
             if(utilization_state.is_start_time):
                 has_utilization = True
         if(has_utilization):
-            pass
-            #print(f"{channel.name} has utilization!")
+            print(f"{channel.name} has utilization!")
 
 # FOR EACH SESChannel IN SES_channels RECORD THE VERY LAST rtl_power_output_temporal_samples AT YOUR index_to_spectrum_decibel_datapoints
 # ...AS THE SignalStrengthSample ENTRY IN YOUR signal_strength_samples
@@ -621,7 +620,7 @@ def main():
     # ...IF spectrum_decibel_datapoints[index_to_spectrum_decibel_datapoints] > or < relevant sliding_windows_thresholds_above_noise_floor_db
     # ...based on your current signal_is_currently_above_threshold, potentially generate a UtilizationState in utilization_states
     generate_utilization_states()
-    print_which_channels_have_utilization() #DEBUG
+    #print_which_channels_have_utilization() #DEBUG
 
     # FOR EACH SESChannel IN SES_channels RECORD THE VERY LAST rtl_power_output_temporal_samples AT YOUR index_to_spectrum_decibel_datapoints
     # ...AS THE SignalStrengthSample ENTRY IN YOUR signal_strength_samples
