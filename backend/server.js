@@ -85,7 +85,7 @@ async function singlePopulate() {
     }
     testObj1.data[467687500].strength[nowTime] = Math.random() * 50.0 - 112.5;
     testObj1.data[457712500].strength[nowTime] = Math.random() * 50.0 - 112.5;
-    await processIncomingData(testObj1, "testdbmu");
+    await processIncomingData(testObj1, "mydb");
 }
 
 async function populateTestData() {
@@ -239,6 +239,7 @@ app.get('/api/analytics/data', async (req, res) => {
       returnVal[key]["utilisation"] = utilisationData[key]
     }
     res.send(returnVal)
+    console.log("SENT analytics")
   }
   catch(error){
     res.status(500).send({
@@ -255,7 +256,7 @@ app.get('/api/notification', async (req, res) => {
   for (const elem in sendObj) {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
   }
-  res.send(await checkNotificationState(requestObj, "testdbmu"));
+  res.send(await checkNotificationState(requestObj, "mydb"));
 });
 
 //http://localhost:9000/api/notification?1=[-100, 5, 600]
@@ -265,7 +266,7 @@ app.get('/api/analytics/strength-dump', async (req, res) => {
   for (const elem in sendObj) {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
   }
-  const myFile = await generateStrengthDataDump(requestObj, "testdbmu");
+  const myFile = await generateStrengthDataDump(requestObj, "mydb");
   res.attachment("strength-data.csv").send(myFile);
 });
 
@@ -275,7 +276,7 @@ app.get('/api/analytics/util-dump', async (req, res) => {
   for (const elem in sendObj) {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
   }
-  const myFile = await generateUtilDataDump(requestObj, "testdbmu");
+  const myFile = await generateUtilDataDump(requestObj, "mydb");
   res.attachment("util-data.csv").send(myFile);
 });
 
@@ -283,8 +284,9 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
 });
 
-app.post('/api/data', async (req, res) => {
+app.post('/upload/data', async (req, res) => {
   try{
+    console.log(req.body)
     const response = await processIncomingData(req.body, "mydb");
 
     if (response){
