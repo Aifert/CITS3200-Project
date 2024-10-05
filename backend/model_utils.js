@@ -18,7 +18,7 @@ let client = new Client({
       });
 
 
-async function connectToDatabase(dbName = "testdbmu", isNew = false) {
+async function connectToDatabase(dbName = "mydb", isNew = false) {
   const maxRetries = 10;
   let retries = 0;
   isConnecting = true;
@@ -52,7 +52,7 @@ async function connectToDatabase(dbName = "testdbmu", isNew = false) {
   }
 }
 
-async function recheckConnection(dbName = "testdbmu") {
+async function recheckConnection(dbName = "mydb") {
   let isNew = false;
   if (!hasEverConnected) {
     await client.connect();
@@ -375,9 +375,6 @@ async function processIncomingData(dataObj, dbName) {
         }
       }
       if ("usage" in freqObj) {
-        if (frequency != 67687500) {
-          console.log("HI", frequency)
-        }
         //start time
         for (let r in results) {
           if (r["c_id"] == freqObj) {
@@ -390,7 +387,7 @@ async function processIncomingData(dataObj, dbName) {
         }
         for (let timePeriod in freqObj.usage) {
           //if timestamp is a start time
-          if (freqObj.usage[timePeriod][1] == "true") {
+          if (freqObj.usage[timePeriod][1] == "true" || freqObj.usage[timePeriod][1] === true) {
             //if no period records exist, or the most recent one has an end time
             //if most recent period record ends in null, ignore the start time
             if (periodRecords.length === 0 || periodRecords[periodRecords.length-1][1]) {

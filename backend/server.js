@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 const { decode } = require('next-auth/jwt');
 const cookieParser = require('cookie-parser');
 const {
-  startMonitor,
+  startMonitorMP3,
   stopMonitor,
   decideMonitorMode } = require('./monitor_server.js');
 
@@ -25,10 +25,9 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 9000;
-const SDR_URL = "http://sdr"
-const SDR_PORT = 4000 + "/";
+const SDR_URL = process.env.SDR_URL || "http://host.docker.internal";
+const SDR_PORT = process.env.SDR_PORT || 4000;
 const PUBLIC_FRONTEND_URL = 'http://localhost:3000';
-const PUBLIC_SDR_URL = `${process.env.NEXT_PUBLIC_SDR_URL}api/` || 'http://localhost:4000/api/';
 
 let is_populating = false;
 
@@ -85,7 +84,7 @@ async function singlePopulate() {
     }
     testObj1.data[467687500].strength[nowTime] = Math.random() * 50.0 - 112.5;
     testObj1.data[457712500].strength[nowTime] = Math.random() * 50.0 - 112.5;
-    await processIncomingData(testObj1, "testdbmu");
+    await processIncomingData(testObj1, "mydb");
 }
 
 async function populateTestData() {
@@ -114,7 +113,7 @@ app.use(express.static(path.join(__dirname, 'public')));
  * <NOT NEED FOR END PRODUCT USED FOR TESTING ONLY>
  */
 app.get('/api/monitor-channels', async (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'monitor.html'))
+  res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
 })
 
 /**
@@ -128,23 +127,25 @@ app.get('/api/monitor-channels', async (req, res) => {
  * - frequency : The frequency to monitor
  */
 app.get('/api/monitor-channels/start', async (req, res) => {
-  const session_id = req.query['session-id'] || '';
-  const channel_id = req.query['channel-id'] || '';
-  const frequency = req.query['frequency'] || '';
-
-  const modeResult = decideMonitorMode(session_id, channel_id, frequency);
+  const file = req.query['file'] || '';
 
   try {
-    await stopMonitor(SDR_URL, SDR_PORT);
-    const responseStream = await startMonitor(SDR_URL, SDR_PORT, modeResult);
+    if (file){
+      const params = {
+        file: file,
+      };
+      const responseStream = await startMonitorMP3(SDR_URL, SDR_PORT, params);
 
-    res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Type', 'audio/mpeg');
 
-    responseStream.pipe(res);
+      responseStream.pipe(res);
+    }
+    res.status(400).send({
+      message: 'No file provided',
+    });
   } catch (error) {
     console.error('Error occurred while getting channel:', error);
     res.status(500).send({
-      code: 500,
       message: 'Error occurred while getting channel',
       error: error.message,
     });
@@ -237,6 +238,7 @@ app.get('/api/analytics/data', async (req, res) => {
       returnVal[key]["utilisation"] = utilisationData[key]
     }
     res.send(returnVal)
+    console.log("SENT analytics")
   }
   catch(error){
     res.status(500).send({
@@ -253,7 +255,7 @@ app.get('/api/notification', async (req, res) => {
   for (const elem in sendObj) {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
   }
-  res.send(await checkNotificationState(requestObj, "testdbmu"));
+  res.send(await checkNotificationState(requestObj, "mydb"));
 });
 
 //http://localhost:9000/api/notification?1=[-100, 5, 600]
@@ -263,7 +265,7 @@ app.get('/api/analytics/strength-dump', async (req, res) => {
   for (const elem in sendObj) {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
   }
-  const myFile = await generateStrengthDataDump(requestObj, "testdbmu");
+  const myFile = await generateStrengthDataDump(requestObj, "mydb");
   res.attachment("strength-data.csv").send(myFile);
 });
 
@@ -273,7 +275,7 @@ app.get('/api/analytics/util-dump', async (req, res) => {
   for (const elem in sendObj) {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
   }
-  const myFile = await generateUtilDataDump(requestObj, "testdbmu");
+  const myFile = await generateUtilDataDump(requestObj, "mydb");
   res.attachment("util-data.csv").send(myFile);
 });
 
@@ -281,8 +283,9 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
 });
 
-app.post('/api/data', async (req, res) => {
+app.post('/upload/data', async (req, res) => {
   try{
+    console.log(req.body)
     const response = await processIncomingData(req.body, "mydb");
 
     if (response){

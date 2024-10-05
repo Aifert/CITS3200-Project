@@ -55,3 +55,8 @@ rasp-pi/rtl_powerOutput/*.csv
 
 # SES Channel List
 **/SESChannelList.csv
+
+# Audio files used for testing
+/rasp-pi/radio-streaming/audio/*
+
+main
