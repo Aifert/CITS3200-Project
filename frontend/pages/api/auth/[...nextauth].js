@@ -38,7 +38,7 @@ export default NextAuth({
       if (parsedUrl) {
         return parsedUrl;
       }
-      return baseUrl + "/dashboard";
+      return baseUrl + "/analytics";
     },
     async jwt({ token, account }) {
       if (account) {
