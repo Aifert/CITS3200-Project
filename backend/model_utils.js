@@ -356,8 +356,9 @@ async function updateChannelInfo(deviceId, freq, dbName) {
 async function processIncomingData(dataObj, dbName) {
   try{
     await recheckConnection(dbName);
-    let recentMin = `SELECT c_id, MAX(a_start_time) FROM "utilisation" WHERE a_end_time IS NULL GROUP BY c_id`;
+    let recentMin = `SELECT c.c_freq, j.m FROM "channels" AS c JOIN (SELECT c_id, MAX(a_start_time) AS m FROM "utilisation" WHERE a_end_time IS NULL GROUP BY c_id) AS j ON c.c_id=j.c_id`
     let results = (await client.query(recentMin)).rows;
+    console.log(results)
     if ("address" in dataObj) {
       await updateDeviceInfo(dataObj, dbName);
     }
@@ -377,8 +378,8 @@ async function processIncomingData(dataObj, dbName) {
       if ("usage" in freqObj) {
         //start time
         for (let r in results) {
-          if (r["c_id"] == freqObj) {
-            startTime = [r["max"], true]
+          if (results[r]["c_freq"] == frequency) {
+            startTime = [results[r]["m"], true]
           }
         }
         let periodRecords = []
