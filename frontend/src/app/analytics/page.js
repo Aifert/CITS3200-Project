@@ -6,6 +6,7 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import NotificationConfigureBell from '../../components/NotificationConfigureBell';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip);
 
@@ -227,7 +228,7 @@ const AnalyticsPage = () => {
       {channelData.map((channel, index) => (
         <div key={index} className="mb-10">
           {/* First Row: Channel Information */}
-          <div className="grid grid-cols-4 gap-4 p-4 bg-white border-b border-gray-300">
+          <div className="grid grid-cols-8 gap-4 p-4 bg-white border-b border-gray-300">
             <div className="flex items-center justify-center border-r border-gray-300">
               {channel.status === 'Active' ? (
                 <Link href="/monitoring">
@@ -239,23 +240,27 @@ const AnalyticsPage = () => {
                 <span>{channel.status}</span>
               )}
             </div>
-            <div className="flex items-center justify-center border-r border-gray-300">
+            <div className="flex col-span-2 items-center justify-center border-r border-gray-300">
               {channel.name} ({channel.frequency.toFixed(6)} MHz)
               <button onClick={() => toggleFavorite(channel.id)}>
                 {channel.isFavorite ? ' ★' : ' ☆'}
               </button>
             </div>
-            <div className="flex items-center justify-center border-r border-gray-300">
+            <div className="flex col-span-2 items-center justify-center border-r border-gray-300">
               <span>Utilisation: {channel.utilisation}</span>
               <button onClick={() => downloadData(channel.id, 'util', 'whitelist')} className="ml-2 text-blue-600">
                 <i className="fas fa-download"></i>
               </button>
             </div>
-            <div className="flex items-center justify-center">
+            <div className="flex col-span-2 items-center justify-center">
               <span>Strength: {channel.strength}</span>
               <button onClick={() => downloadData(channel.id, 'strength', 'whitelist')} className="ml-2 text-blue-600">
                 <i className="fas fa-download"></i>
               </button>
+            </div>
+
+            <div className="flex items-center justify-center shrink">
+              <NotificationConfigureBell channelId={channel.id} />
             </div>
           </div>
 
