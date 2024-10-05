@@ -192,6 +192,19 @@ const AnalyticsPage = () => {
     window.location.href = url;
   };
 
+  const toggleFavorite = (channelId) => {
+    const updatedChannels = channelData.map(channel =>
+      channel.id === channelId
+        ? { ...channel, isFavorite: !channel.isFavorite }
+        : channel
+    );
+    setChannelData(updatedChannels);
+  
+    const favorites = updatedChannels.filter(channel => channel.isFavorite);
+    const nonFavorites = updatedChannels.filter(channel => !channel.isFavorite);
+    setChannelData([...favorites, ...nonFavorites]);
+  };
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Channel Analytics</h1>
@@ -199,30 +212,46 @@ const AnalyticsPage = () => {
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
 
       {/* Time scale selection dropdown */}
-      <div className="mb-6">
-        <label className="mr-2">Select Time Scale:</label>
-        <select
-          value={selectedTimeScale}
-          onChange={e => setSelectedTimeScale(e.target.value)} // Update the time scale
-          className="p-2 border border-gray-300 rounded"
-        >
-          {Object.keys(timeScales).map(label => (
-            <option key={label} value={label}>
-              {label}
-            </option>
-          ))}
-        </select>
+      <div className="mb-6 flex justify-between items-center">
+        <div className="flex space-x-4">
+          <label className="mr-2">Select Time Scale:</label>
+          <select
+            value={selectedTimeScale}
+            onChange={e => setSelectedTimeScale(e.target.value)} // Update the time scale
+            className="p-2 border border-gray-300 rounded"
+          >
+            {Object.keys(timeScales).map(label => (
+              <option key={label} value={label}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div>
+          Download:
+          <button 
+            onClick={() => {
+              downloadData(null, 'strength', 'blacklist');
+            }} 
+            className="ml-2 text-blue-600"
+            title="All Strength Data"
+          >
+            <i className="fas fa-download"></i>
+          </button>
+
+          <button 
+            onClick={() => {
+              downloadData(null, 'util', 'blacklist');
+            }} 
+            className="ml-2 text-blue-600"
+            title="All Utilisation Data"
+          >
+            <i className="fas fa-download"></i>
+          </button>
+        </div>
       </div>
 
-      <button 
-        onClick={() => {
-          downloadData(null, 'strength', 'blacklist');
-          downloadData(null, 'util', 'blacklist');
-        }} 
-        className="ml-2 text-blue-600"
-      >
-        <i className="fas fa-download"></i> Download All
-      </button>
 
       {channelData.map((channel, index) => (
         <div key={index} className="mb-10">
@@ -240,7 +269,9 @@ const AnalyticsPage = () => {
               )}
             </div>
             <div className="flex items-center justify-center border-r border-gray-300">
-              {channel.name} ({channel.frequency.toFixed(6)} MHz)
+                <Link href={`/single-channel?channelId=${channel.id}`}>
+                  {channel.name} ({channel.frequency.toFixed(6)} MHz)
+                </Link>
               <button onClick={() => toggleFavorite(channel.id)}>
                 {channel.isFavorite ? ' ★' : ' ☆'}
               </button>
