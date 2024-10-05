@@ -25,9 +25,8 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 9000;
-const SDR_URL = process.env.SDR_URL || "http://host.docker.internal";
-const SDR_PORT = process.env.SDR_PORT || 4000;
-const PUBLIC_FRONTEND_URL = `${process.env.NEXT_PUBLIC_URL}:${process.env.NEXT_PUBLIC_FRONTEND_PORT}` || 'http://localhost:3000';
+const SDR_URL = process.env.NEXT_PUBLIC_SDR_URL || "http://host.docker.internal:4001/"
+const PUBLIC_FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000/';
 
 let is_populating = false;
 

@@ -13,7 +13,7 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
-  const backendUrl = `${process.env.NEXT_PUBLIC_URL}:${process.env.NEXT_PUBLIC_BACKEND_PORT}` || 'http://localhost:9000/api/';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api/';
 
   const { data: session, status } = useSession();
   const router = useRouter();
