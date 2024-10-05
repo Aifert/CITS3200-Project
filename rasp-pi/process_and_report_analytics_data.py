@@ -480,7 +480,7 @@ def generate_soc_id() -> int:
     hashed_mac = hashlib.sha256(str(mac).encode()).hexdigest()
     #print(hashed_mac) #DEBUG
     #take the first 10 characters of the hash
-    soc_id = int(hashed_mac[:8], 16)
+    soc_id = int(hashed_mac[:4], 16)
     #print(soc_id) #DEBUG
     return soc_id
 
@@ -547,6 +547,8 @@ def upload_data(json_data_to_upload: str) -> bool:
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while uploading data: {e}")
         return False
+    except:
+        print("An unknown error occured")
 
 def run_rtl_power():
     # Hi Joseph! LOOP FROM HERE, AND USE min_rtl_power_frequency_hz AND max_rtl_power_frequency_hz AS YOUR rtl_power FREQUENCY RANGE
@@ -667,15 +669,20 @@ def copy_new_csv_data():
 if __name__ == "__main__":
     first_time = False #So we don't parse the file on the first run
     while True:
-        t1 = threading.Thread(target=main)
-        if not first_time:
-            first_time = True
-            t1 = threading.Thread(target=print, args=("SKIPPING",))
-        t2 = threading.Thread(target=run_rtl_power)
-        t2.start()
-        t1.start()
+        try:
+            t1 = threading.Thread(target=main)
+            if not first_time:
+                first_time = True
+                t1 = threading.Thread(target=print, args=("SKIPPING",))
+            t2 = threading.Thread(target=run_rtl_power)
+            t2.start()
+            t1.start()
 
-        t1.join()
-        t2.join()
+            t1.join()
+            t2.join()
 
-        copy_new_csv_data()
+            copy_new_csv_data()
+        except KeyboardInterrupt as e:
+            raise(e)
+        except:
+            pass
