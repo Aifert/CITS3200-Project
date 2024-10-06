@@ -471,21 +471,24 @@ async function checkNotificationState(requestObj, dbName) {
     const nowTime = Math.floor(new Date().getTime()/1000);
     await recheckConnection(dbName);
     //If channel is alive, send the most recent strength reading
-    let sQuery = `SELECT c_id, s_strength FROM "strength"
-                  WHERE (c_id, s_sample_time) IN
-                  (SELECT c_id, MAX(s_sample_time) FROM "strength" WHERE s_sample_time >= ${nowTime-ALIVETIME} GROUP BY c_id)`;
+    let sQuery = `SELECT s.c_id, c.c_name, s.s_strength FROM "strength" AS s JOIN "channels" AS c ON c.c_id = s.c_id
+                  WHERE (s.c_id, s.s_sample_time) IN
+                  (SELECT s.c_id, MAX(s.s_sample_time) FROM "strength" AS s WHERE s.s_sample_time >= ${nowTime-ALIVETIME} GROUP BY s.c_id)`;
     let res = await client.query(sQuery);
 
     //Make object with channel id as key, and most recent strength value as the value
     let strengthLookUp = {}
+    let nameLookUp = {}
     for (let r in res.rows) {
       strengthLookUp[res.rows[r]["c_id"]] = res.rows[r]["s_strength"];
+      nameLookUp[res.rows[r]["c_id"]] = res.rows[r]["c_name"];
     }
     let output = {};
     //check for every channel
     for (let channel in requestObj) {
       output[channel] = {};
       //If channel is alive it will have a lookup value
+      output[channel]["name"] = nameLookUp[channel];
       if (channel in strengthLookUp) {
         output[channel]["strength"] = strengthLookUp[channel] >= requestObj[channel][0];
       } else { //If not alive, send null
@@ -494,6 +497,7 @@ async function checkNotificationState(requestObj, dbName) {
     }
     let maxTimeAgo = 120; //Needed to ensure all values recieved in sql query
     for (channel in requestObj) {
+      requestObj[channel][2] *= 3600;
       maxTimeAgo = Math.max(maxTimeAgo, requestObj[channel][2])
     }
     //get all utilisation pairs within the maximum time ago
@@ -511,8 +515,12 @@ async function checkNotificationState(requestObj, dbName) {
         uResults[row.c_id].values.push([row.a_start_time, row.a_end_time]);
     }
     for (let channel in requestObj) {
-      const channelAvg = calculateZoneUtilAvg(uResults[channel].values, nowTime, requestObj[channel][2], 0);
-      output[channel]["util"]  = channelAvg >= requestObj[channel][1];
+      if (uResults[channel]) {
+        const channelAvg = calculateZoneUtilAvg(uResults[channel].values, nowTime, requestObj[channel][2], 0);
+        output[channel]["util"]  = channelAvg >= requestObj[channel][1];
+      } else {
+        output[channel]["util"] = 0 >=  requestObj[channel][1];
+      }
     }
     return output;
   } catch(error) {
