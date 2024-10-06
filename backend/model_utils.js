@@ -471,17 +471,21 @@ async function checkNotificationState(requestObj, dbName) {
     const nowTime = Math.floor(new Date().getTime()/1000);
     await recheckConnection(dbName);
     //If channel is alive, send the most recent strength reading
-    let sQuery = `SELECT s.c_id, c.c_name, s.s_strength FROM "strength" AS s JOIN "channels" AS c ON c.c_id = s.c_id
+    let sQuery = `SELECT s.c_id, s.s_strength FROM "strength" AS s
                   WHERE (s.c_id, s.s_sample_time) IN
                   (SELECT s.c_id, MAX(s.s_sample_time) FROM "strength" AS s WHERE s.s_sample_time >= ${nowTime-ALIVETIME} GROUP BY s.c_id)`;
     let res = await client.query(sQuery);
-
+    let nameQuery = `SELECT c_id, c_name FROM "channels"`;
+    let nameRes = await client.query(nameQuery);
     //Make object with channel id as key, and most recent strength value as the value
     let strengthLookUp = {}
     let nameLookUp = {}
     for (let r in res.rows) {
       strengthLookUp[res.rows[r]["c_id"]] = res.rows[r]["s_strength"];
       nameLookUp[res.rows[r]["c_id"]] = res.rows[r]["c_name"];
+    }
+    for (let r in nameRes.rows) {
+      nameLookUp[nameRes.rows[r]["c_id"]] = nameRes.rows[r]["c_name"];
     }
     let output = {};
     //check for every channel
