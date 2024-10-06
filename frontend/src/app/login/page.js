@@ -17,6 +17,7 @@ const LoginPage = () => {
             if (requestedUrl) {
                 const decodedUrl = decodeURIComponent(requestedUrl);
                 const redirectUrl = `${URL}:${port}${decodedUrl}`;
+
                 window.location.href = redirectUrl;
             } else {
                 router.push('/dashboard');
