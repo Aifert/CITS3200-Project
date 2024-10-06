@@ -13,9 +13,16 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip)
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [updatedTime, setUpdatedTime] = useState(false);
   const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
   const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}api/` || 'http://localhost:9000/api/';
+  
 
+  if (!updatedTime && localStorage.getItem("time-scale")) {
+      console.log("here1")
+      setUpdatedTime(true);
+      setSelectedTimeScale(localStorage.getItem("time-scale"));
+  }
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -193,6 +200,12 @@ const AnalyticsPage = () => {
     window.location.href = url;
   };
 
+  const resetTimeScale = (timeS) => {
+    localStorage.setItem("time-scale", timeS)
+    console.log(timeS);
+    setSelectedTimeScale(timeS);
+  }
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Channel Analytics</h1>
@@ -204,7 +217,7 @@ const AnalyticsPage = () => {
         <label className="mr-2">Select Time Scale:</label>
         <select
           value={selectedTimeScale}
-          onChange={e => setSelectedTimeScale(e.target.value)} // Update the time scale
+          onChange={e => resetTimeScale(e.target.value)} // Update the time scale
           className="p-2 border border-gray-300 rounded"
         >
           {Object.keys(timeScales).map(label => (
