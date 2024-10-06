@@ -100,12 +100,16 @@ RTL_POWER_OUTPUT_FILE_NAME = 'rtl_power_output.csv'
 RTL_POWER_IN_PROGRESS_FILE_NAME = 'rtl_power_in_progress.csv'
 RTL_POWER_OUTPUT_FOLDER_NAME = 'rtl_powerOutput'
 NUM_RTL_POWER_CONTEXT_COLUMNS = 6
-RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each sample, rtl_power supports a minimum of 1sec
 K: float = 5.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
 # ...raise this value to raise your squelch floor for activity!
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
 DATA_ENDPOINT_FOR_SERVER: str = '/upload/data' #where we should POST the data we gather
 SERVER_ADDRESS: str = 'https://20.191.210.182:9000' #server's URL
+MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS: int = 30 #timeout parameter to requests.post
+RTL_POWER_GAIN_DB: int = 0 #gain to add to rtl_power output, needs to be set else uses automatic (throws our baseline off)
+RTL_POWER_SDR_DEVICE_INDEX: int = 0 #using RTL-SDRv4 number 0 (of [0, 1]) since 1 is used for audio streaming
+RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each sample, rtl_power supports a minimum of 1sec
+RTL_POWER_EXIT_TIMER_SECONDS: int = 60 #number of seconds rtl_power will sample data for before outputting a data file, which we then parse & attempt to send to the server
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
@@ -480,7 +484,7 @@ def generate_soc_id() -> int:
     hashed_mac = hashlib.sha256(str(mac).encode()).hexdigest()
     #print(hashed_mac) #DEBUG
     #take the first 10 characters of the hash
-    soc_id = int(hashed_mac[:8], 16)
+    soc_id = int(hashed_mac[:4], 16)
     #print(soc_id) #DEBUG
     return soc_id
 
@@ -534,7 +538,7 @@ def upload_data(json_data_to_upload: str) -> bool:
                 "Content-Type": "application/json"
             }
             #POST the request
-            response = requests.post(url, data=next_data, headers=headers)
+            response = requests.post(url, data=next_data, headers=headers, timeout=MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS)
             #check if the request was successful
             if response.status_code == 200:
                 print("Data uploaded successfully!")
@@ -544,9 +548,14 @@ def upload_data(json_data_to_upload: str) -> bool:
                 print(f"Response: {response.text}")
             return False
         return True
+    except requests.exceptions.Timeout:
+        print("Request timed out. The server did not respond within the allocated time.")
+        return False
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while uploading data: {e}")
         return False
+    except:
+        print("An unknown error occured")
 
 def run_rtl_power():
     # Hi Joseph! LOOP FROM HERE, AND USE min_rtl_power_frequency_hz AND max_rtl_power_frequency_hz AS YOUR rtl_power FREQUENCY RANGE
@@ -555,8 +564,7 @@ def run_rtl_power():
 
     # RUN rtl_power (TODO)
     #subprocess.run(["python3", "rtl_power_sim.py"])
-    subprocess.run(["rtl_power", "-f 161.0125M:165.238M:6250", "-d 0", "-g 25", "-i 1", "-e 60", RTL_POWER_OUTPUT_FOLDER_NAME+"/"+RTL_POWER_IN_PROGRESS_FILE_NAME])
-
+    subprocess.run(["rtl_power", f"-f {min_rtl_power_frequency_hz}:{max_rtl_power_frequency_hz}:{int(min_distance_between_frequencies_hz * 0.5)}", f"-d {RTL_POWER_SDR_DEVICE_INDEX}", f"-g {RTL_POWER_GAIN_DB}", f"-i {RTL_POWER_INTEGRATION_INTERVAL_SECONDS}", f"-e {RTL_POWER_EXIT_TIMER_SECONDS}", RTL_POWER_OUTPUT_FOLDER_NAME+"/"+RTL_POWER_IN_PROGRESS_FILE_NAME])
 
 def parse_SES_channels():
     global SES_channels
@@ -667,15 +675,20 @@ def copy_new_csv_data():
 if __name__ == "__main__":
     first_time = False #So we don't parse the file on the first run
     while True:
-        t1 = threading.Thread(target=main)
-        if not first_time:
-            first_time = True
-            t1 = threading.Thread(target=print, args=("SKIPPING",))
-        t2 = threading.Thread(target=run_rtl_power)
-        t2.start()
-        t1.start()
+        try:
+            t1 = threading.Thread(target=main)
+            if not first_time:
+                first_time = True
+                t1 = threading.Thread(target=print, args=("SKIPPING",))
+            t2 = threading.Thread(target=run_rtl_power)
+            t2.start()
+            t1.start()
 
-        t1.join()
-        t2.join()
+            t1.join()
+            t2.join()
 
-        copy_new_csv_data()
+            copy_new_csv_data()
+        except KeyboardInterrupt as e:
+            raise(e)
+        except:
+            pass
