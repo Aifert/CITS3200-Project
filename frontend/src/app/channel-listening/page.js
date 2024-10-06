@@ -161,15 +161,14 @@ const DashboardPage = () => {
       const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
       const testUrl = `http://localhost:9000/api/monitor-channels?sessionId=test-1`;
 
-      console.log("State", playingState);
-
-
+      
       ///// for now set to play if OFFLINE, need to change this
       if (playingState == "Play" || playingState == "") {
+        audioElement.load();
+
         console.log(testUrl);
         
         sourceElement.src = testUrl;
-        audioElement.load();
 
         audioElement.play().catch(error => {
           console.error('Error playing audio:', error);
@@ -178,7 +177,7 @@ const DashboardPage = () => {
       
       else if (playingState == "Pause") {
         audioElement.pause();
-        sourceElement.src = stopUrl;
+        // sourceElement.src = stopUrl;
       } 
       
       else if (state === "SDR Busy") {
@@ -190,6 +189,8 @@ const DashboardPage = () => {
     }
   };
 
+
+  
   if (isLoading) {
     return <p>Loading...</p>;
   }
