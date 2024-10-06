@@ -108,6 +108,7 @@ DATA_ENDPOINT_FOR_SERVER: str = '/upload/data' #where we should POST the data we
 SERVER_ADDRESS: str = 'https://20.191.210.182:9000' #server's URL
 MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS: int = 30 #timeout parameter to requests.post
 RTL_POWER_GAIN_DB: int = 0 #gain to add to rtl_power output, needs to be set else uses automatic (throws our baseline off)
+RTL_POWER_SDR_DEVICE_INDEX: int = 0 #using RTL-SDRv4 number 0 (of [0, 1]) since 1 is used for audio streaming
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
@@ -562,7 +563,7 @@ def run_rtl_power():
 
     # RUN rtl_power (TODO)
     #subprocess.run(["python3", "rtl_power_sim.py"])
-    subprocess.run(["rtl_power", "-f 161.0125M:165.238M:6250", "-d 0", f"-g {RTL_POWER_GAIN_DB}", "-i 1", "-e 60", RTL_POWER_OUTPUT_FOLDER_NAME+"/"+RTL_POWER_IN_PROGRESS_FILE_NAME])
+    subprocess.run(["rtl_power", "-f 161.0125M:165.238M:6250", f"-d {RTL_POWER_SDR_DEVICE_INDEX}", f"-g {RTL_POWER_GAIN_DB}", "-i 1", "-e 60", RTL_POWER_OUTPUT_FOLDER_NAME+"/"+RTL_POWER_IN_PROGRESS_FILE_NAME])
 
 
 def parse_SES_channels():
