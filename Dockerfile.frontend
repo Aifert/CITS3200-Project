@@ -1,27 +1,41 @@
-FROM node:18 AS builder
+# First stage: build the frontend
+FROM node:18-alpine AS builder
+
+# Install necessary build dependencies for alpine
+RUN apk add --no-cache bash git
 
 WORKDIR /app
 
+# Copy the package.json and package-lock.json from the root to install dependencies
 COPY ./package*.json ./
 
+# Install dependencies for the root (if needed)
 RUN npm ci
 
-COPY . .
+# Copy the frontend source code and install frontend dependencies
+COPY ./frontend ./frontend
 
+# Build the production frontend
 RUN npm run build
 
+# Second stage: serve the frontend
 FROM node:18-alpine
 
 WORKDIR /app
 
+# Copy only the necessary files from the builder stage
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/frontend/.next ./frontend/.next
-COPY --from=builder /app/.env .env
 COPY --from=builder /app/frontend/.env.local ./frontend/.env.local
 COPY --from=builder /app/frontend/public ./frontend/public
 
+# Copy package.json files for installing only production dependencies
+
+# Install only production dependencies for the frontend
 RUN npm ci --omit=dev
 
+# Expose the frontend port
 EXPOSE 3000
 
+# Start the frontend server
 CMD ["npm", "run", "start"]

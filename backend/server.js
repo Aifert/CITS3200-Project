@@ -30,11 +30,14 @@ const PUBLIC_FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://loca
 
 let is_populating = false;
 
+const corsOptions = {
+  origin: [PUBLIC_FRONTEND_URL, 'https://20.191.210.182:3000/'],  // Allow requests from this origin
+  credentials: true,  // Allow credentials such as cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
 
-app.use(cors({
-  origin: PUBLIC_FRONTEND_URL,
-  credentials: true,
-}));
+app.use(cors(corsOptions));
 
 app.use(cookieParser());
 

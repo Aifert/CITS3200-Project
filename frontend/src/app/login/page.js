@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 const LoginPage = () => {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const URL = process.env.NEXT_PUBLIC_URL || 'http://localhost';
+    // const URL = process.env.NEXT_PUBLIC_URL || 'http://localhost';
+    const URL = 'https://20.191.210.182';
 
     useEffect(() => {
         if (status === 'authenticated') {
@@ -17,6 +18,8 @@ const LoginPage = () => {
             if (requestedUrl) {
                 const decodedUrl = decodeURIComponent(requestedUrl);
                 const redirectUrl = `${URL}:${port}${decodedUrl}`;
+
+                console.log(`Redirect : ${redirectUrl}`);
                 window.location.href = redirectUrl;
             } else {
                 router.push('/dashboard');
