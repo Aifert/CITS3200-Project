@@ -20,7 +20,7 @@ const SingleChannelPage = () => {
   const channelId = searchParams.get('channelId');
 
   const [isPlaying, setIsPlaying] = useState(false); 
-  const [currentPlayingIndex, setCurrentPlayingIndex] = useState(null);
+  // const [currentPlayingIndex, setCurrentPlayingIndex] = useState(null);
   const [sliderValue, setSliderValue] = useState(50);
   const audioRef = useRef(null); 
 
@@ -50,94 +50,69 @@ const SingleChannelPage = () => {
     }
   };
 
-  const handleStateClick = (channel, state, frequency) => {
-    // const selectedChannel = channelData.find(item => item.name === channel);
-    // const selectedChanneldata = data.find(item => item.name === channel);
 
-    // const playingState = state;
-    // const state_data = state;
-    // const frequency = selectedChannel.frequency;
-    const sessionId = '12345';
-    const audioElement = audioRef.current;
-    const sourceElement = document.getElementById('audioSource');
+// Function to toggle the play/pause state
+const handleStateClick = () => {
+  console.log(channelData);
 
-    const audioUrl = `http://localhost:9000/api/audio?session-id=${sessionId}&channel-id=${channel}&frequency=${frequency}`;
-    const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
-    const testUrl = `http://localhost:9000/api/monitor-channels/start?sessionId=test-1`;
+  const sourceElement = document.getElementById('audioSource');
 
-    console.log("Playing State:", state);
-    console.log(audioElement);
-    console.log(audioRef.volume)
+  const channel = channelData.name;
+  const frequency = channelData.frequency;
+  const sessionId = '12345';
 
-    ///// for now set to play if OFFLINE, need to change this
-    if (state == "Play" || state == "") {
-      console.log(testUrl);
-      
-      sourceElement.src = testUrl;
-      audioElement.load();
+  const audioUrl = `http://localhost:9000/api/audio?session-id=${sessionId}&channel-id=${channel}&frequency=${frequency}`;
+  const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
+  const testUrl = `http://localhost:9000/api/monitor-channels?sessionId=test-1`;
 
-      audioElement.play().catch(error => {
-        console.error('Error playing audio:', error);
-      });
-    } 
-    
-    else if (state == "Pause") {
-      audioElement.pause();
-      sourceElement.src = stopUrl;
-    } 
-    
-    else if (state === "SDR Busy") {
-      alert("SDR is currently busy, please try again later.");
-    }
+  const audioElement = audioRef.current;
+
+  // Flip the `isPlaying` state
+  setIsPlaying(!isPlaying);
+
+  // Optionally perform additional logic when the state changes
+  if (!isPlaying) {
+    console.log('Playing...');
+    console.log(testUrl);
+        
+    sourceElement.src = testUrl;
+    audioElement.load();
+
+    audioElement.play().catch(error => {
+      console.error('Error playing audio:', error);
+    });
+
+  } else {
+    console.log('Paused...');
+    audioElement.pause();
+    sourceElement.src = stopUrl;
+  }
+};
+
+// Function to handle play/pause click (can simply call handleStateClick)
+const handlePlayPauseClick = () => {
+  handleStateClick();
+};
+
+// Function to render the play/pause button with dynamic styles
+const renderButton = () => {
+  return (
+    <button
+      onClick={handlePlayPauseClick}
+      style={{
+        backgroundColor: isPlaying ? 'red' : 'green',
+        color: 'white',
+        padding: '10px',
+        borderRadius: '5px',
+        cursor: 'pointer'
+      }}
+    >
+      {isPlaying ? 'Pause' : 'Play'}
+    </button>
+  );
+};
 
 
-  };
-
-
-  const handlePlayPauseClick = (channel, state, frequency) => {
-    const isCurrentlyPlaying = isPlaying;
-  
-    // Update the play/pause state for the clicked channel
-    if (isCurrentlyPlaying) {
-      state = 'Pause';
-    } else {
-      state = 'Play';
-    }
-    console.log("IsCurrentlyPlaying: ",isCurrentlyPlaying);
-    console.log("state: ",state);
-    // If the channel is now playing, set its volume and handle state click
-    if (!isCurrentlyPlaying && audioRef.current) {
-      const volume = (sliderValue / 100); // row volume * master volume
-      if (!isNaN(volume)) {
-        audioRef.current.volume = volume;
-        console.log(volume);
-      }
-      // state = "Play";
-      handleStateClick(channel, state, frequency); // Play new channel
-    } else {
-      // Pause the current channel
-      handleStateClick(channel, state, frequency); 
-    }
-  };
-  
-  // Function to render the play/pause button with dynamic styles
-  const renderButton = (channel, state, frequency) => {
-    return (
-      <button
-        onClick={() => handlePlayPauseClick(channel, state)}
-        style={{
-          backgroundColor: isPlaying  ? 'red' : 'green',
-          color: 'black',
-          padding: '5px 10px',
-          border: 'none',
-          borderRadius: '3px',
-          cursor: 'pointer',
-        }}
-      >
-        {isPlaying ? 'Pause' : 'Play'}
-      </button>
-    );
-  };
 
   const makeApiRequest = useCallback(
     async (url, options = {}) => {
@@ -383,12 +358,9 @@ const SingleChannelPage = () => {
       <div className="grid grid-cols-2 gap-4 p-4 bg-white border-b border-gray-300">
         {/* Play */}
         <div className="flex items-left justify-center border-r border-gray-300">
-        {/* <span>{channelData.state}</span> */}
-
           <div style={{ padding: '8px', textAlign: 'center' }}>
-            {renderButton(channelData.name, channelData.state, channelData.frequency)}
+            {renderButton(channelData.name)}
           </div>
-          {/* <span>{channelData.state}</span> */}
         </div>
   
         {/* Volume Slider Control */}
