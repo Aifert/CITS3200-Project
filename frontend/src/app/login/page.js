@@ -7,8 +7,7 @@ import { useRouter } from "next/navigation";
 const LoginPage = () => {
     const { data: session, status } = useSession();
     const router = useRouter();
-    // const URL = process.env.NEXT_PUBLIC_URL || 'http://localhost';
-    const URL = 'https://20.191.210.182';
+    const URL = process.env.NEXT_PUBLIC_URL || 'http://localhost';
 
     useEffect(() => {
         if (status === 'authenticated') {
