@@ -159,7 +159,7 @@ const DashboardPage = () => {
 
       const audioUrl = `http://localhost:9000/api/audio?session-id=${sessionId}&channel-id=${channel}&frequency=${frequency}`;
       const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
-      const testUrl = `http://localhost:9000/api/monitor-channels?sessionId=test-1`;
+      const testUrl = `http://localhost:9000/api/monitor-channels/start?file=test-1.mp3`;
 
       
       ///// for now set to play if OFFLINE, need to change this
