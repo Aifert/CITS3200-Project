@@ -106,6 +106,7 @@ K: float = 5.0 #multiplier for associated_standard_deviation calculation when se
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
 DATA_ENDPOINT_FOR_SERVER: str = '/upload/data' #where we should POST the data we gather
 SERVER_ADDRESS: str = 'https://20.191.210.182:9000' #server's URL
+MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS: int = 30 #timeout parameter to requests.post
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
@@ -534,7 +535,7 @@ def upload_data(json_data_to_upload: str) -> bool:
                 "Content-Type": "application/json"
             }
             #POST the request
-            response = requests.post(url, data=next_data, headers=headers)
+            response = requests.post(url, data=next_data, headers=headers, timeout=MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS)
             #check if the request was successful
             if response.status_code == 200:
                 print("Data uploaded successfully!")
@@ -544,6 +545,9 @@ def upload_data(json_data_to_upload: str) -> bool:
                 print(f"Response: {response.text}")
             return False
         return True
+    except requests.exceptions.Timeout:
+        print("Request timed out. The server did not respond within the allocated time.")
+        return False
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while uploading data: {e}")
         return False
