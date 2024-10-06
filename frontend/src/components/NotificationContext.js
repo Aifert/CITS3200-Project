@@ -36,7 +36,6 @@ export const NotificationProvider = ({ children }) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.log(`API Response Data from ${url}:`, responseData); 
       return responseData;
     } catch (error) {
       console.error('API request failed:', error);
@@ -95,7 +94,6 @@ export const NotificationProvider = ({ children }) => {
         }
       }
       const notificationUrl = `${backendUrl}notification?${queryStrings.join("&")}`;
-      console.log('Fetching analytics data from:', notificationUrl); 
 
       const notificationResult = await makeApiRequest(notificationUrl);
 
