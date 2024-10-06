@@ -13,17 +13,17 @@ async function startMonitorRadio(SDR_URL, SDR_PORT, params) {
   }
 }
 
-async function startMonitorMP3(SDR_URL, SDR_PORT, params) {
+async function startMonitorMP3(SDR_URL, params) {
   const queryParams = Object.entries(params)
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join('&');
   const paramsStr = queryParams ? `?${queryParams}` : '';
 
   try {
-    const tuneResponse = await axios.get(`${SDR_URL}:${SDR_PORT}/tune${paramsStr}`);
+    const tuneResponse = await axios.get(`${SDR_URL}tune${paramsStr}`);
 
     if (tuneResponse.status === 200){
-      const streamResponse = await axios.get(`${SDR_URL}:${SDR_PORT}/stream`, {
+      const streamResponse = await axios.get(`${SDR_URL}stream`, {
         responseType: 'stream',
         insecureHTTPParser: true,
       });
