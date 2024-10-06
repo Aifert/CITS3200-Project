@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip } from 'chart.js';
 import { useSession } from 'next-auth/react';
@@ -18,6 +18,13 @@ const SingleChannelPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const channelId = searchParams.get('channelId');
+
+  const [isPlaying, setIsPlaying] = useState(false); 
+  const [currentPlayingIndex, setCurrentPlayingIndex] = useState(null);
+  const [sliderValue, setSliderValue] = useState(50);
+  const audioRef = useRef(null); 
+
+
 
   const timeScales = {
     '60 minutes': { timeScale: 3600, sampleRate: 300 },
@@ -41,6 +48,95 @@ const SingleChannelPage = () => {
       const minutesAgo = (secondsAgo / 60).toFixed(2);
       return `${minutesAgo} minute(s)`;
     }
+  };
+
+  const handleStateClick = (channel, state, frequency) => {
+    // const selectedChannel = channelData.find(item => item.name === channel);
+    // const selectedChanneldata = data.find(item => item.name === channel);
+
+    // const playingState = state;
+    // const state_data = state;
+    // const frequency = selectedChannel.frequency;
+    const sessionId = '12345';
+    const audioElement = audioRef.current;
+    const sourceElement = document.getElementById('audioSource');
+
+    const audioUrl = `http://localhost:9000/api/audio?session-id=${sessionId}&channel-id=${channel}&frequency=${frequency}`;
+    const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
+    const testUrl = `http://localhost:9000/api/monitor-channels/start?sessionId=test-1`;
+
+    console.log("Playing State:", state);
+    console.log(audioElement);
+    console.log(audioRef.volume)
+
+    ///// for now set to play if OFFLINE, need to change this
+    if (state == "Play" || state == "") {
+      console.log(testUrl);
+      
+      sourceElement.src = testUrl;
+      audioElement.load();
+
+      audioElement.play().catch(error => {
+        console.error('Error playing audio:', error);
+      });
+    } 
+    
+    else if (state == "Pause") {
+      audioElement.pause();
+      sourceElement.src = stopUrl;
+    } 
+    
+    else if (state === "SDR Busy") {
+      alert("SDR is currently busy, please try again later.");
+    }
+
+
+  };
+
+
+  const handlePlayPauseClick = (channel, state, frequency) => {
+    const isCurrentlyPlaying = isPlaying;
+  
+    // Update the play/pause state for the clicked channel
+    if (isCurrentlyPlaying) {
+      state = 'Pause';
+    } else {
+      state = 'Play';
+    }
+    console.log("IsCurrentlyPlaying: ",isCurrentlyPlaying);
+    console.log("state: ",state);
+    // If the channel is now playing, set its volume and handle state click
+    if (!isCurrentlyPlaying && audioRef.current) {
+      const volume = (sliderValue / 100); // row volume * master volume
+      if (!isNaN(volume)) {
+        audioRef.current.volume = volume;
+        console.log(volume);
+      }
+      // state = "Play";
+      handleStateClick(channel, state, frequency); // Play new channel
+    } else {
+      // Pause the current channel
+      handleStateClick(channel, state, frequency); 
+    }
+  };
+  
+  // Function to render the play/pause button with dynamic styles
+  const renderButton = (channel, state, frequency) => {
+    return (
+      <button
+        onClick={() => handlePlayPauseClick(channel, state)}
+        style={{
+          backgroundColor: isPlaying  ? 'red' : 'green',
+          color: 'black',
+          padding: '5px 10px',
+          border: 'none',
+          borderRadius: '3px',
+          cursor: 'pointer',
+        }}
+      >
+        {isPlaying ? 'Pause' : 'Play'}
+      </button>
+    );
   };
 
   const makeApiRequest = useCallback(
@@ -166,13 +262,27 @@ const SingleChannelPage = () => {
       };
 
       setChannelData(newChannelData);
+      
+
     } catch (error) {
       setErrorMessage('Fetch error: ' + error.message);
     }
   }, [selectedTimeScale, status, backendUrl, channelId, makeApiRequest]);
 
+
+    // Function to handle volume slider changes
+    const handleSliderChange = (e) => {
+      const newValue = e.target.value;
+      setSliderValue(newValue);
+  
+      if (audioRef.current) {
+        audioRef.current.volume = newValue / 100;
+      }
+    };
+
   useEffect(() => {
     fetchChannelData();
+
   }, [selectedTimeScale, fetchChannelData]);
 
   const downloadData = (dataType) => {
@@ -188,15 +298,20 @@ const SingleChannelPage = () => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">
-        Channel: {channelData.name} ({channelData.frequency.toFixed(6)} MHz)
+        Channel: {channelData.name.replace("Channel", "")} ({channelData.status})
       </h1>
-
+  
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
-
+  
       <div className="mb-10 flex justify-between items-center">
-        <div className="flex space-x-4">
-          <label className="mr-2">Select Time Scale:</label>
-          <select value={selectedTimeScale} onChange={(e) => setSelectedTimeScale(e.target.value)} className="p-2 border border-gray-300 rounded">
+        {/* Time Scale */}
+        <div className="flex items-center space-x-4">
+          <label className="text-lg">Select Time Scale:</label>
+          <select
+            value={selectedTimeScale}
+            onChange={(e) => setSelectedTimeScale(e.target.value)}
+            className="p-2 border border-gray-300 rounded-md"
+          >
             {Object.keys(timeScales).map((label) => (
               <option key={label} value={label}>
                 {label}
@@ -204,28 +319,32 @@ const SingleChannelPage = () => {
             ))}
           </select>
         </div>
-
-        <div>
-          Download:
-          <button onClick={() => downloadData('strength')} className="ml-2 text-blue-600" title="All Strength Data">
-            <i className="fas fa-download"></i>
+  
+        {/* Download */}
+        <div className="flex items-center space-x-4">
+          <span className="text-lg">Download:</span>
+          <button
+            onClick={() => downloadData('strength')}
+            className="text-blue-600 hover:underline"
+            title="All Strength Data"
+          >
+            <i className="fas fa-download"></i> Strength Data
           </button>
-          <button onClick={() => downloadData('util')} className="ml-2 text-blue-600" title="All Utilisation Data">
-            <i className="fas fa-download"></i>
+          <button
+            onClick={() => downloadData('util')}
+            className="text-blue-600 hover:underline"
+            title="All Utilisation Data"
+          >
+            <i className="fas fa-download"></i> Utilisation Data
           </button>
         </div>
       </div>
-
+  
+      {/* Status and Details */}
       <div className="grid grid-cols-4 gap-4 p-4 bg-white border-b border-gray-300">
+
         <div className="flex items-center justify-center border-r border-gray-300">
-          {channelData.status === 'Active' ? (
-            <span className="bg-green-500 text-white px-4 py-1 rounded">Live</span>
-          ) : (
-            <span>{channelData.status}</span>
-          )}
-        </div>
-        <div className="flex items-center justify-center border-r border-gray-300">
-          {channelData.name} ({channelData.frequency.toFixed(6)} MHz)
+          <span>Frequency: {channelData.frequency.toFixed(6)} MHz</span>
         </div>
         <div className="flex items-center justify-center border-r border-gray-300">
           <span>Utilisation: {channelData.utilisation}</span>
@@ -233,8 +352,65 @@ const SingleChannelPage = () => {
         <div className="flex items-center justify-center">
           <span>Strength: {channelData.strength}</span>
         </div>
+        
+      {/* Channel Strength */}
+      <div className="flex items-center justify-center">
+        <div
+          className="w-full"
+          style={{
+            height: '10px',
+            background: 'linear-gradient(90deg, red, yellow, green)',
+            position: 'relative',
+            overflow: 'hidden', // Prevent overflow if the strength is out of bounds
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: `${channelData.strength < 0 ? 0 : channelData.strength > 100 ? 100 : channelData.strength}%`, // Clamp the value between 0 and 100
+              height: '100%',
+              width: '2px',
+              background: 'black',
+            }}
+          ></div>
+        </div>
       </div>
 
+      </div>
+
+      {/* Textual Data */}
+      <div className="grid grid-cols-2 gap-4 p-4 bg-white border-b border-gray-300">
+        {/* Play */}
+        <div className="flex items-left justify-center border-r border-gray-300">
+        {/* <span>{channelData.state}</span> */}
+
+          <div style={{ padding: '8px', textAlign: 'center' }}>
+            {renderButton(channelData.name, channelData.state, channelData.frequency)}
+          </div>
+          {/* <span>{channelData.state}</span> */}
+        </div>
+  
+        {/* Volume Slider Control */}
+        <div className="flex flex-col items-center border-r border-gray-300">
+        <span className="mt-2 text-lg">Volume</span>
+          
+        <input
+          id="slider"
+          type="range"
+          min="0"
+          max="100"
+          value={sliderValue}
+          onChange={handleSliderChange}
+          className="w-full max-w-xs"
+        />
+        </div>
+
+      </div>
+  
+
+  
+      {/* Graphical Data */}
       <div className="grid grid-cols-2 gap-4 p-4 bg-white">
         <div>
           {typeof channelData.dataUtilisation === 'string' ? (
@@ -265,7 +441,11 @@ const SingleChannelPage = () => {
               options={{
                 maintainAspectRatio: false,
                 scales: {
-                  y: { min: -110, max: -70, title: { display: true, text: 'Strength (dBm)' } },
+                  y: {
+                    min: -110,
+                    max: -70,
+                    title: { display: true, text: 'Strength (dBm)' },
+                  },
                   x: { title: { display: true, text: 'Time Ago' } },
                 },
                 spanGaps: true,
@@ -288,8 +468,15 @@ const SingleChannelPage = () => {
           )}
         </div>
       </div>
+  
+      {/* Hidden Audio Element */}
+      <audio id="audioPlayer" ref={audioRef} style={{ display: 'none' }}>
+        <source id="audioSource" src="" type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
     </div>
   );
-};
-
-export default SingleChannelPage;
+  };
+  
+  export default SingleChannelPage;
+  
