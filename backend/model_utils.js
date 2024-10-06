@@ -351,8 +351,9 @@ async function updateChannelInfo(deviceId, freq, dbName) {
 
 async function processIncomingData(dataObj, dbName) {
   try{
+    await santityCheckDatabase(dbName)
     await recheckConnection(dbName);
-    let recentMin = `SELECT c_id, MAX(a_start_time) FROM "utilisation" WHERE a_end_time IS NULL GROUP BY c_id`;
+    let recentMin = `SELECT c.c_freq, j.m FROM "channels" AS c JOIN (SELECT c_id, MAX(a_start_time) AS m FROM "utilisation" WHERE a_end_time IS NULL GROUP BY c_id) AS j ON c.c_id=j.c_id`
     let results = (await client.query(recentMin)).rows;
     if ("address" in dataObj) {
       await updateDeviceInfo(dataObj, dbName);
@@ -373,8 +374,8 @@ async function processIncomingData(dataObj, dbName) {
       if ("usage" in freqObj) {
         //start time
         for (let r in results) {
-          if (r["c_id"] == freqObj) {
-            startTime = [r["max"], true]
+          if (results[r]["c_freq"] == frequency) {
+            startTime = [results[r]["m"], true]
           }
         }
         let periodRecords = []
@@ -407,6 +408,7 @@ async function processIncomingData(dataObj, dbName) {
         await client.query(query);
       }
     }
+    await santityCheckDatabase(dbName)
     return "Successfully processed data"
   }  catch(error) {
     throw error;
@@ -511,6 +513,38 @@ async function checkNotificationState(requestObj, dbName) {
     }
     return output;
   } catch(error) {
+    throw error;
+  }
+}
+
+async function santityCheckDatabase(dbName) {
+  try {
+    await recheckConnection(dbName);
+    const nowTime = Math.floor(new Date().getTime()/1000);
+    //Check all utilisations except the most recent don't end in null
+    let query = `DELETE FROM "utilisation" WHERE a_end_time IS NULL
+             AND (c_id, a_start_time) NOT IN (SELECT c_id, MAX(a_start_time) FROM "utilisation" GROUP BY c_id)`
+
+    //Check no channels have "alive" utilisation when the device is offline
+    let offline = await getOfflineChannels();
+    let offlineChannels = "("
+    for (let o = 0; o < offline.length; o++) {
+      offlineChannels += offline[o]["channel-id"].toString() + ", ";
+    }
+    offlineChannels += "-1)";
+    console.log(offlineChannels)
+    query = `UPDATE "utilisation" SET a_end_time = a_start_time + 150
+             WHERE a_end_time IS NULL AND c_id IN ${offlineChannels}`
+    await client.query(query);
+
+    //Check no records are from the future
+    query = `DELETE FROM "strength" WHERE s_sample_time > ${nowTime};
+                 DELETE FROM "utilisation" WHERE a_start_time > ${nowTime};
+                 UPDATE "utilisation" SET a_end_time = ${nowTime} WHERE a_end_time > ${nowTime}`
+    await client.query(query);
+
+    await client.query(query);
+  } catch (error) {
     throw error;
   }
 }
