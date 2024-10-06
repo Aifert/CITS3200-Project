@@ -12,7 +12,15 @@ const NotificationConfigureBell = ({channelId}) => {
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
     if (!isDropdownOpen) {
-      console.log("hi")
+      let channelItem = localStorage.getItem(channelId);
+      if (channelItem) {
+        setTimeout(() => {
+          channelItem = channelItem.split(",")
+          document.getElementById(channelId.toString()+"-strength").value = channelItem[0]
+          document.getElementById(channelId.toString()+"-util").value = channelItem[1]
+          document.getElementById(channelId.toString()+"-util-time").value = channelItem[2]
+        }, 2);
+      }
     }
   };
   // Close dropdown when clicking outside
@@ -35,7 +43,11 @@ const NotificationConfigureBell = ({channelId}) => {
     const strengthCutOff = document.getElementById(channelId.toString()+"-strength").value;
     const utilCutOff = document.getElementById(channelId.toString()+"-util").value;
     const utilTime = document.getElementById(channelId.toString()+"-util-time").value;
-    localStorage.setItem(channelId, [strengthCutOff, utilCutOff, utilTime, true, true]);
+    if (localStorage.getItem(channelId)) {
+      localStorage.setItem(channelId, [strengthCutOff, utilCutOff, utilTime].concat(localStorage.getItem(channelId).split(",").slice(3, 6)))
+    } else {
+      localStorage.setItem(channelId, [strengthCutOff, utilCutOff, utilTime, true, true, true]);
+    }
   }
 
   const clearNotificationsForChannel = () => {
@@ -91,8 +103,8 @@ const NotificationConfigureBell = ({channelId}) => {
       </button>
     </div>
     <div className="">
-      <button className="shadow bg-blue-500 hover:bg-blue-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded" type="button">
-        Clear
+      <button className="shadow bg-blue-500 hover:bg-blue-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded" type="button" onClick={clearNotificationsForChannel}>
+        Stop
       </button>
     </div>
   </div>
