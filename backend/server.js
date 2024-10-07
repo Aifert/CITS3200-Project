@@ -307,7 +307,7 @@ app.get('/api/notification', async (req, res) => {
 });
 
 //http://localhost:9000/api/notification?1=[-100, 5, 600]
-app.get('/api/strength-dump', async (req, res) => {
+app.get('/api/analytics/strength-dump', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -317,7 +317,7 @@ app.get('/api/strength-dump', async (req, res) => {
   res.attachment("strength-data.csv").send(myFile);
 });
 
-app.get('/api/util-dump', async (req, res) => {
+app.get('/api/analytics/util-dump', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
