@@ -20,7 +20,7 @@ const LoginPage = () => {
 
                 window.location.href = redirectUrl;
             } else {
-                router.push('/dashboard');
+                router.push('/analytics');
             }
         }
     }, [status, router, URL]);
@@ -35,7 +35,7 @@ const LoginPage = () => {
         const port = searchParams.get('port') || '3000';
         const callbackUrl = requestedUrl
             ? `${URL}:${port}${decodeURIComponent(requestedUrl)}`
-            : '/dashboard';
+            : '/analytics';
 
         const result = await signIn("azure-ad", {
             redirect: false,

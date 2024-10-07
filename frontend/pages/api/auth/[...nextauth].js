@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const ONE_DAY_IN_SECONDS = 24 * 60 * 60; // The amount of seconds in a day
+
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
 export default NextAuth({
@@ -25,6 +27,11 @@ export default NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
+    maxAge: ONE_DAY_IN_SECONDS,
+    updateAge: ONE_DAY_IN_SECONDS /2,
+  },
+  jwt: {
+    maxAge: ONE_DAY_IN_SECONDS,
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
@@ -33,7 +40,7 @@ export default NextAuth({
       if (parsedUrl) {
         return parsedUrl;
       }
-      return baseUrl + "/dashboard";
+      return baseUrl + "/analytics";
     },
     async jwt({ token, account }) {
       if (account) {
