@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip } from 'chart.js';
+import { Line, Scatter } from 'react-chartjs-2';
+import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler} from 'chart.js';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip);
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
 
 const SingleChannelPage = () => {
   const [channelData, setChannelData] = useState(null);
@@ -27,13 +27,14 @@ const SingleChannelPage = () => {
 
 
   const timeScales = useMemo(() => ({
-    '60 minutes': { timeScale: 3600, sampleRate: 300 },
-    '3 hours': { timeScale: 10800, sampleRate: 600 },
-    '12 hours': { timeScale: 43200, sampleRate: 1200 },
-    '24 hours': { timeScale: 86400, sampleRate: 1800 },
-    '3 days': { timeScale: 259200, sampleRate: 7200 },
-    '7 days': { timeScale: 604800, sampleRate: 10800 },
-    '30 days': { timeScale: 2592000, sampleRate: 86400 },
+      '10 minutes': { timeScale: 600, sampleRate: 60, isStep: true },  // 1 hour, sample rate 5 minutes
+      '60 minutes': { timeScale: 3600, sampleRate: 300, isStep: false  },  // 1 hour, sample rate 5 minutes
+      '3 hours': { timeScale: 10800, sampleRate: 600, isStep: false  },    // 3 hours, sample rate 10 minutes
+      '12 hours': { timeScale: 43200, sampleRate: 1200, isStep: false  },  // 12 hours, sample rate 20 minutes
+      '24 hours': { timeScale: 86400, sampleRate: 1800, isStep: false  },  // 24 hours, sample rate 30 minutes
+      '3 days': { timeScale: 259200, sampleRate: 7200, isStep: false  },   // 3 days, sample rate 2 hours
+      '7 days': { timeScale: 604800, sampleRate: 10800, isStep: false  },  // 7 days, sample rate 3 hours
+      '30 days': { timeScale: 2592000, sampleRate: 86400, isStep: false  } // 30 days, sample rate 1 day
   }), []);
 
   const formatTimeLabelDirectly = (index, sampleRate) => {
@@ -172,45 +173,73 @@ const renderButton = () => {
         return;
       }
 
+      const isStep = timeScales[selectedTimeScale].isStep;
+
       const queryString = new URLSearchParams({
         'start-time': timeScale,
         'sample-rate': sampleRate,
-        'avg-data': true,
+        'avg-data': !isStep,
         whitelist: `[${channelId}]`,
       }).toString();
 
       const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
 
       const analyticsData = await makeApiRequest(analyticsUrl);
-
       const strengthData = analyticsData?.[channelId]?.strength?.values || {};
-      const utilisationData = analyticsData?.[channelId]?.utilisation?.zones || [];
+      const analyticsForChannel = analyticsData?.[channelId];
+      const utilisationData = isStep ? (analyticsForChannel?.utilisation?.values || []) : (analyticsForChannel?.utilisation?.zones || []);
 
-      const utilisationArray = Object.values(utilisationData).map((val) => val ?? null);
-      const utilisationLabels = Object.keys(utilisationData);
-      const formattedUtilisationLabels = utilisationLabels.map((label, index) => {
-        return formatTimeLabelDirectly(index, timeScales[selectedTimeScale].sampleRate);
-      });
 
       const strengthArray = Object.values(strengthData).map((val) => val ?? null);
       const strengthLabels = Object.keys(strengthData);
       const formattedStrengthLabels = strengthLabels.map((label, index) => {
         return formatTimeLabelDirectly(index, timeScales[selectedTimeScale].sampleRate);
       });
+      console.log(utilisationData);
 
-      const dataUtilisation = utilisationArray.length
-        ? {
-            labels: formattedUtilisationLabels.reverse(),
-            datasets: [
-              {
-                label: 'Utilisation Over Time',
-                data: utilisationArray.reverse(),
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1,
-              },
-            ],
+      let dataUtilisation;
+
+        if (!isStep) {
+          const utilisationArray = Object.values(utilisationData).map(val => val ?? null);
+          const utilisationLabels = Object.keys(utilisationData);
+          const formattedutilisationLabels = utilisationLabels.map((label, index) => {
+            return formatTimeLabelDirectly(index, timeScales[selectedTimeScale].sampleRate);
+          });
+          dataUtilisation = utilisationArray.length
+            ? {
+                labels: formattedutilisationLabels.reverse(),
+                datasets: [{
+                  label: 'Utilisation Over Time',
+                  data: utilisationArray.reverse(),
+                  borderColor: 'rgb(75, 192, 192)',
+                  tension: 0.1,
+                }],
+              }
+            : 'No data';
+
+        } else {
+          let utilStepData = [];
+          const nowTime = Math.floor(new Date().getTime()/1000);
+          for (let u in utilisationData) {
+            utilStepData.push({"x":nowTime-utilisationData[u][0], "y":0});
+            utilStepData.push({"x":nowTime-utilisationData[u][0], "y":1});
+            utilStepData.push({"x":nowTime-utilisationData[u][1], "y":1});
+            utilStepData.push({"x":nowTime-utilisationData[u][1], "y":0});
           }
-        : 'No data';
+
+          dataUtilisation = utilisationData.length
+            ? {
+                datasets: [{
+                  label: 'Utilisation Over Time',
+                  data: utilStepData,
+                  borderColor: 'rgb(75, 192, 192)',
+                  fill: true,
+                  type: "scatter",
+                  showLine: true
+                }],
+              }
+            : 'No data';
+        }
 
       const dataStrength = strengthArray.length
         ? {
@@ -386,23 +415,60 @@ const renderButton = () => {
       <div className="grid grid-cols-2 gap-4 p-4 bg-white">
         <div>
           {typeof channelData.dataUtilisation === 'string' ? (
-            <p>{channelData.dataUtilisation}</p>
-          ) : (
-            <Line
-              data={channelData.dataUtilisation}
-              options={{
-                maintainAspectRatio: false,
-                scales: {
-                  y: {
-                    min: 0,
-                    max: 100,
-                    title: { display: true, text: 'Utilisation (%)' },
-                  },
-                  x: { title: { display: true, text: 'Time Ago' } },
-                },
-              }}
-            />
-          )}
+                <p>{channelData.dataUtilisation}</p>
+              ) : channelData.dataUtilisation.datasets[0].type === "scatter" ? (
+                <Scatter
+                  data={channelData.dataUtilisation}
+                  options={{
+                    aspectRatio: 6,
+                    scales : {
+                      y: {
+                        grid: {
+                          display: false,
+                          },
+                        ticks: {
+                          display: false,
+                        }
+                      },
+                      x: {
+                        min: 0,
+                        max: 600,
+                        grid: {
+                          display: false,
+                          },
+                        title: {
+                          display: true,
+                          text: "Time Ago (s)",
+                        },
+                        reverse: true
+                      }
+                    }
+                  }}
+                  />
+              ) : (
+                <Line 
+                  data={channelData.dataUtilisation} 
+                  options={{ 
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        min: 0,
+                        max: 100,
+                        title: {
+                          display: true,
+                          text: 'Utilisation (%)',
+                        },
+                      },
+                      x: {
+                        title: {
+                          display: true,
+                          text: 'Time Ago',
+                        },
+                      },
+                    }, 
+                  }} 
+                />
+              )}
         </div>
         <div>
           {typeof channelData.dataStrength === 'string' ? (
