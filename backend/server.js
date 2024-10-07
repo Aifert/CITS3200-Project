@@ -153,12 +153,15 @@ app.get('/api/monitor-channels', async (req, res) => {
 app.get('/api/monitor-channels/start', async (req, res) => {
   const file = req.query['file'] || '';
 
+  // Pass through cookies to startMonitorMP3
+  const headers = req.headers;
+
   try {
     if (file){
       const params = {
         file: file,
       };
-      const responseStream = await startMonitorMP3(SDR_URL, SDR_PORT, params);
+      const responseStream = await startMonitorMP3(SDR_URL, params, headers);
 
       res.setHeader('Content-Type', 'audio/mpeg');
 
