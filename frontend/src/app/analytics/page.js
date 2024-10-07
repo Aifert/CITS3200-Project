@@ -271,7 +271,7 @@ const AnalyticsPage = () => {
               )}
             </div>
             <div className="flex items-center justify-center border-r border-gray-300">
-                <Link href={`/single-channel?channelId=${channel.id}` className="text-blue-600 hover:underline"}>
+                <Link href={`/single-channel?channelId=${channel.id}`} className="text-blue-600 hover:underline">
                   {channel.name} ({channel.frequency.toFixed(6)} MHz)
                 </Link>
               <button onClick={() => toggleFavorite(channel.id)}>
