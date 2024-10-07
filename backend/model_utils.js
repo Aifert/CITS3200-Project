@@ -525,6 +525,8 @@ async function santityCheckDatabase(dbName) {
   try {
     await recheckConnection(dbName);
     const nowTime = Math.floor(new Date().getTime()/1000);
+    console.log(nowTime);
+          /*
     //Check all utilisations except the most recent don't end in null
     let query = `DELETE FROM "utilisation" WHERE a_end_time IS NULL
              AND (c_id, a_start_time) NOT IN (SELECT c_id, MAX(a_start_time) FROM "utilisation" GROUP BY c_id)`
@@ -547,7 +549,7 @@ async function santityCheckDatabase(dbName) {
                  UPDATE "utilisation" SET a_end_time = ${nowTime} WHERE a_end_time > ${nowTime}`
     await client.query(query);
 
-    await client.query(query);
+    await client.query(query);*/
   } catch (error) {
     throw error;
   }
