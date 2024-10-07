@@ -15,6 +15,8 @@ const AnalyticsPage = () => {
   const [errorMessage, setErrorMessage] = useState(null);
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api/';
 
+  const [isUtilStep, setIsUtilStep] = useState(false);
+
   const { data: session, status } = useSession();
   const router = useRouter();
 
