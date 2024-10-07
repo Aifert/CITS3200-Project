@@ -7,7 +7,8 @@ const cookieParser = require('cookie-parser');
 const {
   startMonitorMP3,
   stopMonitor,
-  decideMonitorMode } = require('./monitor_server.js');
+  decideMonitorMode
+} = require('./monitor_server.js');
 
 const {
   getAliveChannels,
@@ -25,6 +26,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 9000;
+
 const SDR_URL = "http://sdr"
 const SDR_PORT = 4000 + "/";
 const PUBLIC_FRONTEND_URL = 'http://localhost:3000';
@@ -32,16 +34,37 @@ const PUBLIC_SDR_URL = `${process.env.NEXT_PUBLIC_SDR_URL}api/` || 'http://local
 
 let is_populating = false;
 
+// CORS middleware
+const corsOptions = {
+  origin: function (origin, callback) {
+    callback(null, true);
+  },
+  credentials: true,  // Allow credentials such as cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
 
-app.use(cors({
-  origin: PUBLIC_FRONTEND_URL,
-  credentials: true,
-}));
-
+app.use(cors(corsOptions));
 app.use(cookieParser());
 
+const allowedOrigins = ['https://20.191.210.182:3000', 'http://localhost:3000', PUBLIC_FRONTEND_URL];
+
 const verifyToken = async (req, res, next) => {
-  const token = req.cookies['next-auth.session-token'];
+  // If no token in Authorization header, fall back to cookie
+  const token = req.cookies['__Secure-next-auth.session-token'] || req.cookies['next-auth.session-token'];
+
+  // Set CORS headers for all responses
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
 
   if (token) {
     try {
@@ -55,7 +78,11 @@ const verifyToken = async (req, res, next) => {
       }
     } catch (error) {
       console.error('Token verification failed:', error);
-      res.status(403).json({ error: 'Invalid token' });
+      return res.status(403).json({
+        error: 'Invalid token',
+        message: 'Your session has expired or is invalid. Please log in again.',
+        code: 'INVALID_TOKEN'
+      });
     }
   } else {
     const requestedUrl = req.originalUrl;
@@ -127,29 +154,52 @@ app.get('/api/monitor-channels', async (req, res) => {
  * - channel-id : Radio channel name to listen in
  * - frequency : The frequency to monitor
  */
+
 app.get('/api/monitor-channels/start', async (req, res) => {
   const file = req.query['file'] || '';
 
+  // Pass through cookies to startMonitorMP3
+  const headers = req.headers;
+
   try {
-    if (file){
+    if (file) {
       const params = {
         file: file,
       };
-      const responseStream = await startMonitorMP3(SDR_URL, SDR_PORT, params);
+      const responseStream = await startMonitorMP3(SDR_URL, params, headers);
 
       res.setHeader('Content-Type', 'audio/mpeg');
 
       responseStream.pipe(res);
+
+      // Handle errors on the responseStream
+      responseStream.on('error', (error) => {
+        console.error('Error in responseStream:', error);
+        if (!res.headersSent) {
+          res.status(500).send({
+            message: 'Error occurred while streaming',
+            error: error.message,
+          });
+        }
+      });
+
+      // Ensure we don't try to send a response after the stream has ended
+      responseStream.on('end', () => {
+        if (!res.writableFinished) res.end();
+      });
+    } else {
+      res.status(400).send({
+        message: 'No file provided',
+      });
     }
-    res.status(400).send({
-      message: 'No file provided',
-    });
   } catch (error) {
     console.error('Error occurred while getting channel:', error);
-    res.status(500).send({
-      message: 'Error occurred while getting channel',
-      error: error.message,
-    });
+    if (!res.headersSent) {
+      res.status(500).send({
+        message: 'Error occurred while getting channel',
+        error: error.message,
+      });
+    }
   }
 });
 
