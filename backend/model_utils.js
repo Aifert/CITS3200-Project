@@ -209,6 +209,10 @@ let maxZone = SECONDS_IN_A_DAY / sampleRate;
 }
 
 function calculateZoneUtilAvg(pairedValues, nowTime, sampleRate, currentZone) {
+  if (pairedValues.length === 0) {
+    return 0;
+  }
+
   let zoneTime = nowTime - currentZone * sampleRate; //"end-time" of this zone of length sampleRate
   let zoneUpTime = 0; //holds the usage time across this zone
   if (!pairedValues[pairedValues.length-1][1]) {
