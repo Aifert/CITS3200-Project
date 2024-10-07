@@ -4,6 +4,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 const { decode } = require('next-auth/jwt');
 const cookieParser = require('cookie-parser');
+const https = require('https');
 const {
   startMonitorMP3,
   stopMonitor,
@@ -87,7 +88,10 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-app.use('/api', verifyToken);
+app.use('/api', (req, res, next) => {
+  https.globalAgent.options.rejectUnauthorized = false;
+  verifyToken(req, res, next);
+});
 
 async function singlePopulate() {
     const nowTime = Math.floor(new Date().getTime()/1000);
