@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip } from 'chart.js';
 import { useSession } from 'next-auth/react';
@@ -12,7 +12,7 @@ const SingleChannelPage = () => {
   const [channelData, setChannelData] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
-  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}api/` || 'http://localhost:9000/api/';
+  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}` || 'http://localhost:9000/';
 
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -26,7 +26,7 @@ const SingleChannelPage = () => {
 
 
 
-  const timeScales = {
+  const timeScales = useMemo(() => ({
     '60 minutes': { timeScale: 3600, sampleRate: 300 },
     '3 hours': { timeScale: 10800, sampleRate: 600 },
     '12 hours': { timeScale: 43200, sampleRate: 1200 },
@@ -34,7 +34,7 @@ const SingleChannelPage = () => {
     '3 days': { timeScale: 259200, sampleRate: 7200 },
     '7 days': { timeScale: 604800, sampleRate: 10800 },
     '30 days': { timeScale: 2592000, sampleRate: 86400 },
-  };
+  }), []);
 
   const formatTimeLabelDirectly = (index, sampleRate) => {
     const secondsAgo = sampleRate * (index + 1);
@@ -63,7 +63,7 @@ const handleStateClick = () => {
 
   const audioUrl = `http://localhost:9000/api/audio?session-id=${sessionId}&channel-id=${channel}&frequency=${frequency}`;
   const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
-  const testUrl = `http://localhost:9000/api/monitor-channels/start?file=test-1.mp3`;
+  const testUrl = `http://localhost:9000/api/monitor-channels/start?file=test-3.mp3`;
 
   const audioElement = audioRef.current;
 
