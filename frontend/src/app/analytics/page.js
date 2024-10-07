@@ -131,6 +131,7 @@ const AnalyticsPage = () => {
           });
           dataUtilisation = utilisationArray.length
             ? {
+                labels: formattedutilisationLabels.reverse(),
                 datasets: [{
                   label: 'Utilisation Over Time',
                   data: utilisationArray.reverse(),
@@ -141,13 +142,13 @@ const AnalyticsPage = () => {
             : 'No data';
 
         } else {
-          console.log(utilisationData);
           let utilStepData = [];
+          const nowTime = Math.floor(new Date().getTime()/1000);
           for (let u in utilisationData) {
-            utilStepData.push({"x":utilisationData[u][0], "y":0});
-            utilStepData.push({"x":utilisationData[u][0], "y":1});
-            utilStepData.push({"x":utilisationData[u][1], "y":1});
-            utilStepData.push({"x":utilisationData[u][1], "y":0});
+            utilStepData.push({"x":nowTime-utilisationData[u][0], "y":0});
+            utilStepData.push({"x":nowTime-utilisationData[u][0], "y":1});
+            utilStepData.push({"x":nowTime-utilisationData[u][1], "y":1});
+            utilStepData.push({"x":nowTime-utilisationData[u][1], "y":0});
           }
 
           dataUtilisation = utilisationData.length
@@ -329,6 +330,31 @@ const AnalyticsPage = () => {
               ) : channel.dataUtilisation.datasets[0].type === "scatter" ? (
                 <Scatter
                   data={channel.dataUtilisation}
+                  options={{
+                    aspectRatio: 6,
+                    scales : {
+                      y: {
+                        grid: {
+                          display: false,
+                          },
+                        ticks: {
+                          display: false,
+                        }
+                      },
+                      x: {
+                        min: 0,
+                        max: 600,
+                        grid: {
+                          display: false,
+                          },
+                        title: {
+                          display: true,
+                          text: "Time Ago (s)",
+                        },
+                        reverse: true
+                      }
+                    }
+                  }}
                   />
               ) : (
                 <Line 
