@@ -42,7 +42,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func redirectToLogin(w http.ResponseWriter, r *http.Request) {
 	nextAuthUrl := os.Getenv("NEXTAUTH_URL")
-	loginURL := fmt.Sprintf("%s/login?requestedUrl=%s&port=4001", nextAuthUrl, url.QueryEscape(r.URL.String()))
+	loginURL := fmt.Sprintf("%s/login?requestedUrl=%s&port=5000", nextAuthUrl, url.QueryEscape(r.URL.String()))
 	http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
 }
 
@@ -53,9 +53,12 @@ func getAccessTokenFromSession(sessionToken string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	req.AddCookie(&http.Cookie{
 		Name:  "next-auth.session-token",
+		Value: sessionToken,
+	})
+	req.AddCookie(&http.Cookie{
+		Name:  "__Secure-next-auth.session-token",
 		Value: sessionToken,
 	})
 
