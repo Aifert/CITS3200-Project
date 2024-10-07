@@ -13,14 +13,14 @@ async function startMonitorRadio(SDR_URL, SDR_PORT, params) {
   }
 }
 
-async function startMonitorMP3(SDR_URL, params) {
+async function startMonitorMP3(SDR_URL, params, headers) {
   const queryParams = Object.entries(params)
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join('&');
   const paramsStr = queryParams ? `?${queryParams}` : '';
 
   try {
-    const tuneResponse = await axios.get(`${SDR_URL}tune${paramsStr}`);
+    const tuneResponse = await axios.get(`${SDR_URL}tune${paramsStr}`, headers);
 
     if (tuneResponse.status === 200){
       const streamResponse = await axios.get(`${SDR_URL}stream`, {
