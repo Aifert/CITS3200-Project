@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip } from 'chart.js';
 import { useSession } from 'next-auth/react';
@@ -12,7 +12,7 @@ const SingleChannelPage = () => {
   const [channelData, setChannelData] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
-  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}` || 'http://localhost:9000/api/';
+  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}` || 'http://localhost:9000/';
 
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -63,7 +63,7 @@ const handleStateClick = () => {
 
   const audioUrl = `http://localhost:9000/api/audio?session-id=${sessionId}&channel-id=${channel}&frequency=${frequency}`;
   const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
-  const testUrl = `http://localhost:9000/api/monitor-channels/start?file=test-1.mp3`;
+  const testUrl = `http://localhost:9000/api/monitor-channels/start?file=test-3.mp3`;
 
   const audioElement = audioRef.current;
 
