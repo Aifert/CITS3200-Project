@@ -7,7 +7,8 @@ const cookieParser = require('cookie-parser');
 const {
   startMonitorMP3,
   stopMonitor,
-  decideMonitorMode } = require('./monitor_server.js');
+  decideMonitorMode
+} = require('./monitor_server.js');
 
 const {
   getAliveChannels,
@@ -150,6 +151,7 @@ app.get('/api/monitor-channels', async (req, res) => {
  * - channel-id : Radio channel name to listen in
  * - frequency : The frequency to monitor
  */
+
 app.get('/api/monitor-channels/start', async (req, res) => {
   const file = req.query['file'] || '';
 
@@ -157,7 +159,7 @@ app.get('/api/monitor-channels/start', async (req, res) => {
   const headers = req.headers;
 
   try {
-    if (file){
+    if (file) {
       const params = {
         file: file,
       };
@@ -166,16 +168,35 @@ app.get('/api/monitor-channels/start', async (req, res) => {
       res.setHeader('Content-Type', 'audio/mpeg');
 
       responseStream.pipe(res);
+
+      // Handle errors on the responseStream
+      responseStream.on('error', (error) => {
+        console.error('Error in responseStream:', error);
+        if (!res.headersSent) {
+          res.status(500).send({
+            message: 'Error occurred while streaming',
+            error: error.message,
+          });
+        }
+      });
+
+      // Ensure we don't try to send a response after the stream has ended
+      responseStream.on('end', () => {
+        if (!res.writableFinished) res.end();
+      });
+    } else {
+      res.status(400).send({
+        message: 'No file provided',
+      });
     }
-    res.status(400).send({
-      message: 'No file provided',
-    });
   } catch (error) {
     console.error('Error occurred while getting channel:', error);
-    res.status(500).send({
-      message: 'Error occurred while getting channel',
-      error: error.message,
-    });
+    if (!res.headersSent) {
+      res.status(500).send({
+        message: 'Error occurred while getting channel',
+        error: error.message,
+      });
+    }
   }
 });
 
