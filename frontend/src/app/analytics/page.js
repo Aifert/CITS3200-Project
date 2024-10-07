@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip } from 'chart.js';
 import Link from 'next/link';
@@ -15,8 +15,7 @@ const AnalyticsPage = () => {
   const [errorMessage, setErrorMessage] = useState(null);
   const [updatedTime, setUpdatedTime] = useState(false);
   const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
-  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}api/` || 'http://localhost:9000/api/';
-  
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api/';
 
   if (!updatedTime && localStorage.getItem("time-scale")) {
       console.log("here1")
@@ -26,15 +25,17 @@ const AnalyticsPage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const timeScales = { 
-    '60 minutes': { timeScale: 3600, sampleRate: 300 },  // 1 hour, sample rate 5 minutes
-    '3 hours': { timeScale: 10800, sampleRate: 600 },    // 3 hours, sample rate 10 minutes
-    '12 hours': { timeScale: 43200, sampleRate: 1200 },  // 12 hours, sample rate 20 minutes
-    '24 hours': { timeScale: 86400, sampleRate: 1800 },  // 24 hours, sample rate 30 minutes
-    '3 days': { timeScale: 259200, sampleRate: 7200 },   // 3 days, sample rate 2 hours
-    '7 days': { timeScale: 604800, sampleRate: 10800 },  // 7 days, sample rate 3 hours
-    '30 days': { timeScale: 2592000, sampleRate: 86400 } // 30 days, sample rate 1 day
-  };
+   const timeScales = useMemo(() => {
+    return {
+      '60 minutes': { timeScale: 3600, sampleRate: 300 },  // 1 hour, sample rate 5 minutes
+      '3 hours': { timeScale: 10800, sampleRate: 600 },    // 3 hours, sample rate 10 minutes
+      '12 hours': { timeScale: 43200, sampleRate: 1200 },  // 12 hours, sample rate 20 minutes
+      '24 hours': { timeScale: 86400, sampleRate: 1800 },  // 24 hours, sample rate 30 minutes
+      '3 days': { timeScale: 259200, sampleRate: 7200 },   // 3 days, sample rate 2 hours
+      '7 days': { timeScale: 604800, sampleRate: 10800 },  // 7 days, sample rate 3 hours
+      '30 days': { timeScale: 2592000, sampleRate: 86400 } // 30 days, sample rate 1 day
+    };
+  }, []);
   
   const formatTimeLabelDirectly = (index, sampleRate) => {
     const secondsAgo = sampleRate * (index + 1);
@@ -180,7 +181,7 @@ const AnalyticsPage = () => {
       console.error('Fetch error:', error);
       setErrorMessage('Fetch error: ' + error.message);
     }
-  }, [selectedTimeScale, status, backendUrl, makeApiRequest]);
+  }, [timeScales, selectedTimeScale, status, backendUrl, makeApiRequest]);
 
   useEffect(() => {
     fetchChannelData();
@@ -191,7 +192,7 @@ const AnalyticsPage = () => {
     }, sampleRate * 1000); 
 
     return () => clearInterval(intervalId);
-  }, [selectedTimeScale, fetchChannelData]);
+  }, [selectedTimeScale, fetchChannelData, timeScales]);
 
   const downloadData = (channelId, dataType, type) => {
     const { timeScale } = timeScales[selectedTimeScale];
@@ -200,11 +201,25 @@ const AnalyticsPage = () => {
     window.location.href = url;
   };
 
+
   const resetTimeScale = (timeS) => {
     localStorage.setItem("time-scale", timeS)
     console.log(timeS);
     setSelectedTimeScale(timeS);
   }
+
+  const toggleFavorite = (channelId) => {
+    const updatedChannels = channelData.map(channel =>
+      channel.id === channelId
+        ? { ...channel, isFavorite: !channel.isFavorite }
+        : channel
+    );
+    setChannelData(updatedChannels);
+  
+    const favorites = updatedChannels.filter(channel => channel.isFavorite);
+    const nonFavorites = updatedChannels.filter(channel => !channel.isFavorite);
+    setChannelData([...favorites, ...nonFavorites]);
+  };
 
   return (
     <div className="container mx-auto p-6">
@@ -213,30 +228,47 @@ const AnalyticsPage = () => {
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
 
       {/* Time scale selection dropdown */}
-      <div className="mb-6">
-        <label className="mr-2">Select Time Scale:</label>
-        <select
-          value={selectedTimeScale}
-          onChange={e => resetTimeScale(e.target.value)} // Update the time scale
-          className="p-2 border border-gray-300 rounded"
-        >
-          {Object.keys(timeScales).map(label => (
-            <option key={label} value={label}>
-              {label}
-            </option>
-          ))}
-        </select>
+      <div className="mb-6 flex justify-between items-center">
+        <div className="flex space-x-4">
+          <label className="mr-2">Select Time Scale:</label>
+          <select
+            value={selectedTimeScale}
+            onChange={e => resetTimeScale(e.target.value)} // Update the time scale
+            className="p-2 border border-gray-300 rounded"
+          >
+            {Object.keys(timeScales).map(label => (
+              <option key={label} value={label}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        
+        <div>
+          Download:
+          <button 
+            onClick={() => {
+              downloadData(null, 'strength', 'blacklist');
+            }} 
+            className="ml-2 text-blue-600"
+            title="All Strength Data"
+          >
+            <i className="fas fa-download"></i>
+          </button>
+
+          <button 
+            onClick={() => {
+              downloadData(null, 'util', 'blacklist');
+            }} 
+            className="ml-2 text-blue-600"
+            title="All Utilisation Data"
+          >
+            <i className="fas fa-download"></i>
+          </button>
+        </div>
       </div>
 
-      <button 
-        onClick={() => {
-          downloadData(null, 'strength', 'blacklist');
-          downloadData(null, 'util', 'blacklist');
-        }} 
-        className="ml-2 text-blue-600"
-      >
-        <i className="fas fa-download"></i> Download All
-      </button>
 
       {channelData.map((channel, index) => (
         <div key={index} className="mb-10">
@@ -253,8 +285,10 @@ const AnalyticsPage = () => {
                 <span>{channel.status}</span>
               )}
             </div>
-            <div className="flex col-span-2 items-center justify-center border-r border-gray-300">
-              {channel.name} ({channel.frequency.toFixed(6)} MHz)
+            <div className="flex items-center justify-center border-r border-gray-300">
+                <Link href={`/single-channel?channelId=${channel.id}`} className="text-blue-600 hover:underline">
+                  {channel.name} ({channel.frequency.toFixed(6)} MHz)
+                </Link>
               <button onClick={() => toggleFavorite(channel.id)}>
                 {channel.isFavorite ? ' ★' : ' ☆'}
               </button>
@@ -349,7 +383,7 @@ const AnalyticsPage = () => {
                         enabled: true,
                         callbacks: {
                           label: function(context) {
-                            return `Value: ${context.raw}`;
+                            return `Value: ${Number(context.raw).toFixed(2)}`;
                           },
                         },
                       },

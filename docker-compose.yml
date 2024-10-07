@@ -6,11 +6,12 @@ services:
       dockerfile: Dockerfile.web
     ports:
       - "9001:9000"
-    volumes:
-      - .:/src
     environment:
       - NODE_ENV=production
-    command: node src/server.js
+      - PORT=9000
+    depends_on:
+      - db
+    command: node backend/server.js
 
   db:
     image: postgres:13
@@ -31,6 +32,6 @@ services:
       - "3001:3000"
     environment:
       - NODE_ENV=production
-    volumes:
-      - .:/src
+    depends_on:
+      - web
     command: npm start

@@ -12,36 +12,43 @@ async function startMonitorRadio(SDR_URL, SDR_PORT, params) {
     throw new Error(error.message);
   }
 }
-
-async function startMonitorMP3(SDR_URL, SDR_PORT, params) {
-  const queryParams = Object.entries(params)
-    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-    .join('&');
-  const paramsStr = queryParams ? `?${queryParams}` : '';
-
+async function startMonitorMP3(SDR_URL, params, headers) {
   try {
-    const tuneResponse = await axios.get(`${SDR_URL}:${SDR_PORT}/tune${paramsStr}`);
+    // First, tune to the specified file
+    const queryParams = Object.entries(params)
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join('&');
+    const paramsStr = queryParams ? `?${queryParams}` : '';
 
-    if (tuneResponse.status === 200){
-      const streamResponse = await axios.get(`${SDR_URL}:${SDR_PORT}/stream`, {
+    const tuneResponse = await axios.get(`${SDR_URL}tune${paramsStr}`, {
+      headers: headers,
+      insecureHTTPParser: true
+    });
+
+    if (tuneResponse.status == 200){
+      const streamResponse = await axios.get(`${SDR_URL}stream`, {
+        headers: headers,
         responseType: 'stream',
         insecureHTTPParser: true,
       });
 
       return streamResponse.data;
+
     }
     else{
-      throw new Error('Error tuning to frequency');
+      throw new Error("Error tuning to file");
     }
-  } catch (error) {
+  }
+  catch (error) {
     throw new Error(error.message);
   }
 }
 
-async function stopMonitor(SDR_URL, SDR_PORT){
+
+async function stopMonitor(SDR_URL, headers){
     try {
-      console.log(`${SDR_URL}:${SDR_PORT}/api/monitor/stop`);
-      await axios.get(`${SDR_URL}:${SDR_PORT}/api/monitor/stop`, {
+      await axios.get(`${SDR_URL}/stop`, {
+        headers: headers,
         insecureHTTPParser: true
       });
     } catch (error) {
@@ -64,5 +71,5 @@ function decideMonitorMode(session_id, channel_id, frequency){
 module.exports = {
   startMonitorMP3,
   stopMonitor,
-  decideMonitorMode
+  decideMonitorMode,
 }
