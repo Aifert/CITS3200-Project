@@ -149,15 +149,11 @@ const DashboardPage = () => {
 
     if (selectedChannel) {
       const playingState = selectedChanneldata.status;
-      const state = selectedChannel.status;
-      const frequency = selectedChannel.frequency;
-      const sessionId = '12345';
       const audioElement = audioRef.current;
       const sourceElement = document.getElementById('audioSource');
 
-      const audioUrl = `http://localhost:9000/api/audio?session-id=${sessionId}&channel-id=${channel}&frequency=${frequency}`;
-      const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
-      const testUrl = `http://localhost:9000/api/monitor-channels/start?file=test-3.mp3`;
+      const stopUrl = `${backendUrl}monitor-channels/stop`;
+      const testUrl = `${backendUrl}monitor-channels/start?file=test-3.mp3`;
 
       
       ///// for now set to play if OFFLINE, need to change this
@@ -176,12 +172,7 @@ const DashboardPage = () => {
       else if (playingState == "Pause") {
         audioElement.pause();
         sourceElement.src = stopUrl;
-
       } 
-      
-      else if (state === "SDR Busy") {
-        alert("SDR is currently busy, please try again later.");
-      }
 
     } else {
       alert(`Channel ${channel} not found!`);
