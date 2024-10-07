@@ -1,21 +1,129 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+
 import DynamicChannels from '../../components/DynamicChannel';
 
 const DashboardPage = () => {
+  const [channelData, setChannelData] = useState([]);
+  const [errorMessage, setErrorMessage] = useState(null);
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState([
-    { State: "", Channel: '1', Frequency: 30, SignalStrength: '60' },
+    { status: "", name: '1', frequency: 30, strength: '60' },
     { State: "", Channel: '2', Frequency: 25, SignalStrength: '70' },
     { State: "", Channel: '3', Frequency: 40, SignalStrength: '89' },
     { State: "", Channel: '5', Frequency: 70, SignalStrength: '39' },
   ]);
-
+  const router = useRouter();
+  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}api/` || 'http://localhost:9000/api/';
   const [sliderValue, setSliderValue] = useState(50);
   const audioRef = useRef(null); 
+
+
+
+  const makeApiRequest = useCallback(async (url, options = {}) => {
+    console.log(`Making API request to: ${url}`); 
+
+    if (!session || !session.accessToken) {
+      setErrorMessage('No active session. Please log in.');
+      router.push('/login');
+      return null;
+    }
+
+    const headers = {
+      ...options.headers,
+      'Authorization': `Bearer ${session.accessToken}`,
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      const response = await fetch(url, { credentials: 'include', ...options, headers });
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        console.log(`Error Response:`, responseData); 
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      console.log(`API Response Data from ${url}:`, responseData); 
+      return responseData;
+    } catch (error) {
+      console.error('API request failed:', error);
+      setErrorMessage(`API request failed: ${error.message}`);
+      return null;
+    }
+  }, [session, router]);
+
+  const fetchChannelData = useCallback(async () => {
+
+    if (status !== 'authenticated') return;
+
+    try {
+      const activeChannelsData = await makeApiRequest(`${backendUrl}active-channels`);
+      console.log('Active channels response:', activeChannelsData);
+
+      if (!activeChannelsData || (!activeChannelsData.active && !activeChannelsData.offline && !activeChannelsData.busy)) {
+        setErrorMessage('No active, offline, or busy channels found.');
+        return;
+      }
+
+      const allChannels = [
+        ...activeChannelsData.active?.map(channel => ({ ...channel, status: 'Active' })) || [],
+        ...activeChannelsData.offline?.map(channel => ({ ...channel, status: 'Offline' })) || [],
+        ...activeChannelsData.busy?.map(channel => ({ ...channel, status: 'Busy' })) || [],
+      ];
+
+      const channelIds = allChannels.map(channel => channel['channel-id']);
+
+      const queryString = new URLSearchParams({
+        'start-time': 86400,
+        'sample-rate': 10800,
+        'avg-data': true, 
+        'whitelist': `[${channelIds.join(',')}]`
+      }).toString();
+
+      const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
+      console.log('Fetching analytics data from:', analyticsUrl); 
+
+      const analyticsData = await makeApiRequest(analyticsUrl);
+      console.log('Analytics data response:', analyticsData);
+
+      const processedData = allChannels.map(channel => {
+        const channelId = channel['channel-id'];
+        const analyticsForChannel = analyticsData?.[channelId] || {};
+
+        return {
+          status: channel.status,
+          name: channel['channel-name'],
+          frequency: channel.frequency / 1e6,
+          utilisation: analyticsForChannel?.utilisation?.average ? analyticsForChannel?.utilisation?.average.toFixed(3) : 'No data',
+          strength: analyticsForChannel?.strength?.average ? analyticsForChannel?.strength?.average.toFixed(3) : 'No data',
+          id: channel['channel-id'],
+        };
+      });
+
+    // Keep the original processedData
+    console.log('Processed Data:', processedData);
+    setChannelData(processedData); // Set the unmodified data here
+
+    // Modify the data for setData
+    const modifiedData = processedData.map(item => ({
+      name: item.name, // Keep the name
+      status: item.status === 'Offline' ? "" : item.status // Set to "" if status is Offline, otherwise keep it
+    }));
+
+    console.log("Modified Data:", modifiedData);
+    setData(modifiedData); // Set the modified data here
+
+
+    } catch (error) {
+      console.error('Fetch error:', error);
+      setErrorMessage('Fetch error: ' + error.message);
+    }
+  }, [status, makeApiRequest]);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -23,7 +131,10 @@ const DashboardPage = () => {
     } else if (status === 'unauthenticated') {
       window.location.href = '/login';
     }
-  }, [status]);
+
+
+    fetchChannelData();
+  }, [status, fetchChannelData]);
 
   const handleSliderChange = (e) => {
     const newValue = e.target.value;
@@ -34,37 +145,39 @@ const DashboardPage = () => {
     }
   };
   
-
   const handleStateClick = (channel) => {
-    const selectedChannel = data.find(item => item.Channel === channel);
+    const selectedChannel = channelData.find(item => item.name === channel);
+    const selectedChanneldata = data.find(item => item.name === channel);
 
     if (selectedChannel) {
-      const state = selectedChannel.State;
-      const frequency = selectedChannel.Frequency;
+      const playingState = selectedChanneldata.status;
+      const state = selectedChannel.status;
+      const frequency = selectedChannel.frequency;
       const sessionId = '12345';
       const audioElement = audioRef.current;
       const sourceElement = document.getElementById('audioSource');
 
       const audioUrl = `http://localhost:9000/api/audio?session-id=${sessionId}&channel-id=${channel}&frequency=${frequency}`;
       const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
-      const testUrl = `http://localhost:9000/api/monitor-channels/start?session-id=test-1`;
+      const testUrl = `http://localhost:9000/api/monitor-channels/start?file=test-1.mp3`;
 
-      console.log(state);
+      
+      ///// for now set to play if OFFLINE, need to change this
+      if (playingState == "Play" || playingState == "") {
+        audioElement.load();
 
-      if (state === "Play") {
         console.log(testUrl);
         
         sourceElement.src = testUrl;
-        audioElement.load();
 
         audioElement.play().catch(error => {
           console.error('Error playing audio:', error);
         });
       } 
       
-      else if (state === "Pause") {
+      else if (playingState == "Pause") {
         audioElement.pause();
-        sourceElement.src = stopUrl;
+        // sourceElement.src = stopUrl;
       } 
       
       else if (state === "SDR Busy") {
@@ -76,24 +189,27 @@ const DashboardPage = () => {
     }
   };
 
+
+  
   if (isLoading) {
     return <p>Loading...</p>;
   }
 
   return (
-    <div style={{ height: '100vh', width: '100vw', margin: 0, padding: 0, boxSizing: 'border-box', backgroundColor: '#181817' }}>
+    <div style={{ height: '100vh', width: '100vw', margin: 0, padding: 0, boxSizing: 'border-box', backgroundColor: '#ffffff' }}>
       <div style={{ width: '100%', height: '5px', backgroundColor: 'gray' }}></div>
+      {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
 
       <div className="dashboard-content" style={{ padding: '20px', height: 'calc(100vh - 50px)', overflowY: 'auto' }}>
         <br />
         <div style={{ padding: '20px' }}>
-        <DynamicChannels data={data} handleStateClick={handleStateClick} audioRef={audioRef} sliderValue={sliderValue}/>
+        <DynamicChannels data={channelData} handleStateClick={handleStateClick} audioRef={audioRef} sliderValue={sliderValue}/>
 
         </div>
 
         {/* Volume Slider */}
         <div style={{ marginTop: '20px', textAlign: 'center', padding: '0 20px' }}>
-          <p style={{ marginBottom: '10px', fontSize: '18px', fontWeight: 'bold', color: 'white' }}>Master Volume</p>
+          <p style={{ marginBottom: '10px', fontSize: '18px', fontWeight: 'bold', color: 'black' }}>Master Volume</p>
           <input
             id="slider"
             type="range"
