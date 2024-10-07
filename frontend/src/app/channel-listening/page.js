@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import https from "https";
 
 import DynamicChannels from '../../components/DynamicChannel';
 
@@ -40,7 +41,12 @@ const DashboardPage = () => {
     };
 
     try {
-      const response = await fetch(url, { credentials: 'include', ...options, headers });
+      const response = await fetch(url, {
+        credentials: 'include',
+        ...options,
+        headers,
+        agent: new (require('https').Agent)({ rejectUnauthorized: false })
+      });
       const responseData = await response.json();
 
       if (!response.ok) {
@@ -153,7 +159,7 @@ const DashboardPage = () => {
       const sourceElement = document.getElementById('audioSource');
 
       const stopUrl = `${backendUrl}monitor-channels/stop`;
-      const testUrl = `${backendUrl}monitor-channels/start?file=test-3.mp3`;
+      const testUrl = `${backendUrl}monitor-channels/start?file=test-1.mp3`;
 
 
       ///// for now set to play if OFFLINE, need to change this
