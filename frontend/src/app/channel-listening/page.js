@@ -18,7 +18,7 @@ const DashboardPage = () => {
     { State: "", Channel: '5', Frequency: 70, SignalStrength: '39' },
   ]);
   const router = useRouter();
-  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}api/` || 'http://localhost:9000/api/';
+  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}` || 'http://localhost:9000/';
   const [sliderValue, setSliderValue] = useState(50);
   const audioRef = useRef(null); 
 
@@ -105,18 +105,16 @@ const DashboardPage = () => {
         };
       });
 
-    // Keep the original processedData
     console.log('Processed Data:', processedData);
-    setChannelData(processedData); // Set the unmodified data here
+    setChannelData(processedData); 
 
-    // Modify the data for setData
     const modifiedData = processedData.map(item => ({
-      name: item.name, // Keep the name
-      status: item.status === 'Offline' ? "" : item.status // Set to "" if status is Offline, otherwise keep it
+      name: item.name, 
+      status: item.status === 'Offline' ? "" : item.status
     }));
 
     console.log("Modified Data:", modifiedData);
-    setData(modifiedData); // Set the modified data here
+    setData(modifiedData); 
 
 
     } catch (error) {
@@ -159,7 +157,7 @@ const DashboardPage = () => {
 
       const audioUrl = `http://localhost:9000/api/audio?session-id=${sessionId}&channel-id=${channel}&frequency=${frequency}`;
       const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
-      const testUrl = `http://localhost:9000/api/monitor-channels/start?file=test-1.mp3`;
+      const testUrl = `http://localhost:9000/api/monitor-channels/start?file=test-3.mp3`;
 
       
       ///// for now set to play if OFFLINE, need to change this
@@ -177,7 +175,8 @@ const DashboardPage = () => {
       
       else if (playingState == "Pause") {
         audioElement.pause();
-        // sourceElement.src = stopUrl;
+        sourceElement.src = stopUrl;
+
       } 
       
       else if (state === "SDR Busy") {
