@@ -18,7 +18,6 @@ const AnalyticsPage = () => {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api/';
 
   if (!updatedTime && localStorage.getItem("time-scale")) {
-      console.log("here1")
       setUpdatedTime(true);
       setSelectedTimeScale(localStorage.getItem("time-scale"));
   }
@@ -204,7 +203,6 @@ const AnalyticsPage = () => {
 
   const resetTimeScale = (timeS) => {
     localStorage.setItem("time-scale", timeS)
-    console.log(timeS);
     setSelectedTimeScale(timeS);
   }
 
