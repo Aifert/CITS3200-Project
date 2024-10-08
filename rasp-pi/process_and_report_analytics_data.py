@@ -673,6 +673,7 @@ def copy_new_csv_data():
     shutil.copyfile(full_path_to_rtl_power_in_progress, full_path_to_rtl_power_output)
 
 if __name__ == "__main__":
+    parse_SES_channels()
     first_time = False #So we don't parse the file on the first run
     while True:
         try:
