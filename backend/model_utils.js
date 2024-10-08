@@ -254,6 +254,10 @@ async function getChannelUtilisation(requestObj, dbName) {
   let percentageStart = requestObj?.["start-time"] ? nowTime-requestObj["start-time"] : -1;
   let percentageEnd = requestObj?.["end-time"] ? requestObj["end-time"] : nowTime;
   
+  let allIdsQuery = `SELECT c_id FROM "channels" WHERE c_id ${cond}`;
+  let allIdsResult = await client.query(allIdsQuery);
+  let allIds = allIdsResult.rows.map((x)=>x["c_id"]);
+
   if ("start-time" in requestObj) {
     cond += `AND (a_end_time IS NULL OR a_end_time >= ${nowTime-requestObj["start-time"]})`
     maxZone = (requestObj["start-time"]-(nowTime-percentageEnd))/sampleRate;
@@ -272,11 +276,12 @@ async function getChannelUtilisation(requestObj, dbName) {
 
   let res = await client.query(query);
   let output = {};
+  for (const id in allIds) {
+    output[id] = {};
+    output[id].values = []
+  }
+
   for (const row of res.rows) {
-    if (!(row.c_id in output)) {
-      output[row.c_id] = {};
-      output[row.c_id].values = [];
-    }
       output[row.c_id].values.push([row.a_start_time, row.a_end_time]);
   }
   Object.keys(output).forEach(c_id => {
