@@ -2,8 +2,8 @@ const { Client } = require('pg')
 const fs = require('fs');
 
 const ALIVETIME = 150;
-const STRENGTHMAX = -70.0;
-const STRENGTHMIN = -110;
+const STRENGTHMAX = 40;
+const STRENGTHMIN = -50;
 
 let isConnecting = false;
 let isConnected = false;
@@ -547,7 +547,6 @@ async function santityCheckDatabase(dbName) {
                  UPDATE "utilisation" SET a_end_time = ${nowTime} WHERE a_end_time > ${nowTime}`
     await client.query(query);
 
-    await client.query(query);
   } catch (error) {
     throw error;
   }

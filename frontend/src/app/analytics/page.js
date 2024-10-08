@@ -392,8 +392,8 @@ const AnalyticsPage = () => {
                     maintainAspectRatio: false,
                     scales: {
                       y: {
-                        min: -110,
-                        max: -70,
+                        min: -50,
+                        max: 40,
                         title: {
                           display: true,
                           text: 'Strength (dBm)',
