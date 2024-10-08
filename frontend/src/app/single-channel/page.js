@@ -28,7 +28,7 @@ const SingleChannelPage = () => {
 
   const timeScales = useMemo(() => ({
       '10 minutes': { timeScale: 600, sampleRate: 60, isStep: true },  // 1 hour, sample rate 5 minutes
-      '60 minutes': { timeScale: 3600, sampleRate: 300, isStep: false  },  // 1 hour, sample rate 5 minutes
+      '60 minutes': { timeScale: 3600, sampleRate: 300, isStep: true  },  // 1 hour, sample rate 5 minutes
       '3 hours': { timeScale: 10800, sampleRate: 600, isStep: false  },    // 3 hours, sample rate 10 minutes
       '12 hours': { timeScale: 43200, sampleRate: 1200, isStep: false  },  // 12 hours, sample rate 20 minutes
       '24 hours': { timeScale: 86400, sampleRate: 1800, isStep: false  },  // 24 hours, sample rate 30 minutes
@@ -432,7 +432,7 @@ const renderButton = () => {
                       },
                       x: {
                         min: 0,
-                        max: 600,
+                        max: timeScales[selectedTimeScale].timeScale,
                         grid: {
                           display: false,
                           },
@@ -480,8 +480,8 @@ const renderButton = () => {
                 maintainAspectRatio: false,
                 scales: {
                   y: {
-                    min: -110,
-                    max: -70,
+                    min: -50,
+                    max: 40,
                     title: { display: true, text: 'Strength (dBm)' },
                   },
                   x: { title: { display: true, text: 'Time Ago' } },
