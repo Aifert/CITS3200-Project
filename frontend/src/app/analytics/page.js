@@ -151,10 +151,7 @@ const AnalyticsPage = () => {
         } else {
           let utilStepData = [];
           const nowTime = Math.floor(new Date().getTime()/1000);
-          utilStepData.push({"x":timeScales[selectedTimeScale].timeScale-5, "y":0});
-          if (utilisationData.length > 0) {
-          console.log("MYUTIL", utilisationData);
-          }
+          utilStepData.push({"x":timeScales[selectedTimeScale].timeScale+5, "y":0});
           for (let u in utilisationData) {
             utilStepData.push({"x":nowTime-utilisationData[u][0], "y":0});
             utilStepData.push({"x":nowTime-utilisationData[u][0], "y":1});
