@@ -6,15 +6,22 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import NotificationConfigureBell from '../../components/NotificationConfigureBell';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
 
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [updatedTime, setUpdatedTime] = useState(false);
   const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api/';
 
+  if (!updatedTime && localStorage.getItem("time-scale")) {
+      console.log("here1")
+      setUpdatedTime(true);
+      setSelectedTimeScale(localStorage.getItem("time-scale"));
+  }
   const { data: session, status } = useSession();
   const router = useRouter();
    const timeScales = useMemo(() => {
@@ -223,6 +230,13 @@ const AnalyticsPage = () => {
     window.location.href = url;
   };
 
+
+  const resetTimeScale = (timeS) => {
+    localStorage.setItem("time-scale", timeS)
+    console.log(timeS);
+    setSelectedTimeScale(timeS);
+  }
+
   const toggleFavorite = (channelId) => {
     const updatedChannels = channelData.map(channel =>
       channel.id === channelId
@@ -248,7 +262,7 @@ const AnalyticsPage = () => {
           <label className="mr-2">Select Time Scale:</label>
           <select
             value={selectedTimeScale}
-            onChange={e => setSelectedTimeScale(e.target.value)} // Update the time scale
+            onChange={e => resetTimeScale(e.target.value)} // Update the time scale
             className="p-2 border border-gray-300 rounded"
           >
             {Object.keys(timeScales).map(label => (
@@ -258,6 +272,7 @@ const AnalyticsPage = () => {
             ))}
           </select>
         </div>
+
         
         <div>
           Download:
@@ -287,7 +302,7 @@ const AnalyticsPage = () => {
       {channelData.map((channel, index) => (
         <div key={index} className="mb-10">
           {/* First Row: Channel Information */}
-          <div className="grid grid-cols-4 gap-4 p-4 bg-white border-b border-gray-300">
+          <div className="grid grid-cols-8 gap-4 p-4 bg-white border-b border-gray-300">
             <div className="flex items-center justify-center border-r border-gray-300">
               {channel.status === 'Active' ? (
                 <Link href="/monitoring">
@@ -307,17 +322,21 @@ const AnalyticsPage = () => {
                 {channel.isFavorite ? ' ★' : ' ☆'}
               </button>
             </div>
-            <div className="flex items-center justify-center border-r border-gray-300">
+            <div className="flex col-span-2 items-center justify-center border-r border-gray-300">
               <span>Utilisation: {channel.utilisation}</span>
               <button onClick={() => downloadData(channel.id, 'util', 'whitelist')} className="ml-2 text-blue-600">
                 <i className="fas fa-download"></i>
               </button>
             </div>
-            <div className="flex items-center justify-center">
+            <div className="flex col-span-2 items-center justify-center">
               <span>Strength: {channel.strength}</span>
               <button onClick={() => downloadData(channel.id, 'strength', 'whitelist')} className="ml-2 text-blue-600">
                 <i className="fas fa-download"></i>
               </button>
+            </div>
+
+            <div className="flex items-center justify-center shrink">
+              <NotificationConfigureBell channelId={channel.id} />
             </div>
           </div>
 
