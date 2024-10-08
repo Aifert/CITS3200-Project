@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const { decode } = require('next-auth/jwt');
 const cookieParser = require('cookie-parser');
 const https = require('https');
+
 const {
   startMonitorMP3,
   stopMonitor,
@@ -22,6 +23,11 @@ const {
   generateUtilDataDump,
   checkNotificationState
 } = require('./model_utils.js');
+
+const {
+  saveApiKey,
+  compareApiKey
+} = require('./auth_utils.js');
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -143,6 +149,25 @@ app.use(express.static(path.join(__dirname, 'public')));
  */
 app.get('/api/monitor-channels', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
+})
+
+app.post('/api/generate_api_key', async (req, res) => {
+  const userName = req.headers.authorization;
+
+  if (userName) {
+    const saveResponse = await saveApiKey(userName.toLowerCase());
+
+    if (saveResponse.success) {
+      res.status(200).send({ message: 'API key generated successfully', apiKey: saveResponse.apiKey });
+    }
+    else {
+      res.status(500).send({ message: 'Failed to generate API key' });
+    }
+
+  }
+  else {
+    res.status(400).send({ message: 'User name is required' });
+  }
 })
 
 /**
@@ -336,24 +361,37 @@ app.get('/', (req, res) => {
 });
 
 app.post('/upload/data', async (req, res) => {
-  try{
-    console.log(req.body)
-    const response = await processIncomingData(req.body, "mydb");
+  const apiKey = req.headers.authorization.split(" ")[1];
 
-    if (response){
-      res.status(200).send({
-        message: "Data successfully processed",
-        data: response,
-      });
+  const compareResponse = await compareApiKey(apiKey);
+
+  if (compareResponse == true) {
+    try{
+      console.log(req.body)
+      const response = await processIncomingData(req.body, "mydb");
+
+      if (response){
+        res.status(200).send({
+          message: "Data successfully processed",
+          data: response,
+        });
+      }
+    }
+    catch(error){
+      res.status(500).send({
+        message: "Error occurred while processing data",
+        error: error.message,
+      })
     }
   }
-  catch(error){
-    res.status(500).send({
-      message: "Error occurred while processing data",
-      error: error.message,
+  else{
+    res.status(403).send({
+      message: "Invalid API key",
     })
   }
 });
+
+
 
 app.get('/testdata', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));

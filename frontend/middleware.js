@@ -38,6 +38,7 @@ export const config = {
     '/dashboard/:path*',
     '/analytics/:path*',
     '/channel-listening/:path*',
+    '/api-key/:path*',
     '/api/auth/:path*',
   ],
 };
