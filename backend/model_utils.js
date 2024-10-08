@@ -283,7 +283,10 @@ async function getChannelUtilisation(requestObj, dbName) {
   Object.keys(output).forEach(c_id => {
     const values = output[c_id].values;
     let totalTime = 0, utilTime = 0;
-
+    totalTime = requestObj["start-time"];
+    if ("end-time" in requestObj) {
+      totalTime -= nowTime-requestObj["end-time"];
+    }
     let startTime = percentageStart === -1 ? values[0][0] : percentageStart;
 
     values.forEach((timePair, index) => {
@@ -293,7 +296,6 @@ async function getChannelUtilisation(requestObj, dbName) {
       const thisStart = Math.max(start, startTime);
       const nextStart = values[index + 1]?.[0] || percentageEnd; 
 
-      totalTime += nextStart - thisStart;
       utilTime += Math.min(end, percentageEnd) - thisStart;
     });
 
