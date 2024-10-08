@@ -154,6 +154,10 @@ const AnalyticsPage = () => {
           for (let u in utilisationData) {
             utilStepData.push({"x":nowTime-utilisationData[u][0], "y":0});
             utilStepData.push({"x":nowTime-utilisationData[u][0], "y":1});
+            if (utilisationData[u][1] === null) {
+              utilStepData.push({"x":nowTime, "y":1});
+              utilStepData.push({"x":nowTime, "y":0});
+            }
             utilStepData.push({"x":nowTime-utilisationData[u][1], "y":1});
             utilStepData.push({"x":nowTime-utilisationData[u][1], "y":0});
           }
@@ -314,7 +318,7 @@ const AnalyticsPage = () => {
                 <span>{channel.status}</span>
               )}
             </div>
-            <div className="flex items-center justify-center border-r border-gray-300">
+            <div className="flex col-span-2 items-center justify-center border-r border-gray-300">
                 <Link href={`/single-channel?channelId=${channel.id}`} className="text-blue-600 hover:underline">
                   {channel.name} ({channel.frequency.toFixed(6)} MHz)
                 </Link>

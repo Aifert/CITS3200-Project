@@ -363,8 +363,8 @@ async function processIncomingData(dataObj, dbName) {
     if ("address" in dataObj) {
       await updateDeviceInfo(dataObj, dbName);
     }
-    let startTime = [Math.floor(new Date().getTime()/1000), false];
     for (let frequency in dataObj.data) {
+      let startTime = [Math.floor(new Date().getTime()/1000), false];
       const freqObj = dataObj.data[frequency];
       await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
       const channelId = (await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)).rows[0]["c_id"];
@@ -380,7 +380,9 @@ async function processIncomingData(dataObj, dbName) {
         //start time
         for (let r in results) {
           if (results[r]["c_freq"] == frequency) {
-            startTime = [results[r]["m"], true]
+            if (results[r]["m"]){
+              startTime = [results[r]["m"], true]
+            }
           }
         }
         let periodRecords = []
