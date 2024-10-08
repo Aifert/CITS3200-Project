@@ -220,12 +220,22 @@ const renderButton = () => {
         } else {
           let utilStepData = [];
           const nowTime = Math.floor(new Date().getTime()/1000);
+          utilStepData.push({"x":timeScales[selectedTimeScale].timeScale+5, "y":0});
+          if (utilisationData.length > 0) {
+          console.log("MYUTIL", utilisationData);
+          }
           for (let u in utilisationData) {
             utilStepData.push({"x":nowTime-utilisationData[u][0], "y":0});
             utilStepData.push({"x":nowTime-utilisationData[u][0], "y":1});
-            utilStepData.push({"x":nowTime-utilisationData[u][1], "y":1});
-            utilStepData.push({"x":nowTime-utilisationData[u][1], "y":0});
+            if (utilisationData[u][1] === null) {
+              utilStepData.push({"x":nowTime, "y":1});
+              utilStepData.push({"x":nowTime, "y":0});
+            } else {
+              utilStepData.push({"x":nowTime-utilisationData[u][1], "y":1});
+              utilStepData.push({"x":nowTime-utilisationData[u][1], "y":0});
+            }
           }
+          utilStepData.push({"x":-5, "y":0});
 
           dataUtilisation = utilisationData.length
             ? {
