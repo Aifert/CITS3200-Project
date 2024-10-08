@@ -20,29 +20,33 @@ import (
 var currentFile string
 var fileMutex sync.Mutex
 
+
 // Holds the info of a rtl_fm service
 var monitoringService *monitor.MonitoringService
 
 
-// Initializes and starts the HTTP server on port 8001.
+
+// Initializes and starts the HTTP server on port 4001.
 func StartServer() {
 	// Initialize connection pool
 	connPool := pool.NewConnectionPool()
 
 	// Define HTTP handlers
-	http.HandleFunc("/stream", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/stream", AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		StreamHandler(w, r, connPool)
-	})
-	http.HandleFunc("/tune", func(w http.ResponseWriter, r *http.Request) {
+	}))
+
+	http.HandleFunc("/tune", AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		TuneHandler(w, r, connPool)
-	})
-	http.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
+	}))
+
+	http.HandleFunc("/stop", AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		StopHandler(w, r, connPool);
-	})
+	}))
 
 	// Start the server
-	fmt.Println("Starting server on :8001")
-	http.ListenAndServe(":8001", nil)
+	fmt.Println("Starting server on :4001")
+	http.ListenAndServe(":4001", nil)
 }
 
 // Manages client connections for streaming audio.
@@ -76,7 +80,7 @@ func StreamHandler(w http.ResponseWriter, r *http.Request, connPool *pool.Connec
 }
 
 // Allows clients to change the audio source being streamed.
-// Usage [Address]:8001/tune?["file=blahblah" OR "freq=blahblah"]
+// Usage [Address]:4001/tune?["file=blahblah" OR "freq=blahblah"]
 func TuneHandler(w http.ResponseWriter, r *http.Request, connPool *pool.ConnectionPool) {
 	file := r.URL.Query().Get("file")
 	freq := r.URL.Query().Get("freq")

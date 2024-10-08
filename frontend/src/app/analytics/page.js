@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement } from 'chart.js';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 // Register Chart.js components
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
@@ -11,45 +13,72 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api/';
+
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  const makeApiRequest = useCallback(async (url, options = {}) => {
+    if (!session || !session.accessToken) {
+      setErrorMessage('No active session. Please log in.');
+      router.push('/login');
+      return null;
+    }
+
+    const headers = {
+      ...options.headers,
+      'Authorization': `Bearer ${session.accessToken}`,
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      const response = await fetch(url, { credentials: 'include', ...options, headers });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('API request failed:', error);
+      setErrorMessage(`API request failed: ${error.message}`);
+      return null;
+    }
+  }, [session, router]);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
 
   useEffect(() => {
     const fetchChannelData = async () => {
+      if (status !== 'authenticated') return;
+
       try {
-        const response = await fetch(`${backendUrl}active-channels`);
-        const data = await response.json();
+        const activeChannelsData = await makeApiRequest(`${backendUrl}active-channels`);
+        console.log('Active channels response:', activeChannelsData);
 
-        console.log('Active channels response:', data);
-
-        if (data.active || data.offline || data.busy) {
-          // Extract the channel IDs from all available channels and assign status
+        if (activeChannelsData.active || activeChannelsData.offline || activeChannelsData.busy) {
           const allChannels = [
-            ...data.active.map(channel => ({ ...channel, status: 'Active' })),
-            ...data.offline.map(channel => ({ ...channel, status: 'Offline' })),
-            ...data.busy.map(channel => ({ ...channel, status: 'Busy' }))
+            ...activeChannelsData.active.map(channel => ({ ...channel, status: 'Active' })),
+            ...activeChannelsData.offline.map(channel => ({ ...channel, status: 'Offline' })),
+            ...activeChannelsData.busy.map(channel => ({ ...channel, status: 'Busy' }))
           ];
           const channelIds = allChannels.map(channel => channel['channel-id']);
 
-          // Fetch the analytics data for those channels using the whitelist and start-time
-          const startTime = 86400; // Request data for the past 24 hours
+          const startTime = 86400;
           const queryString = new URLSearchParams({
             'start-time': startTime,
             'whitelist': `[${channelIds.join(',')}]`
           }).toString();
 
-          const analyticsResponse = await fetch(`${backendUrl}analytics/data?${queryString}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-          });
-
           const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
           console.log('Fetching analytics data from:', analyticsUrl);
 
-          const analyticsData = await analyticsResponse.json();
+          const analyticsData = await makeApiRequest(analyticsUrl);
           console.log('Analytics data response:', analyticsData);
 
-          if (analyticsResponse.status < 400) {
-            // Process the data from analytics
+          if (analyticsData) {
             const processedData = allChannels.map(channel => {
               const channelId = channel['channel-id'];
               const analyticsForChannel = analyticsData?.[channelId] || {};  // Ensure the data is accessed safely
@@ -116,8 +145,6 @@ const AnalyticsPage = () => {
             });
             console.log('Processed Data:', processedData);
             setChannelData(processedData);
-          } else {
-            setErrorMessage('Error fetching analytics data: ' + analyticsData.errors);
           }
         } else {
           setErrorMessage('No active channels found');
@@ -129,7 +156,7 @@ const AnalyticsPage = () => {
     };
 
     fetchChannelData();
-  }, []);
+  }, [status, router, backendUrl, makeApiRequest]);
 
   return (
     <div className="container mx-auto p-6">

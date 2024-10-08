@@ -12,18 +12,6 @@ services:
       - NODE_ENV=production
     command: node src/server.js
 
-  sdr:
-    build:
-      context: .
-      dockerfile: Dockerfile.sdr
-    ports:
-      - "4001:4000"
-    environment:
-      - NODE_ENV=production
-    volumes:
-      - .:/src
-    command: node src/sdr_simulation.js
-
   db:
     image: postgres:13
     environment:

@@ -52,19 +52,19 @@ Creates a network server for RTL-SDR. Allows other devices on the network to acc
 
 ## Argument For Using Two RTL-SDRv4's
 Typically, with a single RTL-SDR device, including the v4 model, it is challenging to simultaneously receive a full audio stream from a single channel while also performing broadband spectrum analysis across the VHF and UHF ranges. This limitation is primarily due to the hardware constraints of these devices:
-* Bandwidth limitations: 
+* Bandwidth limitations:
   * RTL-SDR devices usually have a maximum instantaneous bandwidth of about 2-3 MHz. This is sufficient for receiving a single channel or performing spectrum analysis over a narrow range, but not enough to cover the entire VHF and UHF spectrum simultaneously.
-* Processing power: 
+* Processing power:
   * The device needs to dedicate its resources to either demodulating a single channel for audio output or rapidly scanning across frequencies for spectrum analysis.
-* Tuner limitations: 
+* Tuner limitations:
   * The RTL-SDR can only be tuned to one center frequency at a time.
 
 Given these constraints, using two separate SDR devices is often the solution for achieving both tasks simultaneously - one for listening to a specific channel and another for broad spectrum analysis. However, some software solutions attempt to work around these limitations:
-* Time-sharing: 
+* Time-sharing:
   * Some software might rapidly switch between listening to a channel and scanning the spectrum, giving the impression of simultaneous operation. This can work for non-critical applications but may result in gaps in both the audio and the spectrum data.
-* Clever use of bandwidth: 
+* Clever use of bandwidth:
   * If the channel you're listening to is within the 2-3 MHz bandwidth of the RTL-SDR, some software might be able to capture that entire chunk of spectrum, extract the audio from your channel of interest, and also perform limited spectrum analysis within that same bandwidth.
-* Advanced signal processing: 
+* Advanced signal processing:
   * Some software packages might use sophisticated algorithms to extrapolate or predict spectrum information outside the current listening bandwidth, though this would not be as accurate as direct measurement.
 
 It's worth noting that more advanced (and typically more expensive) SDR hardware often can perform these tasks simultaneously due to wider instantaneous bandwidth and more processing power. If you need the most accurate and truly simultaneous operation for both listening and broad spectrum analysis, using two separate RTL-SDR devices is the most straightforward and reliable approach.
@@ -72,7 +72,7 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 ## Process For Gathering Analytics Data
 1. scan the SESChannelList.csv file to find the min & max frequencies in the VHF (30 MHz to 300 MHz) or UHF (300 MHz to 3 GHz) range, depending on which is being targetted (transmit & receive are the same for each channel, so either can be used)
    * also gather the min_distance_between_frequencies in this range, as this will be used to calculate the bin size
-2. extend the range slightly to accommodate for frequency drift, so min_frequency - 50,000Hz (0.05Mhz) and max_frequency + 50,000Hz (0.05Mhz)
+2. extend the range slightly to accommodate for frequency drift, so min_frequency_hz - 50,000Hz (0.05Mhz) and max_frequency_hz + 50,000Hz (0.05Mhz)
    * verify that these buffers / assigned frequencies don't fall outside of the RTL-SDRv4's range, which is 24 - 1766MHz
      * (source: https://www.rtl-sdr.com/about-rtl-sdr/)
 3. run rtl_power over this range to generate the data points across the spectrum
@@ -88,8 +88,8 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
      * -i 1                        ← integration interval
        * 1 second between each sample
        * 1 second is the fastest integration interval rtl_power supports
-     * -e 60                       ← exit timer 
-     * rtl_power_output.csv                  ← file name 
+     * -e 60                       ← exit timer
+     * rtl_power_output.csv                  ← file name
 4. parse the output file to generate results, and send these to the server, in a new thread using python `threading` library, while rtl_power is being run for the next minute in a different one (giving this a limit of 1 minute to successfully execute before aborting!)
    * load the output file into memory
      * 2D array rtl_power_output_data of [Y][X] where [Y] is seconds, and [X] is spacing by bin size along the frequency spectrum holding decibel measurements at that time
@@ -106,7 +106,7 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
            * ...where 'values' is the list of floats within the relevant <=2MHz band & 10 second window
    * create an array of value pairs, associating monitored channels (from the SESChannelList.csv file) with their relevant [X] index band to associate them with relevant rtl_power_output_data values
    * record the Channel Utilization Data
-     * move through each channel's samples & test if the signal is above its relevant <=2MHz band's threshold_above_noise_floor value. 
+     * move through each channel's samples & test if the signal is above its relevant <=2MHz band's threshold_above_noise_floor value.
        * If so (and signal_is_currently_above_threshold = false), note that timestamp as a 'start_time' value in an array of values for that channel and set signal_is_currently_above_threshold = true.
        * If not (and signal_is_currently_above_threshold = true), note that timestamp as a 'stop_time' value in an array of values for that channel and set signal_is_currently_above_threshold = false.
    * record the Channel Signal Strength Data
@@ -118,11 +118,12 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 	{
 		"soc-id": 162475163,
 		“address”: “128.10.20.30:8080”,
+		"message-id": 112,
 		data: {
 			162475000: {
 				"usage": [
-				[1724322719, 1724322724], //(start_time, end_time)
-				[1724322719, null, true]
+				[1724322719, false], //(time, is_start_time)
+				[1724322719, true]
 				],
 				"strength" {
 					1724322719: -75.1,
@@ -131,7 +132,7 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 			},
 			163825000: {
 				"usage": [
-				[1724322600, 1724322710] //(start_time, end_time)
+				[1724322600, false] //(time, is_start_time)
 				],
 				"strength" {
 					1724322600: -105.1,
@@ -140,3 +141,9 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 			}
 		}
 	}
+
+### Expected File Structure
+#### SESChannelList.csv
+* 'SESChannelList.csv' placed in folder 'rasp-pi/SESChannelList'
+* row format:
+  * Channel Name, Receive Frequency (MHz), Transmit Frequency (MHz), Band Width
