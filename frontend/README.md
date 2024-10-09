@@ -43,23 +43,11 @@ $ npm run build
 $ npm run start
 ```
 
-The application will now run in production mode on http://localhost:3000 (or something similar).
+The application will now run in production mode on https://<server-ip>:3000 (or something similar).
 
 ## Setting Up Environment Variables
-1. Create an .env.local file in the root directory of your project.
+1. Copy the .env.local.default file to a .env.local file in the frontend directory of your project.
 2. Add the required variables with their corresponding values, following the format below:
-3. APPEND TO EXISTING ONES
-
-```plaintext
-//Existing ones leave as it is
-
-AZURE_AD_CLIENT_ID=your-client-id
-AZURE_AD_CLIENT_SECRET=your-client-secret
-AZURE_AD_TENANT_ID=your-tenant-id
-NEXTAUTH_SECRET=your-nextauth-secret
-NEXTAUTH_URL=http://localhost:3000
-```
-
 
 ---
 
@@ -111,10 +99,3 @@ Do Not Move or Rename Core Directories:
 
 ## Environment Variables
 This project relies on specific environment variables that must be configured correctly to ensure proper operation. These variables are stored in an .env.local file in the root directory. The following environment variables are required:
-
-AZURE_AD_CLIENT_ID: The Client ID for your Azure AD application.
-AZURE_AD_CLIENT_SECRET: The Client Secret for your Azure AD application. Ensure this is kept secure.
-AZURE_AD_TENANT_ID: The Tenant ID for your Azure AD instance.
-NEXTAUTH_SECRET: A secret used by NextAuth.js to encrypt session data.
-NEXTAUTH_URL: The URL where your application is hosted (e.g., http://localhost:3000 during development).
-
