@@ -110,6 +110,7 @@ RTL_POWER_GAIN_DB: int = 0 #gain to add to rtl_power output, needs to be set els
 RTL_POWER_SDR_DEVICE_INDEX: int = 0 #using RTL-SDRv4 number 0 (of [0, 1]) since 1 is used for audio streaming
 RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each sample, rtl_power supports a minimum of 1sec
 RTL_POWER_EXIT_TIMER_SECONDS: int = 60 #number of seconds rtl_power will sample data for before outputting a data file, which we then parse & attempt to send to the server
+API_KEY: str = None #(TODO, needs to be read from the config txt file on boot)
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = False #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
@@ -555,7 +556,8 @@ def upload_data(json_data_to_upload: str) -> bool:
             url = f"{SERVER_ADDRESS}{DATA_ENDPOINT_FOR_SERVER}"
             #headers for the request
             headers = {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {API_KEY}"
             }
             #POST the request
             response = requests.post(url, data=next_data, headers=headers, timeout=MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS, verify=False)
