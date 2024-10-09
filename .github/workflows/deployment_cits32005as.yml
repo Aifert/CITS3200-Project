@@ -9,10 +9,31 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout the code from the repository
       - uses: actions/checkout@v4
+
+      # Set environment variables from secrets
+      - name: Set environment variables
+        run: |
+          echo "AZURE_AD_CLIENT_ID=${{ secrets.AZURE_AD_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "AZURE_AD_CLIENT_SECRET=${{ secrets.AZURE_AD_CLIENT_SECRET }}" >> $GITHUB_ENV
+          echo "AZURE_AD_TENANT_ID=${{ secrets.AZURE_AD_TENANT_ID }}" >> $GITHUB_ENV
+          echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> $GITHUB_ENV
+          echo "NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_BACKEND_URL=${{ secrets.NEXT_PUBLIC_BACKEND_URL }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SDR_URL=${{ secrets.NEXT_PUBLIC_SDR_URL }}" >> $GITHUB_ENV
+
+      # Run your build or deployment steps
+      - name: Build Docker Compose services
+        run: docker-compose -f docker-compose.yml build
+        env:
+          AZURE_AD_CLIENT_ID: ${{ secrets.AZURE_AD_CLIENT_ID }}
+          AZURE_AD_CLIENT_SECRET: ${{ secrets.AZURE_AD_CLIENT_SECRET }}
+          AZURE_AD_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          NEXT_PUBLIC_BACKEND_URL: ${{ secrets.NEXT_PUBLIC_BACKEND_URL }}
+          NEXT_PUBLIC_SDR_URL: ${{ secrets.NEXT_PUBLIC_SDR_URL }}
 
       # Set up Docker Buildx
       - name: Set up Docker Buildx
@@ -30,10 +51,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # Build Docker Compose services
-      - name: Build Docker Compose services
-        run: docker-compose -f docker-compose.yml build
 
       # Push Docker images to DockerHub
       - name: Push Docker images to DockerHub
