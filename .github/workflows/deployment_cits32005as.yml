@@ -1,4 +1,4 @@
-name: Build and deploy Dockerized CITS3200 App
+name: Build, push, and deploy Dockerized CITS3200 App
 
 on:
   push:

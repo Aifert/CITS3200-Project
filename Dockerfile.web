@@ -1,7 +1,6 @@
 # Use Node.js 18 with Alpine as the base image
 FROM node:18-alpine
 
-
 # Accept build arguments from the GitHub Actions workflow
 ARG NEXTAUTH_SECRET
 ARG NEXTAUTH_URL
@@ -20,8 +19,14 @@ ENV AZURE_AD_CLIENT_ID=${AZURE_AD_CLIENT_ID}
 ENV AZURE_AD_CLIENT_SECRET=${AZURE_AD_CLIENT_SECRET}
 ENV AZURE_AD_TENANT_ID=${AZURE_AD_TENANT_ID}
 
-# Rest of your Dockerfile instructions
-
+# Create .env files for frontend and backend
+RUN echo "NEXTAUTH_SECRET=${NEXTAUTH_SECRET}" > ./.env && \
+    echo "NEXTAUTH_URL=${NEXTAUTH_URL}" >> ./.env && \
+    echo "NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}" >> ./.env && \
+    echo "NEXT_PUBLIC_SDR_URL=${NEXT_PUBLIC_SDR_URL}" >> ./.env && \
+    echo "AZURE_AD_CLIENT_ID=${AZURE_AD_CLIENT_ID}" >> ./.env && \
+    echo "AZURE_AD_CLIENT_SECRET=${AZURE_AD_CLIENT_SECRET}" >> ./.env && \
+    echo "AZURE_AD_TENANT_ID=${AZURE_AD_TENANT_ID}" >> ./.env
 
 # Set the working directory inside the container
 WORKDIR /app
