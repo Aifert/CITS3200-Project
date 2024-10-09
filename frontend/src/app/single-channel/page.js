@@ -451,7 +451,7 @@ const renderButton = () => {
   );
   };
 
-  export default SinglePageChannel( () => {
+  export default SingleChannelPage( () => {
 
 
   return (
