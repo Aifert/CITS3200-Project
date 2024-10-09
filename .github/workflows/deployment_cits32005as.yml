@@ -60,5 +60,5 @@ jobs:
       # Build and push nginx image
       - name: Build and push nginx image
         run: |
-          docker build --platform linux/amd64 -t yelaoshi/nginx:latest -f Dockerfile.nginx .
-          docker push yelaoshi/nginx:latest
+          docker build --platform linux/amd64 -t yelaoshi/nginx-custom:latest -f Dockerfile.nginx .
+          docker push yelaoshi/nginx-custom:latest
