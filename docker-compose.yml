@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile.web
     ports:
-      - "9001:9000"
+      - "9000:9000"
     environment:
       - NODE_ENV=production
       - PORT=9000
@@ -14,24 +14,34 @@ services:
     command: node backend/server.js
 
   db:
-    image: postgres:13
+    build:
+      context: .
+      dockerfile: Dockerfile.db
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: mydb
     ports:
       - "5432:5432"
-    volumes:
-      - ./webserver/database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
     ports:
-      - "3001:3000"
+      - "3000:3000"
     environment:
       - NODE_ENV=production
     depends_on:
       - web
     command: npm start
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+      - web

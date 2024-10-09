@@ -12,8 +12,11 @@ COPY ./package*.json ./
 # Install dependencies for the root (if needed)
 RUN npm ci
 
-# Copy the frontend source code and install frontend dependencies
+# Copy the frontend source code
 COPY ./frontend ./frontend
+
+# Create an empty .env.local file if it doesn't exist
+COPY ./frontend/.env.local ./frontend/.env.local
 
 # Build the production frontend
 RUN npm run build
@@ -26,9 +29,8 @@ WORKDIR /app
 # Copy only the necessary files from the builder stage
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/frontend/.next ./frontend/.next
+COPY --from=builder /app/frontend/.env.local ./frontend/.env.local
 COPY --from=builder /app/frontend/public ./frontend/public
-
-# Copy package.json files for installing only production dependencies
 
 # Install only production dependencies for the frontend
 RUN npm ci --omit=dev
