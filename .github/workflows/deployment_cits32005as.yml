@@ -14,27 +14,31 @@ jobs:
       # Checkout the code from the repository
       - uses: actions/checkout@v4
 
-      # Set up Docker
+      # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Login to DockerHub or Azure Container Registry (ACR)
-      # You need to set up DockerHub credentials in your repository secrets
+      # Install Docker Compose
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      # Log in to DockerHub
       - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Build the Docker images for web, frontend, and db
+      # Build Docker Compose services
       - name: Build Docker Compose services
         run: docker-compose -f docker-compose.yml build
 
-      # Push Docker images to DockerHub (or ACR if using Azure Container Registry)
+      # Push Docker images to DockerHub
       - name: Push Docker images to DockerHub
         run: docker-compose -f docker-compose.yml push
 
-      # Deploy the Docker Compose setup to Azure
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -55,8 +59,7 @@ jobs:
         with:
           app-name: 'cits32005as'
           images: |
-            web: yourdockerhubusername/web:latest
-            frontend: yourdockerhubusername/frontend:latest
-            db: yourdockerhubusername/db:latest
+            web: yelaoshi/web:latest
+            frontend: yelaoshi/frontend:latest
+            db: yelaoshi/db:latest
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_59C98818EF8C463A80B184D72D1ED767 }}
-
