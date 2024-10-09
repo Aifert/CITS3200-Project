@@ -2,6 +2,7 @@
 
 ## Database Schema Diagram
 ![RRMS Database Diagram](RRMS_WebServer_database.png)
+
 This diagram was generated using [database markup](https://github.com/Aifert/CITS3200-Project/blob/main/webserver/database/RRMS_webserver.dbml)
 
 ## Database Explaination
