@@ -103,8 +103,8 @@ NUM_RTL_POWER_CONTEXT_COLUMNS = 6
 K: float = 2.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
 # ...raise this value to raise your squelch floor for activity!
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
-DATA_ENDPOINT_FOR_SERVER: str = '/upload/data' #where we should POST the data we gather
-SERVER_ADDRESS: str = 'https://20.191.210.182:9000' #server's URL
+DATA_ENDPOINT_FOR_SERVER: str = '/upload_data' #where we should POST the data we gather
+SERVER_ADDRESS: str = 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/sdr' #server's URL
 MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS: int = 30 #timeout parameter to requests.post
 RTL_POWER_GAIN_DB: int = 0 #gain to add to rtl_power output, needs to be set else uses automatic (throws our baseline off)
 RTL_POWER_SDR_DEVICE_INDEX: int = 0 #using RTL-SDRv4 number 0 (of [0, 1]) since 1 is used for audio streaming
@@ -112,7 +112,7 @@ RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each 
 RTL_POWER_EXIT_TIMER_SECONDS: int = 60 #number of seconds rtl_power will sample data for before outputting a data file, which we then parse & attempt to send to the server
 
 # GLOBAL VARIABLES
-targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
+targeting_VHF: bool = False #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
 targeting_test_range: bool = False #set to True to target the test range in CONSTANTS
 min_targeted_frequency_hz: int #minimum SESChannelList.csv frequency we are analyzing
 max_targeted_frequency_hz: int #maximum SESChannelList.csv frequency we are analyzing
@@ -623,7 +623,6 @@ def main():
     #python global statements (for assigning to our global variables)
     global SES_channels
     parse_SES_channels() #Just so the data structures get cleared nicely, and its a quick operation, do it again
-
 
     # QUERY SERVER TO DETERMINE ANY ADJUSTMENTS TO SQUELCH LEVEL VIA K (TODO, decent extra functionality but optional for now)
 
