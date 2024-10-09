@@ -331,7 +331,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
 });
 
-app.post('/upload/data', async (req, res) => {
+app.post('/api_v2/upload_data', async (req, res) => {
   try{
     console.log(req.body)
     const response = await processIncomingData(req.body, "mydb");
@@ -351,7 +351,7 @@ app.post('/upload/data', async (req, res) => {
   }
 });
 
-app.get('/testdata', async (req, res) => {
+app.get('/api_v2/testdata', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
   await populateTestData();
 });
