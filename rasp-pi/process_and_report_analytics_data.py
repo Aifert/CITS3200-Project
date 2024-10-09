@@ -103,13 +103,13 @@ NUM_RTL_POWER_CONTEXT_COLUMNS = 6
 K: float = 2.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
 # ...raise this value to raise your squelch floor for activity!
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
-DATA_ENDPOINT_FOR_SERVER: str = '/upload/data' #where we should POST the data we gather
+DATA_ENDPOINT_FOR_SERVER: str = '/upload_data' #where we should POST the data we gather
 MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS: int = 30 #timeout parameter to requests.post
 RTL_POWER_GAIN_DB: int = 0 #gain to add to rtl_power output, needs to be set else uses automatic (throws our baseline off)
 RTL_POWER_SDR_DEVICE_INDEX: int = 0 #using RTL-SDRv4 number 0 (of [0, 1]) since 1 is used for audio streaming
 RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each sample, rtl_power supports a minimum of 1sec
 RTL_POWER_EXIT_TIMER_SECONDS: int = 60 #number of seconds rtl_power will sample data for before outputting a data file, which we then parse & attempt to send to the server
-SERVER_ADDRESS: str = 'https://20.191.210.182:9000' #server's URL
+SERVER_ADDRESS: str = 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/sdr' #server's URL
 API_KEY: str = None #(TODO, needs to be read from the config txt file on boot)
 
 # GLOBAL VARIABLES
@@ -564,7 +564,7 @@ def upload_data(json_data_to_upload: str) -> bool:
             #check if the request was successful
             if response.status_code == 200:
                 print("Data uploaded successfully!")
-                print(data_queue.pop(0))
+                data_queue.pop(0)
             else:
                 print(f"Failed to upload data. Status code: {response.status_code}")
                 print(f"Response: {response.text}")
@@ -672,6 +672,7 @@ def main():
     # ...AND INCLUDE message_id AND address AND soc-id METADATA
     # ...THEN POST JSON DATA TO THE SERVER AT DATA_ENDPOINT_FOR_SERVER
     # ...upon successful upload, empty utilization_states and signal_strength_samples, and increment message_id
+    
     json_data_to_upload = prepare_channel_data()
     if(upload_data(json_data_to_upload)):
         global message_id
