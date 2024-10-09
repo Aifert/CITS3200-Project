@@ -2,8 +2,8 @@ const { Client } = require('pg')
 const fs = require('fs');
 
 const ALIVETIME = 150;
-const STRENGTHMAX = -70.0;
-const STRENGTHMIN = -110;
+const STRENGTHMAX = 40;
+const STRENGTHMIN = -50;
 
 let isConnecting = false;
 let isConnected = false;
@@ -253,7 +253,7 @@ async function getChannelUtilisation(requestObj, dbName) {
   let cond = getCondFromWhiteBlackList(requestObj);
   let percentageStart = requestObj?.["start-time"] ? nowTime-requestObj["start-time"] : -1;
   let percentageEnd = requestObj?.["end-time"] ? requestObj["end-time"] : nowTime;
-  
+
   if ("start-time" in requestObj) {
     cond += `AND (a_end_time IS NULL OR a_end_time >= ${nowTime-requestObj["start-time"]})`
     maxZone = (requestObj["start-time"]-(nowTime-percentageEnd))/sampleRate;
@@ -272,17 +272,21 @@ async function getChannelUtilisation(requestObj, dbName) {
 
   let res = await client.query(query);
   let output = {};
+
   for (const row of res.rows) {
-    if (!(row.c_id in output)) {
-      output[row.c_id] = {};
-      output[row.c_id].values = [];
-    }
+      if (!(row.c_id in output)) {
+        output[row.c_id] = {};
+        output[row.c_id].values = []
+      }
       output[row.c_id].values.push([row.a_start_time, row.a_end_time]);
   }
   Object.keys(output).forEach(c_id => {
     const values = output[c_id].values;
     let totalTime = 0, utilTime = 0;
-
+    totalTime = requestObj["start-time"];
+    if ("end-time" in requestObj) {
+      totalTime -= nowTime-requestObj["end-time"];
+    }
     let startTime = percentageStart === -1 ? values[0][0] : percentageStart;
 
     values.forEach((timePair, index) => {
@@ -292,7 +296,6 @@ async function getChannelUtilisation(requestObj, dbName) {
       const thisStart = Math.max(start, startTime);
       const nextStart = values[index + 1]?.[0] || percentageEnd; 
 
-      totalTime += nextStart - thisStart;
       utilTime += Math.min(end, percentageEnd) - thisStart;
     });
 
@@ -359,11 +362,12 @@ async function processIncomingData(dataObj, dbName) {
     await recheckConnection(dbName);
     let recentMin = `SELECT c.c_freq, j.m FROM "channels" AS c JOIN (SELECT c_id, MAX(a_start_time) AS m FROM "utilisation" WHERE a_end_time IS NULL GROUP BY c_id) AS j ON c.c_id=j.c_id`
     let results = (await client.query(recentMin)).rows;
+    console.log(JSON.stringify(results))
     if ("address" in dataObj) {
       await updateDeviceInfo(dataObj, dbName);
     }
-    let startTime = [Math.floor(new Date().getTime()/1000), false];
     for (let frequency in dataObj.data) {
+      let startTime = [Math.floor(new Date().getTime()/1000), false];
       const freqObj = dataObj.data[frequency];
       await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
       const channelId = (await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)).rows[0]["c_id"];
@@ -379,7 +383,9 @@ async function processIncomingData(dataObj, dbName) {
         //start time
         for (let r in results) {
           if (results[r]["c_freq"] == frequency) {
-            startTime = [results[r]["m"], true]
+            if (results[r]["m"]){
+              startTime = [results[r]["m"], true]
+            }
           }
         }
         let periodRecords = []
@@ -472,21 +478,28 @@ async function checkNotificationState(requestObj, dbName) {
     const nowTime = Math.floor(new Date().getTime()/1000);
     await recheckConnection(dbName);
     //If channel is alive, send the most recent strength reading
-    let sQuery = `SELECT c_id, s_strength FROM "strength"
-                  WHERE (c_id, s_sample_time) IN
-                  (SELECT c_id, MAX(s_sample_time) FROM "strength" WHERE s_sample_time >= ${nowTime-ALIVETIME} GROUP BY c_id)`;
+    let sQuery = `SELECT s.c_id, s.s_strength FROM "strength" AS s
+                  WHERE (s.c_id, s.s_sample_time) IN
+                  (SELECT s.c_id, MAX(s.s_sample_time) FROM "strength" AS s WHERE s.s_sample_time >= ${nowTime-ALIVETIME} GROUP BY s.c_id)`;
     let res = await client.query(sQuery);
-
+    let nameQuery = `SELECT c_id, c_name FROM "channels"`;
+    let nameRes = await client.query(nameQuery);
     //Make object with channel id as key, and most recent strength value as the value
     let strengthLookUp = {}
+    let nameLookUp = {}
     for (let r in res.rows) {
       strengthLookUp[res.rows[r]["c_id"]] = res.rows[r]["s_strength"];
+      nameLookUp[res.rows[r]["c_id"]] = res.rows[r]["c_name"];
+    }
+    for (let r in nameRes.rows) {
+      nameLookUp[nameRes.rows[r]["c_id"]] = nameRes.rows[r]["c_name"];
     }
     let output = {};
     //check for every channel
     for (let channel in requestObj) {
       output[channel] = {};
       //If channel is alive it will have a lookup value
+      output[channel]["name"] = nameLookUp[channel];
       if (channel in strengthLookUp) {
         output[channel]["strength"] = strengthLookUp[channel] >= requestObj[channel][0];
       } else { //If not alive, send null
@@ -495,6 +508,7 @@ async function checkNotificationState(requestObj, dbName) {
     }
     let maxTimeAgo = 120; //Needed to ensure all values recieved in sql query
     for (channel in requestObj) {
+      requestObj[channel][2] *= 3600;
       maxTimeAgo = Math.max(maxTimeAgo, requestObj[channel][2])
     }
     //get all utilisation pairs within the maximum time ago
@@ -512,8 +526,12 @@ async function checkNotificationState(requestObj, dbName) {
         uResults[row.c_id].values.push([row.a_start_time, row.a_end_time]);
     }
     for (let channel in requestObj) {
-      const channelAvg = calculateZoneUtilAvg(uResults[channel].values, nowTime, requestObj[channel][2], 0);
-      output[channel]["util"]  = channelAvg >= requestObj[channel][1];
+      if (uResults[channel]) {
+        const channelAvg = calculateZoneUtilAvg(uResults[channel].values, nowTime, requestObj[channel][2], 0);
+        output[channel]["util"]  = channelAvg >= requestObj[channel][1];
+      } else {
+        output[channel]["util"] = 0 >=  requestObj[channel][1];
+      }
     }
     return output;
   } catch(error) {
@@ -547,7 +565,6 @@ async function santityCheckDatabase(dbName) {
                  UPDATE "utilisation" SET a_end_time = ${nowTime} WHERE a_end_time > ${nowTime}`
     await client.query(query);
 
-    await client.query(query);
   } catch (error) {
     throw error;
   }
