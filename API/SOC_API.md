@@ -8,7 +8,7 @@
 
 ### HTTP from SoC → WebServer Analytics
 
-### POST /data
+### POST /upload/data
 
 #### Parameters
 
@@ -17,6 +17,7 @@
 | **Name**    | **Type** | **Data Type**     | **Description**                                                                                  |
 | soc-id      | Required | String            | An ID used to uniquely identify a SoC (Predetermined)      |
 | address | Optional | String | IP address and Port to be used by Web Server to talk back to SoC later |
+| message-id | Optional | integer | Sequential counter of messages, which can be used to detect if the program has restarted |
 | data  | Required | Object[Object]\* | An Object, with frequencies as indexes, then usage and strength data |
 
 \*See example for structure
@@ -24,9 +25,11 @@
 
 #### Parameters Example
 
+	/data/upload?soc-id=162475163&address=128.10.20.30:8080&data={162475000:{usage:[1724322719, false],strength={1724322719:-75.1}}}
+
 	{
 		"soc-id": 162475163,
-		“address”: “128.10.20.30:8080”,
+		"address": “128.10.20.30:8080”,
 		"message-id": 112,
 		data: {
 			162475000: {
@@ -58,7 +61,7 @@
 | -------- | ----------------- | ------------------------------------------------------------------- |
 | **Code** | **Content-Type**  | **Example**                                                         |
 | 200      | application/json  | {"code": 200}                                                       |
-| 400      | application/json  | {"code": 400, "messages": ["Parameter ‘timestamps’ not provided"]} |
+| 400      | application/json  | {"code": 400, "messages": ["Parameter 'timestamps' not provided"]} |
 | 500      | application/json  | {"code": 400, "messages": ["Internal Server Error"]}               |
 
 
