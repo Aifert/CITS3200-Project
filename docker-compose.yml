@@ -9,6 +9,11 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=9000
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_NAME=mydb
+      - DB_HOST=db
+      - DB_PORT=5432
     depends_on:
       - db
     command: node backend/server.js
