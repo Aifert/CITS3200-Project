@@ -6,7 +6,6 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import Loading from '../loading';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip);
 
@@ -456,7 +455,7 @@ const renderButton = () => {
 
 
   return (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<div>Loading channel data...</div>}>
       <ContentPage />
     </Suspense>
   );
