@@ -451,12 +451,11 @@ const renderButton = () => {
   );
   };
 
-  export default SingleChannelPage( () => {
 
-
-  return (
-    <Suspense fallback={<div>Loading channel data...</div>}>
-      <ContentPage />
-    </Suspense>
-  );
-  })
+  export default function SingleChannelPage() {
+    return (
+      <Suspense fallback={<div>Loading channel data...</div>}>
+        <ContentPage />
+      </Suspense>
+    );
+  }
