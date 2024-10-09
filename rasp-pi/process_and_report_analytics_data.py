@@ -104,12 +104,12 @@ K: float = 2.0 #multiplier for associated_standard_deviation calculation when se
 # ...raise this value to raise your squelch floor for activity!
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
 DATA_ENDPOINT_FOR_SERVER: str = '/upload/data' #where we should POST the data we gather
-SERVER_ADDRESS: str = 'https://20.191.210.182:9000' #server's URL
 MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS: int = 30 #timeout parameter to requests.post
 RTL_POWER_GAIN_DB: int = 0 #gain to add to rtl_power output, needs to be set else uses automatic (throws our baseline off)
 RTL_POWER_SDR_DEVICE_INDEX: int = 0 #using RTL-SDRv4 number 0 (of [0, 1]) since 1 is used for audio streaming
 RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each sample, rtl_power supports a minimum of 1sec
 RTL_POWER_EXIT_TIMER_SECONDS: int = 60 #number of seconds rtl_power will sample data for before outputting a data file, which we then parse & attempt to send to the server
+SERVER_ADDRESS: str = 'https://20.191.210.182:9000' #server's URL
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
@@ -412,7 +412,7 @@ def generate_utilization_states():
                         #first data point assessment for this channel, should assign as per the first sample
                         rtl_power_output_min_frequency_hz = rtl_power_output_temporal_samples[0].starting_frequency
                         threshold_index_for_this_channel = int(((channel.frequency_hz + RTL_SDR_V4_tuning_hz) - rtl_power_output_min_frequency_hz) / sliding_windows_band_width_hz)
-                        threshold_for_this_channel = sliding_windows_thresholds_above_noise_floor_db[threshold_index_for_this_channel]
+                        threshold_for_this_channel = 0.0#sliding_windows_thresholds_above_noise_floor_db[threshold_index_for_this_channel]
                         signal_is_hot = False
                         if(temporal_sample.spectrum_decibel_datapoints[channel.index_to_spectrum_decibel_datapoints] >= threshold_for_this_channel):
                             signal_is_hot = True
@@ -423,7 +423,7 @@ def generate_utilization_states():
                         #test if we've had a flip in activity over the threshold, and record if so
                         rtl_power_output_min_frequency_hz = rtl_power_output_temporal_samples[0].starting_frequency
                         threshold_index_for_this_channel = int(((channel.frequency_hz + RTL_SDR_V4_tuning_hz) - rtl_power_output_min_frequency_hz) / sliding_windows_band_width_hz)
-                        threshold_for_this_channel = sliding_windows_thresholds_above_noise_floor_db[threshold_index_for_this_channel]
+                        threshold_for_this_channel = 0.0#sliding_windows_thresholds_above_noise_floor_db[threshold_index_for_this_channel]
                         signal_is_hot = False
                         if(temporal_sample.spectrum_decibel_datapoints[channel.index_to_spectrum_decibel_datapoints] >= threshold_for_this_channel):
                             signal_is_hot = True
@@ -562,7 +562,7 @@ def upload_data(json_data_to_upload: str) -> bool:
             #check if the request was successful
             if response.status_code == 200:
                 print("Data uploaded successfully!")
-                data_queue.pop(0)
+                print(data_queue.pop(0))
             else:
                 print(f"Failed to upload data. Status code: {response.status_code}")
                 print(f"Response: {response.text}")
@@ -585,7 +585,7 @@ def run_rtl_power():
 
     # RUN rtl_power (TODO)
     #subprocess.run(["python3", "rtl_power_sim.py"])
-    subprocess.run(["rtl_power", f"-f {min_rtl_power_frequency_hz}:{max_rtl_power_frequency_hz}:{int(min_distance_between_frequencies_hz * 0.5)}", f"-d {RTL_POWER_SDR_DEVICE_INDEX}", f"-g {RTL_POWER_GAIN_DB}", f"-i {RTL_POWER_INTEGRATION_INTERVAL_SECONDS}", f"-e {RTL_POWER_EXIT_TIMER_SECONDS}", RTL_POWER_OUTPUT_FOLDER_NAME+"/"+RTL_POWER_IN_PROGRESS_FILE_NAME])
+    subprocess.run(["rtl_power", "-f 161.0125M:165.238M:6250", "-d 0", "-g 25", "-i 1", "-e 60", RTL_POWER_OUTPUT_FOLDER_NAME+"/"+RTL_POWER_IN_PROGRESS_FILE_NAME])
 
 def parse_SES_channels():
     global SES_channels

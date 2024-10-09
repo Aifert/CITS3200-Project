@@ -2,8 +2,8 @@ const { Client } = require('pg')
 const fs = require('fs');
 
 const ALIVETIME = 150;
-const STRENGTHMAX = -70.0;
-const STRENGTHMIN = -110;
+const STRENGTHMAX = 40;
+const STRENGTHMIN = -50;
 
 let isConnecting = false;
 let isConnected = false;
@@ -253,7 +253,7 @@ async function getChannelUtilisation(requestObj, dbName) {
   let cond = getCondFromWhiteBlackList(requestObj);
   let percentageStart = requestObj?.["start-time"] ? nowTime-requestObj["start-time"] : -1;
   let percentageEnd = requestObj?.["end-time"] ? requestObj["end-time"] : nowTime;
-  
+
   if ("start-time" in requestObj) {
     cond += `AND (a_end_time IS NULL OR a_end_time >= ${nowTime-requestObj["start-time"]})`
     maxZone = (requestObj["start-time"]-(nowTime-percentageEnd))/sampleRate;
@@ -272,17 +272,21 @@ async function getChannelUtilisation(requestObj, dbName) {
 
   let res = await client.query(query);
   let output = {};
+
   for (const row of res.rows) {
-    if (!(row.c_id in output)) {
-      output[row.c_id] = {};
-      output[row.c_id].values = [];
-    }
+      if (!(row.c_id in output)) {
+        output[row.c_id] = {};
+        output[row.c_id].values = []
+      }
       output[row.c_id].values.push([row.a_start_time, row.a_end_time]);
   }
   Object.keys(output).forEach(c_id => {
     const values = output[c_id].values;
     let totalTime = 0, utilTime = 0;
-
+    totalTime = requestObj["start-time"];
+    if ("end-time" in requestObj) {
+      totalTime -= nowTime-requestObj["end-time"];
+    }
     let startTime = percentageStart === -1 ? values[0][0] : percentageStart;
 
     values.forEach((timePair, index) => {
@@ -292,7 +296,6 @@ async function getChannelUtilisation(requestObj, dbName) {
       const thisStart = Math.max(start, startTime);
       const nextStart = values[index + 1]?.[0] || percentageEnd; 
 
-      totalTime += nextStart - thisStart;
       utilTime += Math.min(end, percentageEnd) - thisStart;
     });
 
@@ -363,8 +366,8 @@ async function processIncomingData(dataObj, dbName) {
     if ("address" in dataObj) {
       await updateDeviceInfo(dataObj, dbName);
     }
-    let startTime = [Math.floor(new Date().getTime()/1000), false];
     for (let frequency in dataObj.data) {
+      let startTime = [Math.floor(new Date().getTime()/1000), false];
       const freqObj = dataObj.data[frequency];
       await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
       const channelId = (await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)).rows[0]["c_id"];
@@ -380,7 +383,9 @@ async function processIncomingData(dataObj, dbName) {
         //start time
         for (let r in results) {
           if (results[r]["c_freq"] == frequency) {
-            startTime = [results[r]["m"], true]
+            if (results[r]["m"]){
+              startTime = [results[r]["m"], true]
+            }
           }
         }
         let periodRecords = []
@@ -560,7 +565,6 @@ async function santityCheckDatabase(dbName) {
                  UPDATE "utilisation" SET a_end_time = ${nowTime} WHERE a_end_time > ${nowTime}`
     await client.query(query);
 
-    await client.query(query);
   } catch (error) {
     throw error;
   }
