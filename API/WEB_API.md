@@ -357,8 +357,14 @@ When a user requests the data dump file for utilisation data \- it is to be crea
 #### Responses Example
 
 	{
-		"strength": true,
-		"util": false
+		21892: {
+			"strength": true,
+			"util": false
+		},
+		2098: {
+			"strength": true,
+			"util": true
+		},
 	}
 
 #### When to Use
