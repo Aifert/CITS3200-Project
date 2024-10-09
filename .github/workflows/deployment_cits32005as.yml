@@ -23,22 +23,41 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Build and push Docker images
+      # Build and push web image
       - name: Build and push web image
         run: |
-          docker build --platform linux/amd64 -t yelaoshi/web:latest -f Dockerfile.web .
+          docker build --platform linux/amd64 \
+            --build-arg NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }} \
+            --build-arg NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }} \
+            --build-arg NEXT_PUBLIC_BACKEND_URL=${{ secrets.NEXT_PUBLIC_BACKEND_URL }} \
+            --build-arg NEXT_PUBLIC_SDR_URL=${{ secrets.NEXT_PUBLIC_SDR_URL }} \
+            --build-arg AZURE_AD_CLIENT_ID=${{ secrets.AZURE_AD_CLIENT_ID }} \
+            --build-arg AZURE_AD_CLIENT_SECRET=${{ secrets.AZURE_AD_CLIENT_SECRET }} \
+            --build-arg AZURE_AD_TENANT_ID=${{ secrets.AZURE_AD_TENANT_ID }} \
+            -t yelaoshi/web:latest -f Dockerfile.web .
           docker push yelaoshi/web:latest
 
+      # Build and push frontend image
       - name: Build and push frontend image
         run: |
-          docker build --platform linux/amd64 -t yelaoshi/frontend:latest -f Dockerfile.frontend .
+          docker build --platform linux/amd64 \
+            --build-arg NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }} \
+            --build-arg NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }} \
+            --build-arg NEXT_PUBLIC_BACKEND_URL=${{ secrets.NEXT_PUBLIC_BACKEND_URL }} \
+            --build-arg NEXT_PUBLIC_SDR_URL=${{ secrets.NEXT_PUBLIC_SDR_URL }} \
+            --build-arg AZURE_AD_CLIENT_ID=${{ secrets.AZURE_AD_CLIENT_ID }} \
+            --build-arg AZURE_AD_CLIENT_SECRET=${{ secrets.AZURE_AD_CLIENT_SECRET }} \
+            --build-arg AZURE_AD_TENANT_ID=${{ secrets.AZURE_AD_TENANT_ID }} \
+            -t yelaoshi/frontend:latest -f Dockerfile.frontend .
           docker push yelaoshi/frontend:latest
 
+      # Build and push db image
       - name: Build and push db image
         run: |
           docker build --platform linux/amd64 -t yelaoshi/db:latest -f Dockerfile.db .
           docker push yelaoshi/db:latest
 
+      # Build and push nginx image
       - name: Build and push nginx image
         run: |
           docker build --platform linux/amd64 -t yelaoshi/nginx:latest -f Dockerfile.nginx .
