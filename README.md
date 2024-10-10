@@ -62,11 +62,13 @@ docker-compose -f docker-compose.dev.yml up --build
 
 ## Environment Variables
 
-If you want to set up CI/CD before starting add these env values to your .env file
+If you want to set up CI/CD before starting update copy the `env.default` file and update accordingly
 ```bash
+sudo cp .env.default .env
 sudo nano .env
 ```
 
+To run a front-end, you will also need to update a `.env.local.default` file in frontend directory
 ```bash
 AZURE_AD_CLIENT_ID=***
 AZURE_AD_CLIENT_SECRET=***
