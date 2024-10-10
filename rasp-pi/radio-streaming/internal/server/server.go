@@ -33,8 +33,8 @@ func StartServer() {
 	}))
 
 	// Start the server
-	fmt.Println("Starting server on :4001")
-	http.ListenAndServe(":4001", nil)
+	fmt.Println("Starting server on :5000")
+	http.ListenAndServe(":5000", nil)
 }
 
 // Manages client connections for streaming audio.
