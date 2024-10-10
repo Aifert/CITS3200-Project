@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import https from "https";
 
 import DynamicChannels from '../../components/DynamicChannel';
 
@@ -20,12 +21,12 @@ const DashboardPage = () => {
   const router = useRouter();
   const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}` || 'http://localhost:9000/';
   const [sliderValue, setSliderValue] = useState(50);
-  const audioRef = useRef(null); 
+  const audioRef = useRef(null);
 
 
 
   const makeApiRequest = useCallback(async (url, options = {}) => {
-    console.log(`Making API request to: ${url}`); 
+    console.log(`Making API request to: ${url}`);
 
     if (!session || !session.accessToken) {
       setErrorMessage('No active session. Please log in.');
@@ -40,15 +41,20 @@ const DashboardPage = () => {
     };
 
     try {
-      const response = await fetch(url, { credentials: 'include', ...options, headers });
+      const response = await fetch(url, {
+        credentials: 'include',
+        ...options,
+        headers,
+        agent: new (require('https').Agent)({ rejectUnauthorized: false })
+      });
       const responseData = await response.json();
 
       if (!response.ok) {
-        console.log(`Error Response:`, responseData); 
+        console.log(`Error Response:`, responseData);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.log(`API Response Data from ${url}:`, responseData); 
+      console.log(`API Response Data from ${url}:`, responseData);
       return responseData;
     } catch (error) {
       console.error('API request failed:', error);
@@ -81,12 +87,12 @@ const DashboardPage = () => {
       const queryString = new URLSearchParams({
         'start-time': 86400,
         'sample-rate': 10800,
-        'avg-data': true, 
+        'avg-data': true,
         'whitelist': `[${channelIds.join(',')}]`
       }).toString();
 
       const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
-      console.log('Fetching analytics data from:', analyticsUrl); 
+      console.log('Fetching analytics data from:', analyticsUrl);
 
       const analyticsData = await makeApiRequest(analyticsUrl);
       console.log('Analytics data response:', analyticsData);
@@ -106,22 +112,22 @@ const DashboardPage = () => {
       });
 
     console.log('Processed Data:', processedData);
-    setChannelData(processedData); 
+    setChannelData(processedData);
 
     const modifiedData = processedData.map(item => ({
-      name: item.name, 
+      name: item.name,
       status: item.status === 'Offline' ? "" : item.status
     }));
 
     console.log("Modified Data:", modifiedData);
-    setData(modifiedData); 
+    setData(modifiedData);
 
 
     } catch (error) {
       console.error('Fetch error:', error);
       setErrorMessage('Fetch error: ' + error.message);
     }
-  }, [status, makeApiRequest]);
+  }, [status, makeApiRequest, backendUrl]);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -142,7 +148,7 @@ const DashboardPage = () => {
       audioRef.current.volume = newValue / 100;
     }
   };
-  
+
   const handleStateClick = (channel) => {
     const selectedChannel = channelData.find(item => item.name === channel);
     const selectedChanneldata = data.find(item => item.name === channel);
@@ -153,26 +159,26 @@ const DashboardPage = () => {
       const sourceElement = document.getElementById('audioSource');
 
       const stopUrl = `${backendUrl}monitor-channels/stop`;
-      const testUrl = `${backendUrl}monitor-channels/start?file=test-3.mp3`;
+      const testUrl = `${backendUrl}monitor-channels/start?file=test-1.mp3`;
 
-      
+
       ///// for now set to play if OFFLINE, need to change this
       if (playingState == "Play" || playingState == "") {
         audioElement.load();
 
         console.log(testUrl);
-        
+
         sourceElement.src = testUrl;
 
         audioElement.play().catch(error => {
           console.error('Error playing audio:', error);
         });
-      } 
-      
+      }
+
       else if (playingState == "Pause") {
         audioElement.pause();
         sourceElement.src = stopUrl;
-      } 
+      }
 
     } else {
       alert(`Channel ${channel} not found!`);
@@ -180,7 +186,7 @@ const DashboardPage = () => {
   };
 
 
-  
+
   if (isLoading) {
     return <p>Loading...</p>;
   }
