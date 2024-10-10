@@ -388,7 +388,12 @@ app.post('/sdr/upload_data', async (req, res) => {
       message: "Invalid API key",
     })
   }
-});
+}catch(error){
+  res.status(500).send({
+    message: "Error occurred while processing data",
+    error: error.message,
+  })
+}});
 
 app.get('/api_v2/testdata', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
