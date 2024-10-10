@@ -9,7 +9,7 @@ export const NotificationContext = createContext();
 
 // Provider Component
 export const NotificationProvider = ({ children }) => {
-  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}` || 'http://localhost:9000/api/';
+  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}` || 'http://localhost:9000/api_v2/';
   const [notifications, setNotifications] = useState([]);
   const router = useRouter();
 
@@ -32,7 +32,7 @@ export const NotificationProvider = ({ children }) => {
       const responseData = await response.json();
 
       if (!response.ok) {
-        console.log(`Error Response:`, responseData); 
+        console.log(`Error Response:`, responseData);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -45,7 +45,7 @@ export const NotificationProvider = ({ children }) => {
 
   // Load notifications from local storage on mount
   useEffect(() => {
-    const storedNotifications = localStorage.getItem('notifications');
+    const storedNotifications = window.localStorage.getItem('notifications');
     if (storedNotifications) {
       setNotifications(JSON.parse(storedNotifications));
     }
@@ -53,7 +53,7 @@ export const NotificationProvider = ({ children }) => {
 
   // Save notifications to local storage whenever they change
   useEffect(() => {
-    localStorage.setItem('notifications', JSON.stringify(notifications));
+    window.localStorage.setItem('notifications', JSON.stringify(notifications));
   }, [notifications]);
 
   // Add a new notification
@@ -88,9 +88,9 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     const interval = setInterval(async () => {
       let queryStrings = [];
-      for (const key in localStorage) {
+      for (const key in window.localStorage) {
         if (!isNaN(key)) {
-          queryStrings.push(`${key}=[${localStorage[key].split(",").slice(0, 3).join(",")}]`);
+          queryStrings.push(`${key}=[${window.localStorage[key].split(",").slice(0, 3).join(",")}]`);
         }
       }
       const notificationUrl = `${backendUrl}notification?${queryStrings.join("&")}`;
@@ -98,9 +98,9 @@ export const NotificationProvider = ({ children }) => {
       const notificationResult = await makeApiRequest(notificationUrl);
 
       for (let key in notificationResult) {
-        if (localStorage.getItem(key)) {
+        if (window.localStorage.getItem(key)) {
           let cName = notificationResult[key]["name"];
-          let storedValues = localStorage[key].split(",");
+          let storedValues = window.localStorage[key].split(",");
           console.log(storedValues)
           if (null===notificationResult[key]["strength"]) {
             if (storedValues[5] === "true") {
@@ -122,7 +122,7 @@ export const NotificationProvider = ({ children }) => {
               addNotification(`${cName} utilization is ${notificationResult[key]["util"] ? "above" : "below"} ${storedValues[1]}%`)
               storedValues[4] = notificationResult[key]["util"].toString();
           }
-          localStorage.setItem(key, storedValues.join(","));
+          window.localStorage.setItem(key, storedValues.join(","));
         }
       }
     }, 5000); // 5,000 milliseconds = 5 seconds

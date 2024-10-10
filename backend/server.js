@@ -4,6 +4,8 @@ const path = require('path');
 const dotenv = require('dotenv');
 const { decode } = require('next-auth/jwt');
 const cookieParser = require('cookie-parser');
+const https = require('https');
+
 const {
   startMonitorMP3,
   stopMonitor,
@@ -21,6 +23,11 @@ const {
   generateUtilDataDump,
   checkNotificationState
 } = require('./model_utils.js');
+
+const {
+  saveApiKey,
+  compareApiKey
+} = require('./auth_utils.js');
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -44,7 +51,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
-const allowedOrigins = ['https://20.191.210.182:3000', 'http://localhost:3000', PUBLIC_FRONTEND_URL];
+const allowedOrigins = [PUBLIC_FRONTEND_URL];
 
 const verifyToken = async (req, res, next) => {
   // If no token in Authorization header, fall back to cookie
@@ -139,6 +146,25 @@ app.use(express.static(path.join(__dirname, 'public')));
  */
 app.get('/api_v2/monitor-channels', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
+})
+
+app.post('/api_v2/generate_api_key', async (req, res) => {
+  const userName = req.headers.authorization;
+
+  if (userName) {
+    const saveResponse = await saveApiKey(userName.toLowerCase());
+
+    if (saveResponse.success) {
+      res.status(200).send({ message: 'API key generated successfully', apiKey: saveResponse.apiKey });
+    }
+    else {
+      res.status(500).send({ message: 'Failed to generate API key' });
+    }
+
+  }
+  else {
+    res.status(400).send({ message: 'User name is required' });
+  }
 })
 
 /**
@@ -314,7 +340,8 @@ app.get('/api_v2/analytics/strength-dump', async (req, res) => {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
   }
   const myFile = await generateStrengthDataDump(requestObj, "mydb");
-  res.attachment("strength-data.csv").send(myFile);
+  const nowTime = Math.floor(new Date().getTime()/1000);
+  res.attachment(`strength-data-${nowTime}.csv`).send(myFile);
 });
 
 app.get('/api_v2/analytics/util-dump', async (req, res) => {
@@ -324,7 +351,8 @@ app.get('/api_v2/analytics/util-dump', async (req, res) => {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
   }
   const myFile = await generateUtilDataDump(requestObj, "mydb");
-  res.attachment("util-data.csv").send(myFile);
+  const nowTIme = Math.floor(new Date().getTime()/1000);
+  res.attachment(`util-data-${nowTime}.csv`).send(myFile);
 });
 
 app.get('/', (req, res) => {
@@ -336,20 +364,38 @@ app.post('/sdr/upload_data', async (req, res) => {
     console.log(req.body)
     const response = await processIncomingData(req.body, "mydb");
 
-    if (response){
-      res.status(200).send({
-        message: "Data successfully processed",
-        data: response,
-      });
+  const compareResponse = await compareApiKey(apiKey);
+
+  if (compareResponse == true) {
+    try{
+      console.log(req.body)
+      const response = await processIncomingData(req.body, "mydb");
+
+      if (response){
+        res.status(200).send({
+          message: "Data successfully processed",
+          data: response,
+        });
+      }
+    }
+    catch(error){
+      res.status(500).send({
+        message: "Error occurred while processing data",
+        error: error.message,
+      })
     }
   }
-  catch(error){
-    res.status(500).send({
-      message: "Error occurred while processing data",
-      error: error.message,
+  else{
+    res.status(403).send({
+      message: "Invalid API key",
     })
   }
-});
+}catch(error){
+  res.status(500).send({
+    message: "Error occurred while processing data",
+    error: error.message,
+  })
+}});
 
 app.get('/api_v2/testdata', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));

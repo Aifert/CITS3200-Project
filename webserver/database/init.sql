@@ -39,6 +39,11 @@ CREATE TABLE "session_listeners" (
   PRIMARY KEY ("session_id", "c_id")
 );
 
+CREATE TABLE "pi_api" (
+  "username" varchar PRIMARY KEY,
+  "api_key1" varchar NOT NULL
+);
+
 COMMENT ON COLUMN "devices"."d_id" IS 'Unique preallocated random id identifying a specific raspberry pi';
 
 COMMENT ON COLUMN "devices"."d_address" IS 'Current Public IP address for this raspberry pi';

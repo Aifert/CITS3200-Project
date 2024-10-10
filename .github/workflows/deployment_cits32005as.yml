@@ -34,8 +34,8 @@ jobs:
             --build-arg AZURE_AD_CLIENT_ID=${{ secrets.AZURE_AD_CLIENT_ID }} \
             --build-arg AZURE_AD_CLIENT_SECRET=${{ secrets.AZURE_AD_CLIENT_SECRET }} \
             --build-arg AZURE_AD_TENANT_ID=${{ secrets.AZURE_AD_TENANT_ID }} \
-            -t yelaoshi/web:latest -f Dockerfile.web .
-          docker push yelaoshi/web:latest
+            -t ${{ secrets.DOCKER_USERNAME }}/web:latest -f Dockerfile.web .
+          docker push ${{ secrets.DOCKER_USERNAME }}/web:latest
 
       # Build and push frontend image
       - name: Build and push frontend image
@@ -48,17 +48,18 @@ jobs:
             --build-arg AZURE_AD_CLIENT_ID=${{ secrets.AZURE_AD_CLIENT_ID }} \
             --build-arg AZURE_AD_CLIENT_SECRET=${{ secrets.AZURE_AD_CLIENT_SECRET }} \
             --build-arg AZURE_AD_TENANT_ID=${{ secrets.AZURE_AD_TENANT_ID }} \
-            -t yelaoshi/frontend:latest -f Dockerfile.frontend .
-          docker push yelaoshi/frontend:latest
+            -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest -f Dockerfile.frontend .
+          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
 
       # Build and push db image
       - name: Build and push db image
         run: |
-          docker build --platform linux/amd64 -t yelaoshi/db:latest -f Dockerfile.db .
-          docker push yelaoshi/db:latest
+          docker build --platform linux/amd64 \
+            -t ${{ secrets.DOCKER_USERNAME }}/db:latest -f Dockerfile.db .
+          docker push ${{ secrets.DOCKER_USERNAME }}/db:latest
 
       # Build and push nginx image
       - name: Build and push nginx image
         run: |
-          docker build --platform linux/amd64 -t yelaoshi/nginx-custom:latest -f Dockerfile.nginx .
-          docker push yelaoshi/nginx-custom:latest
+          docker build --platform linux/amd64 -t ${{ secrets.DOCKER_USERNAME }}/nginx-custom:latest -f Dockerfile.nginx .
+          docker push ${{ secrets.DOCKER_USERNAME }}/nginx-custom:latest
