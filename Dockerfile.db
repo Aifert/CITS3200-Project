@@ -1,0 +1,10 @@
+FROM postgres:13-alpine
+
+# Install postgresql-client
+RUN apk update && apk add --no-cache postgresql-client
+
+# Copy the init.sql file into the appropriate directory
+COPY ./webserver/database/init.sql /docker-entrypoint-initdb.d/init.sql
+
+# Expose the PostgreSQL port
+EXPOSE 5432
