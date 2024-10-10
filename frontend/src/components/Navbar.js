@@ -45,6 +45,12 @@ const Navbar = () => {
         {/* Right Side Icons */}
         <div className="flex items-center space-x-4">
           <NotificationBell />
+          <Link
+            href="/api-key"
+            className="text-white hover:text-gray-300 focus:outline-none"
+          >
+            API Key
+          </Link>
           <button
             onClick={handleLogout}
             className="text-white hover:text-gray-300 focus:outline-none"
