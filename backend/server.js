@@ -340,7 +340,8 @@ app.get('/api_v2/analytics/strength-dump', async (req, res) => {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
   }
   const myFile = await generateStrengthDataDump(requestObj, "mydb");
-  res.attachment("strength-data.csv").send(myFile);
+  const nowTime = Math.floor(new Date().getTime()/1000);
+  res.attachment(`strength-data-${nowTime}.csv`).send(myFile);
 });
 
 app.get('/api_v2/analytics/util-dump', async (req, res) => {
@@ -350,7 +351,8 @@ app.get('/api_v2/analytics/util-dump', async (req, res) => {
     requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):parseInt(sendObj[elem]);
   }
   const myFile = await generateUtilDataDump(requestObj, "mydb");
-  res.attachment("util-data.csv").send(myFile);
+  const nowTIme = Math.floor(new Date().getTime()/1000);
+  res.attachment(`util-data-${nowTime}.csv`).send(myFile);
 });
 
 app.get('/', (req, res) => {
