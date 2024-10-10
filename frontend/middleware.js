@@ -9,7 +9,7 @@ export async function middleware(req) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith('/api/')) {
+  if (pathname.startsWith('/api_v2/')) {
     if (token) {
       return NextResponse.next();
     } else {

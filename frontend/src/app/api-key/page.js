@@ -12,7 +12,7 @@ const ApiKeyPage = () => {
   const [error, setError] = useState('');
   const { data: session } = useSession();
   const router = useRouter();
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api/';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api_v2/';
   const userName = session?.user?.name.toLowerCase();
 
   const handleGenerateClick = () => {
