@@ -14,7 +14,7 @@ const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
   const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api/';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api_v2/';
 
   useEffect(() => {
     // Move the localStorage logic inside useEffect

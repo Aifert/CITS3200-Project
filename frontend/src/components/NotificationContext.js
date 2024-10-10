@@ -9,7 +9,7 @@ export const NotificationContext = createContext();
 
 // Provider Component
 export const NotificationProvider = ({ children }) => {
-  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}` || 'http://localhost:9000/api/';
+  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}` || 'http://localhost:9000/api_v2/';
   const [notifications, setNotifications] = useState([]);
   const router = useRouter();
 

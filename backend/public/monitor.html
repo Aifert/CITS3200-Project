@@ -9,7 +9,7 @@
             event.preventDefault();
 
             try {
-                await fetch('http://localhost:9000/api/monitor-channels/stop');
+                await fetch('http://localhost:9000/api_v2/monitor-channels/stop');
                 console.log('Stopped current stream');
             } catch (error) {
                 console.error('Error stopping the current stream:', error);
@@ -22,7 +22,7 @@
             const audioElement = document.getElementById('audioPlayer');
             const sourceElement = document.getElementById('audioSource');
 
-            const url = `http://localhost:9000/api/monitor-channels/start?session-id=${sessionId}&channel-id=${channelId}&frequency=${frequency}`;
+            const url = `http://localhost:9000/api_v2/monitor-channels/start?session-id=${sessionId}&channel-id=${channelId}&frequency=${frequency}`;
 
             sourceElement.src = url;
             audioElement.load();
