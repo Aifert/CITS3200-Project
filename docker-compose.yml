@@ -4,6 +4,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.web
+      args:
+        - AZURE_AD_CLIENT_ID=9c812423-8896-4196-8ee9-c7178059bc11
+        - AZURE_AD_CLIENT_SECRET=O~l8Q~lOEzUnS56B.iu3tVMwH8scw6tHZpl0JbDB
+        - AZURE_AD_TENANT_ID=29936a83-47ed-4dfe-a708-6176ac573ca3
+        - NEXTAUTH_SECRET=c7851d066b0442a436636ee3220d040fe2c7e10a218e0c511eb8ee0df99b29b8
+        - NEXTAUTH_URL=https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/
+        - NEXT_PUBLIC_BACKEND_URL=https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/api_v2/
+        - NEXT_PUBLIC_SDR_URL=http://host.docker.internal:4001/
     ports:
       - "9000:9000"
     environment:
@@ -33,6 +41,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        - AZURE_AD_CLIENT_ID=9c812423-8896-4196-8ee9-c7178059bc11
+        - AZURE_AD_CLIENT_SECRET=O~l8Q~lOEzUnS56B.iu3tVMwH8scw6tHZpl0JbDB
+        - AZURE_AD_TENANT_ID=29936a83-47ed-4dfe-a708-6176ac573ca3
+        - NEXTAUTH_SECRET=c7851d066b0442a436636ee3220d040fe2c7e10a218e0c511eb8ee0df99b29b8
+        - NEXTAUTH_URL=https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/
+        - NEXT_PUBLIC_BACKEND_URL=https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/api_v2/
+        - NEXT_PUBLIC_SDR_URL=http://host.docker.internal:4001/
     ports:
       - "3000:3000"
     environment:
