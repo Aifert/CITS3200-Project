@@ -12,7 +12,7 @@ Quick-access hyperlinks:
 | 23012728 | Henry Hewgill  | HenryHewgill    |
 | 22705919 | Jakem Pinchin  | JakePinchin     |
 | 23334811 | Joseph Newman  | RedBlueCarrots  |
-| 23165388 | Sigmund Howe   | SigHowe         |
+| 23165388 | Sigmund Howe   | sighowe         |
 
 ---
 
