@@ -148,7 +148,7 @@ app.get('/api_v2/monitor-channels', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
 })
 
-app.post('/api/generate_api_key', async (req, res) => {
+app.post('/api_v2/generate_api_key', async (req, res) => {
   const userName = req.headers.authorization;
 
   if (userName) {
