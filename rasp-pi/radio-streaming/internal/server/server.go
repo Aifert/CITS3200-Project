@@ -32,17 +32,17 @@ func StartServer() {
 	connPool := pool.NewConnectionPool()
 
 	// Define HTTP handlers
-	http.HandleFunc("/stream", AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/stream", func(w http.ResponseWriter, r *http.Request) {
 		StreamHandler(w, r, connPool)
-	}))
+	})
 
-	http.HandleFunc("/tune", AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/tune", func(w http.ResponseWriter, r *http.Request) {
 		TuneHandler(w, r, connPool)
-	}))
+	})
 
-	http.HandleFunc("/stop", AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
 		StopHandler(w, r, connPool);
-	}))
+	})
 
 	// Start the server
 	fmt.Println("Starting server on :4001")
