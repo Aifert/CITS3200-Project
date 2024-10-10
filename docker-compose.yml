@@ -12,6 +12,8 @@ services:
     depends_on:
       - db
     command: node backend/server.js
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   db:
     image: postgres:13
