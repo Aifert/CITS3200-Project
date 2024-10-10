@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Line, Scatter } from 'react-chartjs-2';
-import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler} from 'chart.js';
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip } from 'chart.js';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -63,9 +63,8 @@ const handleStateClick = () => {
   const frequency = channelData.frequency;
   const sessionId = '12345';
 
-  const audioUrl = `http://localhost:9000/api/audio?session-id=${sessionId}&channel-id=${channel}&frequency=${frequency}`;
-  const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
-  const testUrl = `http://localhost:9000/api/monitor-channels/start?file=test-3.mp3`;
+  const stopUrl = `${backendUrl}monitor-channels/stop`;
+  const testUrl = `${backendUrl}monitor-channels/start?file=test-1.mp3`;
 
   const audioElement = audioRef.current;
 
@@ -457,9 +456,9 @@ const renderButton = () => {
                   }}
                   />
               ) : (
-                <Line 
-                  data={channelData.dataUtilisation} 
-                  options={{ 
+                <Line
+                  data={channelData.dataUtilisation}
+                  options={{
                     maintainAspectRatio: false,
                     scales: {
                       y: {
@@ -476,8 +475,8 @@ const renderButton = () => {
                           text: 'Time Ago',
                         },
                       },
-                    }, 
-                  }} 
+                    },
+                  }}
                 />
               )}
         </div>
