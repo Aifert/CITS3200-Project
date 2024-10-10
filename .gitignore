@@ -60,3 +60,4 @@ rasp-pi/rtl_powerOutput/*.csv
 /rasp-pi/radio-streaming/audio/*
 
 main
+docker-compose.prod.yml
