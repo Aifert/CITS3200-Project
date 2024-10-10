@@ -256,14 +256,14 @@ const AnalyticsPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="w-full mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Channel Analytics</h1>
 
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
 
       {/* Time scale selection dropdown */}
-      <div className="mb-6 flex justify-between items-center">
-        <div className="flex space-x-4">
+      <div className="mb-6 flex flex-wrap justify-between items-center">
+        <div className="flex flex-wrap space-x-4">
           <label className="mr-2">Select Time Scale:</label>
           <select
             value={selectedTimeScale}
@@ -277,28 +277,22 @@ const AnalyticsPage = () => {
             ))}
           </select>
         </div>
-
         
-        <div>
-          Download:
-          <button 
-            onClick={() => {
-              downloadData(null, 'strength', 'blacklist');
-            }} 
-            className="ml-2 text-blue-600"
+        <div className="flex flex-wrap items-center space-x-4 mt-4 sm:mt-0">
+          <span className="text-lg">Download:</span>
+          <button
+            onClick={() => downloadData('strength')}
+            className="text-blue-600 hover:underline"
             title="All Strength Data"
           >
-            <i className="fas fa-download"></i>
+            <i className="fas fa-download"></i> Strength Data
           </button>
-
-          <button 
-            onClick={() => {
-              downloadData(null, 'util', 'blacklist');
-            }} 
-            className="ml-2 text-blue-600"
+          <button
+            onClick={() => downloadData('util')}
+            className="text-blue-600 hover:underline"
             title="All Utilisation Data"
           >
-            <i className="fas fa-download"></i>
+            <i className="fas fa-download"></i> Utilisation Data
           </button>
         </div>
       </div>
@@ -307,10 +301,10 @@ const AnalyticsPage = () => {
       {channelData.map((channel, index) => (
         <div key={index} className="mb-10">
           {/* First Row: Channel Information */}
-          <div className="grid grid-cols-8 gap-4 p-4 bg-white border-b border-gray-300">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4 p-4 bg-white border-b border-gray-300">
             <div className="flex items-center justify-center border-r border-gray-300">
               {channel.status === 'Active' ? (
-                <Link href="/monitoring">
+                <Link href="/channel-listening">
                   <button className="bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600">
                     Live
                   </button>
@@ -320,21 +314,21 @@ const AnalyticsPage = () => {
               )}
             </div>
             <div className="flex col-span-2 items-center justify-center border-r border-gray-300">
-                <Link href={`/single-channel?channelId=${channel.id}`} className="text-blue-600 hover:underline">
-                  {channel.name} ({channel.frequency.toFixed(6)} MHz)
-                </Link>
+              <Link href={`/single-channel?channelId=[${channel.id}]`} className="text-blue-600 hover:underline">
+                {channel.name} ({channel.frequency.toFixed(6)} MHz)
+              </Link>
               <button onClick={() => toggleFavorite(channel.id)}>
                 {channel.isFavorite ? ' ★' : ' ☆'}
               </button>
             </div>
             <div className="flex col-span-2 items-center justify-center border-r border-gray-300">
-              <span>Utilisation: {channel.utilisation}</span>
+              <span>Utilisation average: {channel.utilisation} (%)</span>
               <button onClick={() => downloadData(channel.id, 'util', 'whitelist')} className="ml-2 text-blue-600">
                 <i className="fas fa-download"></i>
               </button>
             </div>
             <div className="flex col-span-2 items-center justify-center">
-              <span>Strength: {channel.strength}</span>
+              <span>Strength average: {channel.strength} (dBm)</span>
               <button onClick={() => downloadData(channel.id, 'strength', 'whitelist')} className="ml-2 text-blue-600">
                 <i className="fas fa-download"></i>
               </button>
@@ -346,7 +340,7 @@ const AnalyticsPage = () => {
           </div>
 
           {/* Second Row: Graphs */}
-          <div className="grid grid-cols-2 gap-4 p-4 bg-white">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white">
             {/* Utilisation Over Time Graph */}
             <div>
               {typeof channel.dataUtilisation === 'string' ? (
@@ -360,7 +354,7 @@ const AnalyticsPage = () => {
                       y: {
                         grid: {
                           display: false,
-                          },
+                        },
                         ticks: {
                           display: false,
                         }
@@ -370,7 +364,7 @@ const AnalyticsPage = () => {
                         max: 600,
                         grid: {
                           display: false,
-                          },
+                        },
                         title: {
                           display: true,
                           text: "Time Ago (s)",
@@ -379,7 +373,7 @@ const AnalyticsPage = () => {
                       }
                     }
                   }}
-                  />
+                />
               ) : (
                 <Line 
                   data={channel.dataUtilisation} 

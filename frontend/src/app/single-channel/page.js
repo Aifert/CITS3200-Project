@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Line, Scatter } from 'react-chartjs-2';
-import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler} from 'chart.js';
+import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler } from 'chart.js';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -11,30 +11,35 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip,
 const SingleChannelPage = () => {
   const [channelData, setChannelData] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [availableChannels, setAvailableChannels] = useState([]);
   const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
   const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}` || 'http://localhost:9000/';
 
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const channelId = searchParams.get('channelId');
+
+  const channelIds = useMemo(() => {
+    return searchParams.get('channelId')
+      ? searchParams.get('channelId').replace(/[\[\]]/g, '').split(',').map(id => parseInt(id.trim(), 10))
+      : [];
+  }, [searchParams]);
+  
 
   const [isPlaying, setIsPlaying] = useState(false); 
   // const [currentPlayingIndex, setCurrentPlayingIndex] = useState(null);
   const [sliderValue, setSliderValue] = useState(50);
   const audioRef = useRef(null); 
 
-
-
   const timeScales = useMemo(() => ({
-      '10 minutes': { timeScale: 600, sampleRate: 60, isStep: true },  // 1 hour, sample rate 5 minutes
-      '60 minutes': { timeScale: 3600, sampleRate: 300, isStep: true  },  // 1 hour, sample rate 5 minutes
-      '3 hours': { timeScale: 10800, sampleRate: 600, isStep: false  },    // 3 hours, sample rate 10 minutes
-      '12 hours': { timeScale: 43200, sampleRate: 1200, isStep: false  },  // 12 hours, sample rate 20 minutes
-      '24 hours': { timeScale: 86400, sampleRate: 1800, isStep: false  },  // 24 hours, sample rate 30 minutes
-      '3 days': { timeScale: 259200, sampleRate: 7200, isStep: false  },   // 3 days, sample rate 2 hours
-      '7 days': { timeScale: 604800, sampleRate: 10800, isStep: false  },  // 7 days, sample rate 3 hours
-      '30 days': { timeScale: 2592000, sampleRate: 86400, isStep: false  } // 30 days, sample rate 1 day
+    '10 minutes': { timeScale: 600, sampleRate: 60, isStep: true },  // 1 hour, sample rate 5 minutes
+    '60 minutes': { timeScale: 3600, sampleRate: 300, isStep: true },  // 1 hour, sample rate 5 minutes
+    '3 hours': { timeScale: 10800, sampleRate: 600, isStep: false },  // 3 hours, sample rate 10 minutes
+    '12 hours': { timeScale: 43200, sampleRate: 1200, isStep: false },  // 12 hours, sample rate 20 minutes
+    '24 hours': { timeScale: 86400, sampleRate: 1800, isStep: false },  // 24 hours, sample rate 30 minutes
+    '3 days': { timeScale: 259200, sampleRate: 7200, isStep: false },  // 3 days, sample rate 2 hours
+    '7 days': { timeScale: 604800, sampleRate: 10800, isStep: false },  // 7 days, sample rate 3 hours
+    '30 days': { timeScale: 2592000, sampleRate: 86400, isStep: false } // 30 days, sample rate 1 day
   }), []);
 
   const formatTimeLabelDirectly = (index, sampleRate) => {
@@ -50,7 +55,6 @@ const SingleChannelPage = () => {
       return `${minutesAgo} minute(s)`;
     }
   };
-
 
 // Function to toggle the play/pause state
 const handleStateClick = () => {
@@ -90,16 +94,12 @@ const handleStateClick = () => {
   }
 };
 
-// Function to handle play/pause click (can simply call handleStateClick)
-const handlePlayPauseClick = () => {
-  handleStateClick();
-};
 
 // Function to render the play/pause button with dynamic styles
 const renderButton = () => {
   return (
     <button
-      onClick={handlePlayPauseClick}
+      onClick={handleStateClick}
       style={{
         backgroundColor: isPlaying ? 'red' : 'green',
         color: 'white',
@@ -147,29 +147,44 @@ const renderButton = () => {
   );
 
   const fetchChannelData = useCallback(async () => {
+    console.log('fetchChannelData called');
     const { timeScale, sampleRate } = timeScales[selectedTimeScale];
 
-    if (status !== 'authenticated' || !channelId) return;
+    if (status !== 'authenticated' || channelIds.length === 0) return;
 
     try {
       const activeChannelsData = await makeApiRequest(`${backendUrl}active-channels`);
-
+      console.log('Active Channels Data:', activeChannelsData);
       if (!activeChannelsData || (!activeChannelsData.active && !activeChannelsData.offline && !activeChannelsData.busy)) {
         setErrorMessage('No active, offline, or busy channels found.');
         return;
       }
 
-      const channel =
-        activeChannelsData.active?.find((channel) => String(channel['channel-id']) === String(channelId))
-          ? { ...activeChannelsData.active.find((channel) => String(channel['channel-id']) === String(channelId)), status: 'Active' }
-          : activeChannelsData.offline?.find((channel) => String(channel['channel-id']) === String(channelId))
-          ? { ...activeChannelsData.offline.find((channel) => String(channel['channel-id']) === String(channelId)), status: 'Offline' }
-          : activeChannelsData.busy?.find((channel) => String(channel['channel-id']) === String(channelId))
-          ? { ...activeChannelsData.busy.find((channel) => String(channel['channel-id']) === String(channelId)), status: 'Busy' }
-          : null;
+      const selectedChannels = activeChannelsData.active
+        ?.filter(channel => channelIds.includes(channel['channel-id']))
+        .map(channel => ({ ...channel, status: 'Active' })) || [];
 
-      if (!channel) {
-        setErrorMessage('Channel not found.');
+      const offlineChannels = activeChannelsData.offline
+        ?.filter(channel => channelIds.includes(channel['channel-id']))
+        .map(channel => ({ ...channel, status: 'Offline' })) || [];
+
+      const busyChannels = activeChannelsData.busy
+        ?.filter(channel => channelIds.includes(channel['channel-id']))
+        .map(channel => ({ ...channel, status: 'Busy' })) || [];
+
+      const allSelectedChannels = [...selectedChannels, ...offlineChannels, ...busyChannels];
+
+      const allChannels = [...(activeChannelsData?.active || []), ...(activeChannelsData?.busy || []), ...(activeChannelsData?.offline || [])];
+      const availableChannels = allChannels.filter(channel => !channelIds.includes(channel['channel-id']));
+      setAvailableChannels(availableChannels);
+
+      console.log('Selected Channels:', selectedChannels);
+      console.log('Offline Channels:', offlineChannels);;
+      console.log('Busy Channels:', busyChannels);
+      console.log('All Selected Channels:', allSelectedChannels);
+
+      if (allSelectedChannels.length === 0) {
+        setErrorMessage('No matching channels found.');
         return;
       }
 
@@ -179,25 +194,23 @@ const renderButton = () => {
         'start-time': timeScale,
         'sample-rate': sampleRate,
         'avg-data': !isStep,
-        whitelist: `[${channelId}]`,
+        whitelist: `[${channelIds.join(',')}]`,
       }).toString();
 
       const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
+      console.log('Fetching analytics data from:', analyticsUrl); 
 
       const analyticsData = await makeApiRequest(analyticsUrl);
-      const strengthData = analyticsData?.[channelId]?.strength?.values || {};
-      const analyticsForChannel = analyticsData?.[channelId];
-      const utilisationData = isStep ? (analyticsForChannel?.utilisation?.values || []) : (analyticsForChannel?.utilisation?.zones || []);
+      console.log('Analytics data response:', analyticsData);
 
+      // Process analytics data for each channel
+      const processedData = allSelectedChannels.map(channel => {
+        const channelId = channel['channel-id'];
+        const analyticsForChannel = analyticsData?.[channelId] || {};
+        const strengthData = analyticsForChannel?.strength?.values || {};
+        const utilisationData = isStep ? (analyticsForChannel?.utilisation?.values || []) : (analyticsForChannel?.utilisation?.zones || []);
 
-      const strengthArray = Object.values(strengthData).map((val) => val ?? null);
-      const strengthLabels = Object.keys(strengthData);
-      const formattedStrengthLabels = strengthLabels.map((label, index) => {
-        return formatTimeLabelDirectly(index, timeScales[selectedTimeScale].sampleRate);
-      });
-      console.log(utilisationData);
-
-      let dataUtilisation;
+        let dataUtilisation;
 
         if (!isStep) {
           const utilisationArray = Object.values(utilisationData).map(val => val ?? null);
@@ -221,9 +234,6 @@ const renderButton = () => {
           let utilStepData = [];
           const nowTime = Math.floor(new Date().getTime()/1000);
           utilStepData.push({"x":timeScales[selectedTimeScale].timeScale+5, "y":0});
-          if (utilisationData.length > 0) {
-          console.log("MYUTIL", utilisationData);
-          }
           for (let u in utilisationData) {
             utilStepData.push({"x":nowTime-utilisationData[u][0], "y":0});
             utilStepData.push({"x":nowTime-utilisationData[u][0], "y":1});
@@ -251,57 +261,65 @@ const renderButton = () => {
             : 'No data';
         }
 
-      const dataStrength = strengthArray.length
-        ? {
-            labels: formattedStrengthLabels.reverse(),
-            datasets: [
-              {
+        const strengthArray = Object.values(strengthData).map(val => val ?? null);
+        const strengthLabels = Object.keys(strengthData);
+        const formattedStrengthLabels = strengthLabels.map((label, index) => {
+          return formatTimeLabelDirectly(index, timeScales[selectedTimeScale].sampleRate);
+        });
+
+
+        const dataStrength = strengthArray.length
+          ? {
+              labels: formattedStrengthLabels.reverse(), 
+              datasets: [{
                 label: 'Strength Over Time (dBm)',
                 data: strengthArray.reverse(),
                 borderColor: 'rgb(255, 99, 132)',
                 tension: 0.1,
-              },
-            ],
-          }
-        : 'No data';
+              }],
+            }
+          : 'No data';
 
-      const newChannelData = {
-        status: channel.status,
-        name: channel['channel-name'],
-        frequency: channel.frequency / 1e6,
-        utilisation: analyticsData?.[channelId]?.utilisation?.average ? analyticsData?.[channelId]?.utilisation?.average.toFixed(3) : 'No data',
-        strength: analyticsData?.[channelId]?.strength?.average ? analyticsData?.[channelId]?.strength?.average.toFixed(3) : 'No data',
-        dataUtilisation,
-        dataStrength,
-      };
+        return {
+          status: channel.status,
+          name: channel['channel-name'],
+          frequency: channel.frequency / 1e6,
+          utilisation: analyticsForChannel?.utilisation?.average ? analyticsForChannel?.utilisation?.average.toFixed(3) : 'No data',
+          strength: analyticsForChannel?.strength?.average ? analyticsForChannel?.strength?.average.toFixed(3) : 'No data',
+          dataUtilisation,
+          dataStrength,
+          id: channel['channel-id'],
+        };
+      });
 
-      setChannelData(newChannelData);
-      
+      setChannelData(processedData);
+      console.log('Processed channel data:', processedData);
 
     } catch (error) {
       setErrorMessage('Fetch error: ' + error.message);
     }
-  }, [selectedTimeScale, status, backendUrl, channelId, makeApiRequest]);
+  }, [selectedTimeScale, status, backendUrl, channelIds, makeApiRequest]);
 
-
-    // Function to handle volume slider changes
-    const handleSliderChange = (e) => {
-      const newValue = e.target.value;
-      setSliderValue(newValue);
-  
-      if (audioRef.current) {
-        audioRef.current.volume = newValue / 100;
-      }
-    };
 
   useEffect(() => {
     fetchChannelData();
 
   }, [selectedTimeScale, fetchChannelData]);
 
+  const handleAddChannel = (newChannelId) => {
+    if (!newChannelId) return;
+    const updatedChannelIds = [...channelIds, parseInt(newChannelId)];
+  
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.set('channelId', `[${updatedChannelIds.join(',')}]`);
+
+    router.push(`?${newSearchParams.toString()}`);
+  };
+  
+
   const downloadData = (dataType) => {
     const { timeScale } = timeScales[selectedTimeScale];
-    const url = `${backendUrl}analytics/${dataType}-dump?whitelist=[${channelId}]&start-time=${timeScale}`;
+    const url = `${backendUrl}analytics/${dataType}-dump?whitelist=[${channelIds}]&start-time=${timeScale}`;
     window.location.href = url;
   };
 
@@ -310,15 +328,10 @@ const renderButton = () => {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">
-        Channel: {channelData.name.replace("Channel", "")} ({channelData.status})
-      </h1>
-  
+    <div className="w-full mx-auto p-6">
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
-  
+
       <div className="mb-10 flex justify-between items-center">
-        {/* Time Scale */}
         <div className="flex items-center space-x-4">
           <label className="text-lg">Select Time Scale:</label>
           <select
@@ -333,8 +346,27 @@ const renderButton = () => {
             ))}
           </select>
         </div>
-  
-        {/* Download */}
+
+      {/* Dropdown for channels not in URL */}
+      <div className="flex items-center space-x-4">
+        <label className="text-lg">Add Channel:</label>
+        <select
+          onChange={(e) => handleAddChannel(e.target.value)}
+          className="p-2 border border-gray-300 rounded-md"
+          defaultValue=""
+          disabled={availableChannels.length === 0}
+        >
+          <option value="" disabled>
+            {availableChannels.length === 0 ? "No channels available" : "Select a channel"}
+          </option>
+          {availableChannels.map((channel) => (
+            <option key={channel['channel-id']} value={channel['channel-id']}>
+              {channel['channel-name']}
+            </option>
+          ))}
+        </select>
+      </div>
+
         <div className="flex items-center space-x-4">
           <span className="text-lg">Download:</span>
           <button
@@ -353,112 +385,105 @@ const renderButton = () => {
           </button>
         </div>
       </div>
-  
-      {/* Status and Details */}
-      <div className="grid grid-cols-4 gap-4 p-4 bg-white border-b border-gray-300">
+      {channelData.map((channel, index) => (
+        <div key={index} className="mb-10">
+          <h2 className="text-xl font-bold mb-4">
+            Channel: {channel.name.replace("Channel", "")} ({channel.status})
+          </h2>
 
-        <div className="flex items-center justify-center border-r border-gray-300">
-          <span>Frequency: {channelData.frequency.toFixed(6)} MHz</span>
-        </div>
-        <div className="flex items-center justify-center border-r border-gray-300">
-          <span>Utilisation: {channelData.utilisation}</span>
-        </div>
-        <div className="flex items-center justify-center">
-          <span>Strength: {channelData.strength}</span>
-        </div>
-        
-      {/* Channel Strength */}
-      <div className="flex items-center justify-center">
-        <div
-          className="w-full"
-          style={{
-            height: '10px',
-            background: 'linear-gradient(90deg, red, yellow, green)',
-            position: 'relative',
-            overflow: 'hidden', // Prevent overflow if the strength is out of bounds
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: '0',
-              left: `${channelData.strength < 0 ? 0 : channelData.strength > 100 ? 100 : channelData.strength}%`, // Clamp the value between 0 and 100
-              height: '100%',
-              width: '2px',
-              background: 'black',
-            }}
-          ></div>
-        </div>
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-white border-b border-gray-300">
+            <div className="flex items-center justify-center border-r border-gray-300">
+              <span>Frequency: {channel.frequency.toFixed(6)} MHz</span>
+            </div>
+            <div className="flex items-center justify-center border-r border-gray-300">
+              <span>Utilisation average: {channel.utilisation} (%)</span>
+            </div>
+            <div className="flex items-center justify-center">
+              <span>Strength average: {channel.strength} (dBm)</span>
+            </div>
 
-      </div>
-
-      {/* Textual Data */}
-      <div className="grid grid-cols-2 gap-4 p-4 bg-white border-b border-gray-300">
-        {/* Play */}
-        <div className="flex items-left justify-center border-r border-gray-300">
-          <div style={{ padding: '8px', textAlign: 'center' }}>
-            {renderButton(channelData.name)}
+            <div className="flex items-center justify-center">
+              <div
+                className="w-full"
+                style={{
+                  height: '10px',
+                  background: 'linear-gradient(90deg, red, yellow, green)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '0',
+                    left: `${channel.strength < 0 ? 0 : channel.strength > 100 ? 100 : channel.strength}%`,
+                    height: '100%',
+                    width: '2px',
+                    background: 'black',
+                  }}
+                ></div>
+              </div>
+            </div>
           </div>
-        </div>
-  
-        {/* Volume Slider Control */}
-        <div className="flex flex-col items-center border-r border-gray-300">
-        <span className="mt-2 text-lg">Volume</span>
-          
-        <input
-          id="slider"
-          type="range"
-          min="0"
-          max="100"
-          value={sliderValue}
-          onChange={handleSliderChange}
-          className="w-full max-w-xs"
-        />
-        </div>
 
-      </div>
-  
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white border-b border-gray-300">
+            <div className="flex items-left justify-center border-r border-gray-300">
+              <div style={{ padding: '8px', textAlign: 'center' }}>
+                {renderButton(channel.name)}
+              </div>
+            </div>
 
-  
-      {/* Graphical Data */}
-      <div className="grid grid-cols-2 gap-4 p-4 bg-white">
-        <div>
-          {typeof channelData.dataUtilisation === 'string' ? (
-                <p>{channelData.dataUtilisation}</p>
-              ) : channelData.dataUtilisation.datasets[0].type === "scatter" ? (
+            <div className="flex flex-col items-center border-r border-gray-300">
+              <span className="mt-2 text-lg">Volume</span>
+              <input
+                id="slider"
+                type="range"
+                min="0"
+                max="100"
+                value={sliderValue}
+                onChange={(e) => setSliderValue(e.target.value)}
+                className="w-full max-w-xs"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white">
+            <div>
+              {typeof channel.dataUtilisation === 'string' ? (
+                <p>{channel.dataUtilisation}</p>
+              ) : channel.dataUtilisation.datasets[0].type === 'scatter' ? (
                 <Scatter
-                  data={channelData.dataUtilisation}
+                  data={channel.dataUtilisation}
                   options={{
                     aspectRatio: 6,
-                    scales : {
+                    scales: {
                       y: {
                         grid: {
                           display: false,
-                          },
+                        },
                         ticks: {
                           display: false,
-                        }
+                        },
                       },
                       x: {
                         min: 0,
                         max: timeScales[selectedTimeScale].timeScale,
                         grid: {
                           display: false,
-                          },
+                        },
                         title: {
                           display: true,
-                          text: "Time Ago (s)",
+                          text: 'Time Ago (s)',
                         },
-                        reverse: true
-                      }
-                    }
+                        reverse: true,
+                      },
+                    },
                   }}
-                  />
+                />
               ) : (
-                <Line 
-                  data={channelData.dataUtilisation} 
-                  options={{ 
+                <Line
+                  data={channel.dataUtilisation}
+                  options={{
                     maintainAspectRatio: false,
                     scales: {
                       y: {
@@ -475,56 +500,45 @@ const renderButton = () => {
                           text: 'Time Ago',
                         },
                       },
-                    }, 
-                  }} 
+                    },
+                  }}
                 />
               )}
-        </div>
-        <div>
-          {typeof channelData.dataStrength === 'string' ? (
-            <p>{channelData.dataStrength}</p>
-          ) : (
-            <Line
-              data={channelData.dataStrength}
-              options={{
-                maintainAspectRatio: false,
-                scales: {
-                  y: {
-                    min: -50,
-                    max: 40,
-                    title: { display: true, text: 'Strength (dBm)' },
-                  },
-                  x: { title: { display: true, text: 'Time Ago' } },
-                },
-                spanGaps: true,
-                segment: {
-                  borderDash: (ctx) => (ctx.p1.parsed.y === null || ctx.p0.parsed.y === null ? [6, 6] : undefined),
-                  borderColor: (ctx) => (ctx.p1.parsed.y === null || ctx.p0.parsed.y === null ? 'rgba(255, 99, 132, 0.5)' : 'rgb(255, 99, 132)'),
-                },
-                plugins: {
-                  tooltip: {
-                    enabled: true,
-                    callbacks: {
-                      label: function (context) {
-                        return `Value: ${context.raw}`;
+            </div>
+            <div>
+              {typeof channel.dataStrength === 'string' ? (
+                <p>{channel.dataStrength}</p>
+              ) : (
+                <Line
+                  data={channel.dataStrength}
+                  options={{
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        min: -50,
+                        max: 40,
+                        title: { display: true, text: 'Strength (dBm)' },
                       },
+                      x: { title: { display: true, text: 'Time Ago' } },
                     },
-                  },
-                },
-              }}
-            />
-          )}
+                    spanGaps: true,
+                    segment: {
+                      borderDash: (ctx) => (ctx.p1.parsed.y === null || ctx.p0.parsed.y === null ? [6, 6] : undefined),
+                      borderColor: (ctx) => (ctx.p1.parsed.y === null || ctx.p0.parsed.y === null ? 'rgba(255, 99, 132, 0.5)' : 'rgb(255, 99, 132)'),
+                    },
+                  }}
+                />
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-  
-      {/* Hidden Audio Element */}
+      ))}
       <audio id="audioPlayer" ref={audioRef} style={{ display: 'none' }}>
         <source id="audioSource" src="" type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
     </div>
   );
-  };
-  
-  export default SingleChannelPage;
-  
+};
+
+export default SingleChannelPage;

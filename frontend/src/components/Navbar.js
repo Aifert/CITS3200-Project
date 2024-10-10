@@ -20,28 +20,51 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="w-full bg-emerald-800 sticky top-0 z-50">
+    <nav className="w-full bg-orange-400 sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Left Side Links */}
-        <div className="flex space-x-4">
-          <Link
-            href="/channel-listening"
-            className={`text-white hover:text-gray-300 ${
-              pathname === '/channel-listening' ? 'font-bold' : ''
-            }`}
-          >
-            Channel Listening
-          </Link>
-          <Link
-            href="/analytics"
-            className={`text-white hover:text-gray-300 ${
-              pathname === '/analytics' ? 'font-bold' : ''
-            }`}
-          >
-            Analytics
-          </Link>
-        </div>
+        {/* Left Side - Logos and Links */}
+        <div className="flex items-center space-x-8">
+          {/* Logos */}
+          <div className="flex items-center space-x-4">
+            <a href="https://csu-ses.com.au/" target="_blank" rel="noopener noreferrer">
+              <img
+                src="https://csu-ses.com.au/wp-content/themes/hatchet/assets/art/csu-ses-wa.svg"
+                alt="SWORD"
+                className="h-12 max-h-12 object-contain"
+              />
+            </a>
 
+            {/* Link for Department of Fire and Emergency Services */}
+            <a href="https://dfes.wa.gov.au/" target="_blank" rel="noopener noreferrer">
+              <img
+                src="https://dfes.wa.gov.au/images/dfes-logo-black_1dfes-logo-black.png"
+                alt="Department of Fire and Emergency Services"
+                className="h-12 max-h-12 object-contain"
+              />
+            </a>
+          </div>
+  
+          {/* Links */}
+          <div className="flex space-x-4">
+            <Link
+              href="/channel-listening"
+              className={`text-white hover:text-gray-300 ${
+                pathname === '/channel-listening' ? 'font-bold' : ''
+              }`}
+            >
+              Channel Listening
+            </Link>
+            <Link
+              href="/analytics"
+              className={`text-white hover:text-gray-300 ${
+                pathname === '/analytics' ? 'font-bold' : ''
+              }`}
+            >
+              Analytics
+            </Link>
+          </div>
+        </div>
+  
         {/* Right Side Icons */}
         <div className="flex items-center space-x-4">
           <NotificationBell />
@@ -54,7 +77,7 @@ const Navbar = () => {
         </div>
       </div>
     </nav>
-  );
+  );  
 };
 
 export default Navbar;
