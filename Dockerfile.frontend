@@ -1,6 +1,24 @@
 # First stage: build the frontend
 FROM node:18-alpine AS builder
 
+# # Accept build arguments from the GitHub Actions workflow
+ARG NEXTAUTH_SECRET
+ARG NEXTAUTH_URL
+ARG NEXT_PUBLIC_BACKEND_URL
+ARG NEXT_PUBLIC_SDR_URL
+ARG AZURE_AD_CLIENT_ID
+ARG AZURE_AD_CLIENT_SECRET
+ARG AZURE_AD_TENANT_ID
+
+# Set environment variables
+ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+ENV NEXTAUTH_URL=${NEXTAUTH_URL}
+ENV NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+ENV NEXT_PUBLIC_SDR_URL=${NEXT_PUBLIC_SDR_URL}
+ENV AZURE_AD_CLIENT_ID=${AZURE_AD_CLIENT_ID}
+ENV AZURE_AD_CLIENT_SECRET=${AZURE_AD_CLIENT_SECRET}
+ENV AZURE_AD_TENANT_ID=${AZURE_AD_TENANT_ID}
+
 # Install necessary build dependencies for alpine
 RUN apk add --no-cache bash git
 
@@ -9,12 +27,20 @@ WORKDIR /app
 # Copy the package.json and package-lock.json from the root to install dependencies
 COPY ./package*.json ./
 
-# Install dependencies for the root (if needed)
+# Install dependencies
 RUN npm ci
 
-# Copy the frontend source code and install frontend dependencies
+# Copy the frontend source code
 COPY ./frontend ./frontend
 
+# Dynamically create .env.local
+RUN echo "NEXTAUTH_SECRET=${NEXTAUTH_SECRET}" > ./frontend/.env.local && \
+    echo "NEXTAUTH_URL=${NEXTAUTH_URL}" >> ./frontend/.env.local && \
+    echo "NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}" >> ./frontend/.env.local && \
+    echo "NEXT_PUBLIC_SDR_URL=${NEXT_PUBLIC_SDR_URL}" >> ./frontend/.env.local && \
+    echo "AZURE_AD_CLIENT_ID=${AZURE_AD_CLIENT_ID}" >> ./frontend/.env.local && \
+    echo "AZURE_AD_CLIENT_SECRET=${AZURE_AD_CLIENT_SECRET}" >> ./frontend/.env.local && \
+    echo "AZURE_AD_TENANT_ID=${AZURE_AD_TENANT_ID}" >> ./frontend/.env.local
 # Build the production frontend
 RUN npm run build
 
@@ -26,10 +52,8 @@ WORKDIR /app
 # Copy only the necessary files from the builder stage
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/frontend/.next ./frontend/.next
-COPY --from=builder /app/frontend/.env.local ./frontend/.env.local
+COPY --from=builder app/frontend/.env.local ./frontend/.env.local
 COPY --from=builder /app/frontend/public ./frontend/public
-
-# Copy package.json files for installing only production dependencies
 
 # Install only production dependencies for the frontend
 RUN npm ci --omit=dev

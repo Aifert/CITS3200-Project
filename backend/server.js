@@ -26,11 +26,8 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 9000;
-
-const SDR_URL = "http://sdr"
-const SDR_PORT = 4000 + "/";
-const PUBLIC_FRONTEND_URL = 'http://localhost:3000';
-const PUBLIC_SDR_URL = `${process.env.NEXT_PUBLIC_SDR_URL}` || 'http://localhost:4000/api/';
+const SDR_URL = process.env.NEXT_PUBLIC_SDR_URL || "http://host.docker.internal:4001/"
+const PUBLIC_FRONTEND_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000/';
 
 let is_populating = false;
 
@@ -90,7 +87,7 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-app.use('/api', verifyToken);
+app.use('/api_v2', verifyToken);
 
 async function singlePopulate() {
     const nowTime = Math.floor(new Date().getTime()/1000);
@@ -140,7 +137,7 @@ app.use(express.static(path.join(__dirname, 'public')));
  *
  * <NOT NEED FOR END PRODUCT USED FOR TESTING ONLY>
  */
-app.get('/api/monitor-channels', async (req, res) => {
+app.get('/api_v2/monitor-channels', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
 })
 
@@ -155,7 +152,7 @@ app.get('/api/monitor-channels', async (req, res) => {
  * - frequency : The frequency to monitor
  */
 
-app.get('/api/monitor-channels/start', async (req, res) => {
+app.get('/api_v2/monitor-channels/start', async (req, res) => {
   const file = req.query['file'] || '';
 
   // Pass through cookies to startMonitorMP3
@@ -208,7 +205,7 @@ app.get('/api/monitor-channels/start', async (req, res) => {
  *
  * /monitor-channels/{frequency}
  */
-app.get('/api/monitor-channels/:frequency', async (req, res) => {
+app.get('/api_v2/monitor-channels/:frequency', async (req, res) => {
   const frequency = req.params.frequency;
 
   try {
@@ -235,7 +232,7 @@ app.get('/api/monitor-channels/:frequency', async (req, res) => {
  *
  * /monitor-channels/stop
  */
-app.get('/api/monitor-channels/stop', async (req, res) => {
+app.get('/api_v2/monitor-channels/stop', async (req, res) => {
   try{
     const response = await stopMonitor(SDR_URL, SDR_PORT);
 
@@ -250,7 +247,7 @@ app.get('/api/monitor-channels/stop', async (req, res) => {
   }
 })
 
-app.get('/api/active-channels', async (req, res) => {
+app.get('/api_v2/active-channels', async (req, res) => {
   try{
     console.log('getting active channels')
     let returnVal = {}
@@ -268,7 +265,7 @@ app.get('/api/active-channels', async (req, res) => {
   }
 });
 
-app.get('/api/analytics/data', async (req, res) => {
+app.get('/api_v2/analytics/data', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -300,7 +297,7 @@ app.get('/api/analytics/data', async (req, res) => {
   }
 });
 
-app.get('/api/notification', async (req, res) => {
+app.get('/api_v2/notification', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -309,8 +306,8 @@ app.get('/api/notification', async (req, res) => {
   res.send(await checkNotificationState(requestObj, "mydb"));
 });
 
-//http://localhost:9000/api/notification?1=[-100, 5, 600]
-app.get('/api/analytics/strength-dump', async (req, res) => {
+//http://localhost:9000/api_v2/notification?1=[-100, 5, 600]
+app.get('/api_v2/analytics/strength-dump', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -320,7 +317,7 @@ app.get('/api/analytics/strength-dump', async (req, res) => {
   res.attachment("strength-data.csv").send(myFile);
 });
 
-app.get('/api/analytics/util-dump', async (req, res) => {
+app.get('/api_v2/analytics/util-dump', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -334,7 +331,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
 });
 
-app.post('/upload/data', async (req, res) => {
+app.post('/sdr/upload_data', async (req, res) => {
   try{
     console.log(req.body)
     const response = await processIncomingData(req.body, "mydb");
@@ -354,13 +351,13 @@ app.post('/upload/data', async (req, res) => {
   }
 });
 
-app.get('/testdata', async (req, res) => {
+app.get('/api_v2/testdata', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
   await populateTestData();
 });
 
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0',() => {
   console.log(`Server successfully started on port ${PORT}`);
 });
 

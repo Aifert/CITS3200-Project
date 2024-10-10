@@ -5,10 +5,11 @@ import { Line, Scatter } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler} from 'chart.js';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
 
-const SingleChannelPage = () => {
+const ContentPage = () => {
   const [channelData, setChannelData] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
@@ -19,10 +20,10 @@ const SingleChannelPage = () => {
   const searchParams = useSearchParams();
   const channelId = searchParams.get('channelId');
 
-  const [isPlaying, setIsPlaying] = useState(false); 
+  const [isPlaying, setIsPlaying] = useState(false);
   // const [currentPlayingIndex, setCurrentPlayingIndex] = useState(null);
   const [sliderValue, setSliderValue] = useState(50);
-  const audioRef = useRef(null); 
+  const audioRef = useRef(null);
 
 
 
@@ -75,7 +76,7 @@ const handleStateClick = () => {
   if (!isPlaying) {
     console.log('Playing...');
     console.log(testUrl);
-        
+
     sourceElement.src = testUrl;
     audioElement.load();
 
@@ -276,7 +277,7 @@ const renderButton = () => {
       };
 
       setChannelData(newChannelData);
-      
+
 
     } catch (error) {
       setErrorMessage('Fetch error: ' + error.message);
@@ -288,7 +289,7 @@ const renderButton = () => {
     const handleSliderChange = (e) => {
       const newValue = e.target.value;
       setSliderValue(newValue);
-  
+
       if (audioRef.current) {
         audioRef.current.volume = newValue / 100;
       }
@@ -314,9 +315,9 @@ const renderButton = () => {
       <h1 className="text-2xl font-bold mb-6">
         Channel: {channelData.name.replace("Channel", "")} ({channelData.status})
       </h1>
-  
+
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
-  
+
       <div className="mb-10 flex justify-between items-center">
         {/* Time Scale */}
         <div className="flex items-center space-x-4">
@@ -333,7 +334,7 @@ const renderButton = () => {
             ))}
           </select>
         </div>
-  
+
         {/* Download */}
         <div className="flex items-center space-x-4">
           <span className="text-lg">Download:</span>
@@ -353,7 +354,7 @@ const renderButton = () => {
           </button>
         </div>
       </div>
-  
+
       {/* Status and Details */}
       <div className="grid grid-cols-4 gap-4 p-4 bg-white border-b border-gray-300">
 
@@ -366,7 +367,7 @@ const renderButton = () => {
         <div className="flex items-center justify-center">
           <span>Strength: {channelData.strength}</span>
         </div>
-        
+
       {/* Channel Strength */}
       <div className="flex items-center justify-center">
         <div
@@ -401,11 +402,11 @@ const renderButton = () => {
             {renderButton(channelData.name)}
           </div>
         </div>
-  
+
         {/* Volume Slider Control */}
         <div className="flex flex-col items-center border-r border-gray-300">
         <span className="mt-2 text-lg">Volume</span>
-          
+
         <input
           id="slider"
           type="range"
@@ -418,9 +419,9 @@ const renderButton = () => {
         </div>
 
       </div>
-  
 
-  
+
+
       {/* Graphical Data */}
       <div className="grid grid-cols-2 gap-4 p-4 bg-white">
         <div>
@@ -516,7 +517,7 @@ const renderButton = () => {
           )}
         </div>
       </div>
-  
+
       {/* Hidden Audio Element */}
       <audio id="audioPlayer" ref={audioRef} style={{ display: 'none' }}>
         <source id="audioSource" src="" type="audio/mpeg" />
@@ -525,6 +526,12 @@ const renderButton = () => {
     </div>
   );
   };
-  
-  export default SingleChannelPage;
-  
+
+
+  export default function SingleChannelPage() {
+    return (
+      <Suspense fallback={<div>Loading channel data...</div>}>
+        <ContentPage />
+      </Suspense>
+    );
+  }
