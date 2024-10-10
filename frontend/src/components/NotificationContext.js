@@ -128,7 +128,7 @@ export const NotificationProvider = ({ children }) => {
     }, 5000); // 5,000 milliseconds = 5 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  },  [backendUrl, makeApiRequest]);
 
   return (
     <NotificationContext.Provider

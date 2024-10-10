@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip } from 'chart.js';
+import { Scatter } from 'react-chartjs-2';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip);
 
 const ContentPage = () => {
   const [channelData, setChannelData] = useState(null);
@@ -142,7 +143,7 @@ const renderButton = () => {
         return null;
       }
     },
-    [session, router]
+    [session, router, timeScales]
   );
 
   const fetchChannelData = useCallback(async () => {
