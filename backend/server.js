@@ -44,7 +44,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
-const allowedOrigins = ['https://20.191.210.182:3000', 'http://localhost:3000', PUBLIC_FRONTEND_URL];
+const allowedOrigins = [PUBLIC_FRONTEND_URL];
 
 const verifyToken = async (req, res, next) => {
   // If no token in Authorization header, fall back to cookie
