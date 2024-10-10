@@ -5,28 +5,7 @@
 
 ## HTTP from Front-end → WebServer Initialisation
 
-### GET /session-id
-
-#### Responses Parameters
-
-| Name | Type | Data Type | Description |
-| :---- | :---- | :---- | :---- |
-| code | Required | Integer | HTTP response code |
-| errors | Optional | List\[String\] | If response is not 2xx, error messages are here |
-| session-id | Optional | Integer | Unique integer identifying the session |
-
-#### Responses Example
-
-	{
-	"code": 200,
-	"session-id": 10437528
-	}
-
-#### When to Use
-
-When first loading/reloading/opening (TBD implementation), get a unique session-id the server can later use to track request sources
-
-### GET /active-channels
+### GET /api/active-channels
 
 #### Responses Parameters
 
@@ -294,7 +273,7 @@ Respond will download a file "strength-data.csv" from the browser
 
 When a user requests the data dump file for strength data \- it is to be created on the web server and passed to the web interface by this request.
 
-### GET /analytics/util-dump
+### GET /api/analytics/util-dump
 
 #### Parameters
 
@@ -335,13 +314,18 @@ When a user requests the data dump file for utilisation data \- it is to be crea
 | :---- | :---- | :---- | :---- |
 | channel_id | Required | Integer: List\[Integer\] | A set of 3 query values per specified channel|
 
+Each channel id contains a list of length 3.
+Index 0 is the channel strength threshold (in dB)
+Index 1 is the utilisation % threshold
+Index 2 is the time period to calculate utilisation % with (in seconds)
+
 #### Parameters Example
 
 	/api/notification?21892=[-100, 5, 3600]&2098=[-110, 20, 86400]
 
 	{
 		21892: [-100, 5, 3600], //Index 0 is Strength cut off for a notification.
-		2098: [-110, 20, 86400] //Index 1 is % cur off for utilisation, Index 2 is time period to measure % over
+		2098: [-110, 20, 86400] //Index 1 is % cut off for utilisation, Index 2 is time period to measure % over
 	}
 
 #### Responses Parameters
