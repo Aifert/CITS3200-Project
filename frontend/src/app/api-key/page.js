@@ -58,7 +58,7 @@ const ApiKeyPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 flex jusitfy-center flex-col ">
+    <div className="container mx-auto p-6 flex justify-center flex-col ">
       <h1 className="text-2xl font-bold mb-6 flex justify-center items-center">API Key Management</h1>
 
       {error && <p className="text-red-500 mb-4 flex justify-center">{error}</p>}

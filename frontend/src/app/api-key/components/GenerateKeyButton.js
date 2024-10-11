@@ -1,7 +1,7 @@
 const GenerateKeyButton = ({ onClick }) => (
   <button
     onClick={onClick}
-    className="bg-emerald-800 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4"
+    className="bg-orange-400 hover:bg-orange:800 text-white font-bold py-2 px-4 rounded mb-4"
   >
     Generate API Key
   </button>
