@@ -13,17 +13,22 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip,
 const AnalyticsPage = () => {
   const [channelData, setChannelData] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [updatedTime, setUpdatedTime] = useState(false);
   const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api/';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api_v2/';
 
-  if (!updatedTime && localStorage.getItem("time-scale")) {
-      setUpdatedTime(true);
-      setSelectedTimeScale(localStorage.getItem("time-scale"));
-  }
   const { data: session, status } = useSession();
   const router = useRouter();
-   const timeScales = useMemo(() => {
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedTimeScale = localStorage.getItem("time-scale");
+      if (storedTimeScale) {
+        setSelectedTimeScale(storedTimeScale);
+      }
+    }
+  }, []);
+
+  const timeScales = useMemo(() => {
     return {
       '10 minutes': { timeScale: 600, sampleRate: 60, isStep: true },  // 1 hour, sample rate 5 minutes
       '60 minutes': { timeScale: 3600, sampleRate: 300, isStep: false  },  // 1 hour, sample rate 5 minutes
@@ -35,24 +40,24 @@ const AnalyticsPage = () => {
       '30 days': { timeScale: 2592000, sampleRate: 86400, isStep: false  } // 30 days, sample rate 1 day
     };
   }, []);
-  
+
   const formatTimeLabelDirectly = (index, sampleRate) => {
     const secondsAgo = sampleRate * (index + 1);
-    
+
     if (secondsAgo >= 86400) {
       const daysAgo = (secondsAgo / 86400).toFixed(2);
       return `${daysAgo} day(s)`;
     } else if (secondsAgo >= 3600) {
-      const hoursAgo = (secondsAgo / 3600).toFixed(2); 
+      const hoursAgo = (secondsAgo / 3600).toFixed(2);
       return `${hoursAgo} hour(s)`;
     } else {
-      const minutesAgo = (secondsAgo / 60).toFixed(2); 
+      const minutesAgo = (secondsAgo / 60).toFixed(2);
       return `${minutesAgo} minute(s)`;
     }
   };
 
   const makeApiRequest = useCallback(async (url, options = {}) => {
-    console.log(`Making API request to: ${url}`); 
+    console.log(`Making API request to: ${url}`);
 
     if (!session || !session.accessToken) {
       setErrorMessage('No active session. Please log in.');
@@ -71,11 +76,11 @@ const AnalyticsPage = () => {
       const responseData = await response.json();
 
       if (!response.ok) {
-        console.log(`Error Response:`, responseData); 
+        console.log(`Error Response:`, responseData);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      console.log(`API Response Data from ${url}:`, responseData); 
+      console.log(`API Response Data from ${url}:`, responseData);
       return responseData;
     } catch (error) {
       console.error('API request failed:', error);
@@ -111,12 +116,12 @@ const AnalyticsPage = () => {
       const queryString = new URLSearchParams({
         'start-time': timeScale,
         'sample-rate': sampleRate,
-        'avg-data': !isStep, 
+        'avg-data': !isStep,
         'whitelist': `[${channelIds.join(',')}]`
       }).toString();
 
       const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
-      console.log('Fetching analytics data from:', analyticsUrl); 
+      console.log('Fetching analytics data from:', analyticsUrl);
 
       const analyticsData = await makeApiRequest(analyticsUrl);
       console.log('Analytics data response:', analyticsData);
@@ -187,7 +192,7 @@ const AnalyticsPage = () => {
 
         const dataStrength = strengthArray.length
           ? {
-              labels: formattedStrengthLabels.reverse(), 
+              labels: formattedStrengthLabels.reverse(),
               datasets: [{
                 label: 'Strength Over Time (dBm)',
                 data: strengthArray.reverse(),
@@ -224,21 +229,23 @@ const AnalyticsPage = () => {
     const { sampleRate } = timeScales[selectedTimeScale];
     const intervalId = setInterval(() => {
       fetchChannelData();
-    }, sampleRate * 1000); 
+    }, sampleRate * 1000);
 
     return () => clearInterval(intervalId);
   }, [selectedTimeScale, fetchChannelData, timeScales]);
 
   const downloadData = (channelId, dataType, type) => {
     const { timeScale } = timeScales[selectedTimeScale];
-    const list = channelId ? `[${channelId}]` : '[]'; 
+    const list = channelId ? `[${channelId}]` : '[]';
     const url = `${backendUrl}analytics/${dataType}-dump?${type}=${list}&start-time=${timeScale}`;
     window.location.href = url;
   };
 
 
   const resetTimeScale = (timeS) => {
-    localStorage.setItem("time-scale", timeS)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("time-scale", timeS);
+    }
     setSelectedTimeScale(timeS);
   }
 
@@ -249,7 +256,7 @@ const AnalyticsPage = () => {
         : channel
     );
     setChannelData(updatedChannels);
-  
+
     const favorites = updatedChannels.filter(channel => channel.isFavorite);
     const nonFavorites = updatedChannels.filter(channel => !channel.isFavorite);
     setChannelData([...favorites, ...nonFavorites]);
@@ -277,7 +284,7 @@ const AnalyticsPage = () => {
             ))}
           </select>
         </div>
-        
+
         <div className="flex flex-wrap items-center space-x-4 mt-4 sm:mt-0">
           <span className="text-lg">Download:</span>
           <button
@@ -375,9 +382,9 @@ const AnalyticsPage = () => {
                   }}
                 />
               ) : (
-                <Line 
-                  data={channel.dataUtilisation} 
-                  options={{ 
+                <Line
+                  data={channel.dataUtilisation}
+                  options={{
                     maintainAspectRatio: false,
                     scales: {
                       y: {
@@ -394,8 +401,8 @@ const AnalyticsPage = () => {
                           text: 'Time Ago',
                         },
                       },
-                    }, 
-                  }} 
+                    },
+                  }}
                 />
               )}
             </div>

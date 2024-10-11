@@ -34,6 +34,7 @@ export async function middleware(req) {
 
 export const config = {
   matcher: [
+    '/',
     '/api_v2/:path*',
     '/dashboard/:path*',
     '/analytics/:path*',

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import NotificationBell from './NotificationBell';
+import Image from 'next/image';
 
 const Navbar = () => {
   const pathname = usePathname();
@@ -27,7 +28,7 @@ const Navbar = () => {
           {/* Logos */}
           <div className="flex items-center space-x-4">
             <a href="https://csu-ses.com.au/" target="_blank" rel="noopener noreferrer">
-              <img
+              <Image
                 src="https://csu-ses.com.au/wp-content/themes/hatchet/assets/art/csu-ses-wa.svg"
                 alt="SWORD"
                 className="h-12 max-h-12 object-contain"
@@ -36,14 +37,14 @@ const Navbar = () => {
 
             {/* Link for Department of Fire and Emergency Services */}
             <a href="https://dfes.wa.gov.au/" target="_blank" rel="noopener noreferrer">
-              <img
+              <Image
                 src="https://dfes.wa.gov.au/images/dfes-logo-black_1dfes-logo-black.png"
                 alt="Department of Fire and Emergency Services"
                 className="h-12 max-h-12 object-contain"
               />
             </a>
           </div>
-  
+
           {/* Links */}
           <div className="flex space-x-4">
             <Link
@@ -64,7 +65,7 @@ const Navbar = () => {
             </Link>
           </div>
         </div>
-  
+
         {/* Right Side Icons */}
         <div className="flex items-center space-x-4">
           <NotificationBell />
@@ -83,7 +84,7 @@ const Navbar = () => {
         </div>
       </div>
     </nav>
-  );  
+  );
 };
 
 export default Navbar;

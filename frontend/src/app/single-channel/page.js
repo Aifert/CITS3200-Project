@@ -24,12 +24,12 @@ const ChannelContent = () => {
       ? searchParams.get('channelId').replace(/[\[\]]/g, '').split(',').map(id => parseInt(id.trim(), 10))
       : [];
   }, [searchParams]);
-  
+
 
   const [isPlaying, setIsPlaying] = useState(false);
   // const [currentPlayingIndex, setCurrentPlayingIndex] = useState(null);
   const [sliderValue, setSliderValue] = useState(50);
-  const audioRef = useRef(null); 
+  const audioRef = useRef(null);
 
   const timeScales = useMemo(() => ({
     '10 minutes': { timeScale: 600, sampleRate: 60, isStep: true },  // 1 hour, sample rate 5 minutes
@@ -260,7 +260,7 @@ const renderButton = () => {
 
         const dataStrength = strengthArray.length
           ? {
-              labels: formattedStrengthLabels.reverse(), 
+              labels: formattedStrengthLabels.reverse(),
               datasets: [{
                 label: 'Strength Over Time (dBm)',
                 data: strengthArray.reverse(),
@@ -287,7 +287,7 @@ const renderButton = () => {
     } catch (error) {
       setErrorMessage('Fetch error: ' + error.message);
     }
-  }, [selectedTimeScale, status, backendUrl, channelIds, makeApiRequest]);
+  }, [selectedTimeScale, status, backendUrl, channelIds, makeApiRequest, timeScales]);
 
 
     // Function to handle volume slider changes
@@ -308,13 +308,13 @@ const renderButton = () => {
   const handleAddChannel = (newChannelId) => {
     if (!newChannelId) return;
     const updatedChannelIds = [...channelIds, parseInt(newChannelId)];
-  
+
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set('channelId', `[${updatedChannelIds.join(',')}]`);
 
     router.push(`?${newSearchParams.toString()}`);
   };
-  
+
 
   const downloadData = (dataType) => {
     const { timeScale } = timeScales[selectedTimeScale];
