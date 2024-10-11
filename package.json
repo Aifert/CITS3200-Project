@@ -32,7 +32,7 @@
     "nodemon": "^2.0.22"
   },
   "scripts": {
-    "dev": "cd frontend && next dev",
+    "dev": "cd frontend && NODE_ENV=development DOTENV_CONFIG_PATH=../.env next dev",
     "build": "cd frontend && next build",
     "start": "cd frontend && next start",
     "lint": "cd frontend && next lint",

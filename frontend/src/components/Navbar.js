@@ -30,6 +30,8 @@ const Navbar = () => {
             <a href="https://csu-ses.com.au/" target="_blank" rel="noopener noreferrer">
               <Image
                 src="https://csu-ses.com.au/wp-content/themes/hatchet/assets/art/csu-ses-wa.svg"
+                width={100}
+                height={100}
                 alt="SWORD"
                 className="h-12 max-h-12 object-contain"
               />
@@ -40,6 +42,8 @@ const Navbar = () => {
               <Image
                 src="https://dfes.wa.gov.au/images/dfes-logo-black_1dfes-logo-black.png"
                 alt="Department of Fire and Emergency Services"
+                width={100}
+                height={100}
                 className="h-12 max-h-12 object-contain"
               />
             </a>

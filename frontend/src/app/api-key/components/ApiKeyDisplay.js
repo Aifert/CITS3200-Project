@@ -30,7 +30,7 @@ const ApiKeyDisplay = ({ apiKey }) => {
         <div>
           <button
             onClick={copyToClipboard}
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded mr-2"
+            className="bg-orange-400 hover:bg-orange-700 text-white font-bold py-1 px-2 rounded mr-2"
           >
             {copyButtonText}
           </button>
