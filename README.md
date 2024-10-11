@@ -207,34 +207,16 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 You can start web server by doing (Make sure you are in the clone project directory)
 
-If you want to set up CI/CD before starting add these env values to your .env file
+If you want to set up CI/CD before starting update copy the `env.default` file and update accordingly
 ```bash
+sudo cp .env.default .env
 sudo nano .env
 ```
 
+To run a front-end, you will also need to update a `.env.local.default` file in frontend directory
 ```bash
-AZURE_AD_CLIENT_ID=***
-AZURE_AD_CLIENT_SECRET=***
-AZURE_AD_TENANT_ID=***
-NEXTAUTH_SECRET=***
-DISCORD_WEBHOOK_URL=***
-GITHUB_USERNAME=Aifert
-GITHUB_REPO=GravityWorld/CITS3200-Project
-GITHUB_SECRET=***
-PROJECT_DIR=~/CITS3200-Project
-branch=main
-```
-
-Then you also need a `.env.local` file in frontend directory
-```bash
+sudo cp frontend/.env.local.default frontend/.env.local
 sudo nano frontend/.env.local
-```
-
-```bash
-NEXTAUTH_URL=https://<public_ip>:3000/
-NEXT_PUBLIC_BACKEND_URL=https://<public_ip>:9000/
-NEXT_PUBLIC_FRONTEND_URL=https://<public_ip>:3000/
-NEXT_PUBLIC_SDR_URL=https://<public_ip>:4000/
 ```
 
 Finally run the deploy script

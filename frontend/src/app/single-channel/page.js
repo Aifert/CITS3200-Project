@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 import { Line, Scatter } from 'react-chartjs-2';
-import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler } from 'chart.js';
+import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler} from 'chart.js';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
 
-const SingleChannelPage = () => {
+const ChannelContent = () => {
   const [channelData, setChannelData] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [availableChannels, setAvailableChannels] = useState([]);
@@ -26,7 +26,7 @@ const SingleChannelPage = () => {
   }, [searchParams]);
   
 
-  const [isPlaying, setIsPlaying] = useState(false); 
+  const [isPlaying, setIsPlaying] = useState(false);
   // const [currentPlayingIndex, setCurrentPlayingIndex] = useState(null);
   const [sliderValue, setSliderValue] = useState(50);
   const audioRef = useRef(null); 
@@ -66,9 +66,8 @@ const handleStateClick = () => {
   const frequency = channelData.frequency;
   const sessionId = '12345';
 
-  const audioUrl = `http://localhost:9000/api/audio?session-id=${sessionId}&channel-id=${channel}&frequency=${frequency}`;
-  const stopUrl = `http://localhost:9000/api/monitor-channels/stop`;
-  const testUrl = `http://localhost:9000/api/monitor-channels/start?file=test-3.mp3`;
+  const stopUrl = `${backendUrl}monitor-channels/stop`;
+  const testUrl = `${backendUrl}monitor-channels/start?file=test-1.mp3`;
 
   const audioElement = audioRef.current;
 
@@ -79,7 +78,7 @@ const handleStateClick = () => {
   if (!isPlaying) {
     console.log('Playing...');
     console.log(testUrl);
-        
+
     sourceElement.src = testUrl;
     audioElement.load();
 
@@ -147,14 +146,13 @@ const renderButton = () => {
   );
 
   const fetchChannelData = useCallback(async () => {
-    console.log('fetchChannelData called');
     const { timeScale, sampleRate } = timeScales[selectedTimeScale];
 
     if (status !== 'authenticated' || channelIds.length === 0) return;
 
     try {
       const activeChannelsData = await makeApiRequest(`${backendUrl}active-channels`);
-      console.log('Active Channels Data:', activeChannelsData);
+
       if (!activeChannelsData || (!activeChannelsData.active && !activeChannelsData.offline && !activeChannelsData.busy)) {
         setErrorMessage('No active, offline, or busy channels found.');
         return;
@@ -178,11 +176,6 @@ const renderButton = () => {
       const availableChannels = allChannels.filter(channel => !channelIds.includes(channel['channel-id']));
       setAvailableChannels(availableChannels);
 
-      console.log('Selected Channels:', selectedChannels);
-      console.log('Offline Channels:', offlineChannels);;
-      console.log('Busy Channels:', busyChannels);
-      console.log('All Selected Channels:', allSelectedChannels);
-
       if (allSelectedChannels.length === 0) {
         setErrorMessage('No matching channels found.');
         return;
@@ -198,10 +191,7 @@ const renderButton = () => {
       }).toString();
 
       const analyticsUrl = `${backendUrl}analytics/data?${queryString}`;
-      console.log('Fetching analytics data from:', analyticsUrl); 
-
       const analyticsData = await makeApiRequest(analyticsUrl);
-      console.log('Analytics data response:', analyticsData);
 
       // Process analytics data for each channel
       const processedData = allSelectedChannels.map(channel => {
@@ -293,13 +283,22 @@ const renderButton = () => {
       });
 
       setChannelData(processedData);
-      console.log('Processed channel data:', processedData);
 
     } catch (error) {
       setErrorMessage('Fetch error: ' + error.message);
     }
   }, [selectedTimeScale, status, backendUrl, channelIds, makeApiRequest]);
 
+
+    // Function to handle volume slider changes
+    const handleSliderChange = (e) => {
+      const newValue = e.target.value;
+      setSliderValue(newValue);
+
+      if (audioRef.current) {
+        audioRef.current.volume = newValue / 100;
+      }
+    };
 
   useEffect(() => {
     fetchChannelData();
@@ -330,6 +329,7 @@ const renderButton = () => {
   return (
     <div className="w-full mx-auto p-6">
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
+
 
       <div className="mb-10 flex justify-between items-center">
         <div className="flex items-center space-x-4">
@@ -539,6 +539,13 @@ const renderButton = () => {
       </audio>
     </div>
   );
-};
+  };
 
-export default SingleChannelPage;
+
+  export default function SingleChannelPage() {
+    return (
+      <Suspense fallback={<div>Loading channel data...</div>}>
+        <ChannelContent />
+      </Suspense>
+    );
+  }
