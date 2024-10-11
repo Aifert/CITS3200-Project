@@ -150,20 +150,23 @@ const DashboardPage = () => {
   };
 
   const handleStateClick = (channel) => {
+    console.log("e");
     const selectedChannel = channelData.find(item => item.name === channel);
     const selectedChanneldata = data.find(item => item.name === channel);
 
     if (selectedChannel) {
+      console.log("ee");
       const playingState = selectedChanneldata.status;
       const audioElement = audioRef.current;
       const sourceElement = document.getElementById('audioSource');
 
       const stopUrl = `${backendUrl}monitor-channels/stop`;
-      const testUrl = `${backendUrl}monitor-channels/start?file=test-1.mp3`;
+      const testUrl = `${backendUrl}monitor-channels/start?freq=477112500`;
 
 
       ///// for now set to play if OFFLINE, need to change this
-      if (playingState == "Play" || playingState == "") {
+      console.log(playingState);
+      if (playingState == "Play" || playingState == "" || playingState == "Active") {
         audioElement.load();
 
         console.log(testUrl);
@@ -176,6 +179,7 @@ const DashboardPage = () => {
       }
 
       else if (playingState == "Pause") {
+        console.log("eee");
         audioElement.pause();
         sourceElement.src = stopUrl;
       }

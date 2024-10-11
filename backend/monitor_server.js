@@ -1,14 +1,37 @@
 const axios = require('axios');
 
-async function startMonitorRadio(SDR_URL, SDR_PORT, params) {
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; //TODO: remove this
+
+async function startMonitorRadio(SDR_URL, params, headers) {
   try {
-    const response = await axios.get(`${SDR_URL}:${SDR_PORT}/tune/${params}`,{
-      responseType: 'stream',
-      insecureHTTPParser: true,
+    // First, tune to the specified file
+    const queryParams = Object.entries(params)
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join('&');
+    const paramsStr = queryParams ? `?${queryParams}` : '';
+
+    console.log(`${SDR_URL}tune${paramsStr}`)
+    const tuneResponse = await axios.get(`${SDR_URL}tune${paramsStr}`, {
+      headers: headers,
+      insecureHTTPParser: true
     });
 
-    return response.data;
-  } catch (error) {
+    console.log(tuneResponse);
+    if (tuneResponse.status == 200){
+      const streamResponse = await axios.get(`${SDR_URL}stream`, {
+        headers: headers,
+        responseType: 'stream',
+        insecureHTTPParser: true,
+      });
+
+      return streamResponse.data;
+
+    }
+    else{
+      throw new Error("Error tuning to file");
+    }
+  }
+  catch (error) {
     throw new Error(error.message);
   }
 }
@@ -72,4 +95,5 @@ module.exports = {
   startMonitorMP3,
   stopMonitor,
   decideMonitorMode,
+  startMonitorRadio,
 }
