@@ -6,9 +6,10 @@ services:
       - "9000:9000"
     volumes:
       - .:/app
+      - /app/node_modules
     environment:
       - NODE_ENV=development
-    command: sh -c "npm install && nodemon backend/server.js"
+    command: nodemon backend/server.js
     depends_on:
       - db
 
@@ -29,8 +30,9 @@ services:
       - "3000:3000"
     volumes:
       - .:/app
+      - /app/node_modules
     environment:
       - NODE_ENV=development
-    command: sh -c "npm install && npm run dev"
+    command: npm run dev
     depends_on:
       - web
