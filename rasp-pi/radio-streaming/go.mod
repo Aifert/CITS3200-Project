@@ -1,6 +1,6 @@
 module radio-streaming
 
-go 1.23.0
+go 1.19
 
 require (
 	github.com/hajimehoshi/go-mp3 v0.3.4

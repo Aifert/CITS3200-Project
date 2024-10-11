@@ -48,7 +48,7 @@ func redirectToLogin(w http.ResponseWriter, r *http.Request) {
 
 func getAccessTokenFromSession(sessionToken string) (string, error) {
 	nextAuthUrl := os.Getenv("NEXTAUTH_URL")
-	sessionApiUrl := fmt.Sprintf("%s/api_v2/auth/session", nextAuthUrl)
+	sessionApiUrl := fmt.Sprintf("%s/api/auth/session", nextAuthUrl)
 	req, err := http.NewRequest("GET", sessionApiUrl, nil)
 	if err != nil {
 		return "", err
