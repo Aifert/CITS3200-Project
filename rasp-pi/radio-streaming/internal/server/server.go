@@ -12,7 +12,6 @@ import (
 	"sync"
 	"radio-streaming/internal/pool"
 	"radio-streaming/internal/stream"
-	"radio-streaming/internal/monitor"
 	"log"
 )
 
@@ -20,29 +19,18 @@ import (
 var currentFile string
 var fileMutex sync.Mutex
 
-
-// Holds the info of a rtl_fm service
-var monitoringService *monitor.MonitoringService
-
-
-
 // Initializes and starts the HTTP server on port 4001.
 func StartServer() {
 	// Initialize connection pool
 	connPool := pool.NewConnectionPool()
 
 	// Define HTTP handlers
-	http.HandleFunc("/stream", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/stream", AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		StreamHandler(w, r, connPool)
-	})
-
-	http.HandleFunc("/tune", func(w http.ResponseWriter, r *http.Request) {
+	}))
+	http.HandleFunc("/tune", AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		TuneHandler(w, r, connPool)
-	})
-
-	http.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
-		StopHandler(w, r, connPool);
-	})
+	}))
 
 	// Start the server
 	fmt.Println("Starting server on :5000")
@@ -96,41 +84,7 @@ func TuneHandler(w http.ResponseWriter, r *http.Request, connPool *pool.Connecti
 	} else if freq != "" {
 		// Placeholder for radio streaming
 		fmt.Fprintf(w, "Tuning to frequency: %s", freq)
-
-		if monitoringService != nil {
-			if err := monitor.StopRadioMonitoring(monitoringService); err != nil {
-				fmt.Println("Error stopping monitoring service:", err)
-			}
-			monitoringService = nil
-		}
-
-		var err error
-		monitoringService, err = monitor.StartRadioMonitoring(freq)
-		if err != nil {
-			fmt.Println("Error starting monitoring service:", err)
-		}
-
-		// Simulate some work
-		fmt.Println("Monitoring...")
-
-		go stream.StreamFrequency(connPool);
-
-
-
 	} else {
 		http.Error(w, "Invalid parameters", http.StatusBadRequest)
-	}
-}
-
-// Allows clients to make a stop monitoring on a device
-func StopHandler(w http.ResponseWriter, r *http.Request, connPool *pool.ConnectionPool){
-	if monitoringService != nil {
-		if err := monitor.StopRadioMonitoring(monitoringService); err != nil {
-			fmt.Println("Error stopping monitoring service:", err)
-		} else {
-			fmt.Println("Monitoring service stopped")
-		}
-		monitoringService = nil
-
 	}
 }

@@ -5,7 +5,7 @@
 
 ## HTTP from Front-end → WebServer Initialisation
 
-### GET /api/active-channels
+### GET /api_v2/active-channels
 
 #### Responses Parameters
 
@@ -20,7 +20,7 @@
 
 #### Responses Example
 
-	/api/active-channels
+	/api_v2/active-channels
 
 	{
 		"code": 200,
@@ -140,7 +140,7 @@ This is not an HTTP request, it is a raw TCP socket for MP3 data streaming strai
 
 #### Parameters Example
 
-	/api/analytics/data?blacklist=[21892]&start-time=86400&sample-rate=1800&avg-data=false
+	/api_v2/analytics/data?blacklist=[21892]&start-time=86400&sample-rate=1800&avg-data=false
 
 	{
 		"black-list": [21892],
@@ -244,7 +244,7 @@ When requiring data \- either when initially requesting or when asking for perio
 Black list is efficient if one set of data is already received for a single analytics page
 While list is efficient if just one is wanted
 
-### GET /api/analytics/strength-dump
+### GET /api_v2/analytics/strength-dump
 
 #### Parameters
 
@@ -257,7 +257,7 @@ While list is efficient if just one is wanted
 
 #### Parameters Example
 
-	/api/analytics/strength-dump?blacklist=[21892]&start-time=86400
+	/api_v2/analytics/strength-dump?blacklist=[21892]&start-time=86400
 
 	{
 		"black-list": [21892],
@@ -265,7 +265,7 @@ While list is efficient if just one is wanted
 	}
 
 
-#### Responses 
+#### Responses
 
 Respond will download a file "strength-data.csv" from the browser
 
@@ -273,7 +273,7 @@ Respond will download a file "strength-data.csv" from the browser
 
 When a user requests the data dump file for strength data \- it is to be created on the web server and passed to the web interface by this request.
 
-### GET /api/analytics/util-dump
+### GET /api_v2/analytics/util-dump
 
 #### Parameters
 
@@ -286,7 +286,7 @@ When a user requests the data dump file for strength data \- it is to be created
 
 #### Parameters Example
 
-	/api/analytics/util-dump?blacklist=[21892]&start-time=86400
+	/api_v2/analytics/util-dump?blacklist=[21892]&start-time=86400
 
 	{
 		"black-list": [21892],
@@ -296,7 +296,7 @@ When a user requests the data dump file for strength data \- it is to be created
 
 
 
-#### Responses 
+#### Responses
 
 Respond will download a file "util-data.csv" from the browser
 
@@ -321,7 +321,7 @@ Index 2 is the time period to calculate utilisation % with (in seconds)
 
 #### Parameters Example
 
-	/api/notification?21892=[-100, 5, 3600]&2098=[-110, 20, 86400]
+	/api_v2/notification?21892=[-100, 5, 3600]&2098=[-110, 20, 86400]
 
 	{
 		21892: [-100, 5, 3600], //Index 0 is Strength cut off for a notification.

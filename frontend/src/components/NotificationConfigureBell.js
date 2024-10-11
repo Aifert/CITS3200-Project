@@ -12,7 +12,7 @@ const NotificationConfigureBell = ({channelId}) => {
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
     if (!isDropdownOpen) {
-      let channelItem = localStorage.getItem(channelId);
+      let channelItem = window.localStorage.getItem(channelId);
       if (channelItem) {
         setTimeout(() => {
           channelItem = channelItem.split(",")
@@ -43,15 +43,15 @@ const NotificationConfigureBell = ({channelId}) => {
     const strengthCutOff = document.getElementById(channelId.toString()+"-strength").value;
     const utilCutOff = document.getElementById(channelId.toString()+"-util").value;
     const utilTime = document.getElementById(channelId.toString()+"-util-time").value;
-    if (localStorage.getItem(channelId)) {
-      localStorage.setItem(channelId, [strengthCutOff, utilCutOff, utilTime].concat(localStorage.getItem(channelId).split(",").slice(3, 6)))
+    if (window.localStorage.getItem(channelId)) {
+      window.localStorage.setItem(channelId, [strengthCutOff, utilCutOff, utilTime].concat(window.localStorage.getItem(channelId).split(",").slice(3, 6)))
     } else {
-      localStorage.setItem(channelId, [strengthCutOff, utilCutOff, utilTime, true, true, true]);
+      window.localStorage.setItem(channelId, [strengthCutOff, utilCutOff, utilTime, true, true, true]);
     }
   }
 
   const clearNotificationsForChannel = () => {
-    localStorage.removeItem(channelId);
+    window.localStorage.removeItem(channelId);
   }
 
   return (
