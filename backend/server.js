@@ -9,7 +9,8 @@ const https = require('https');
 const {
   startMonitorMP3,
   stopMonitor,
-  decideMonitorMode
+  decideMonitorMode,
+  startMonitorRadio,
 } = require('./monitor_server.js');
 
 const {
@@ -21,20 +22,23 @@ const {
   processIncomingData,
   generateStrengthDataDump,
   generateUtilDataDump,
-  checkNotificationState
+  checkNotificationState,
+  getAddressFromChannelId,
 } = require('./model_utils.js');
 
 const {
   saveApiKey,
-  compareApiKey
+  compareApiKey,
 } = require('./auth_utils.js');
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 9000;
-const SDR_URL = process.env.NEXT_PUBLIC_SDR_URL || "http://host.docker.internal:4001/"
+const SDR_URL =/* process.env.NEXT_PUBLIC_SDR_URL ||*/ "http://192.168.1.103:4001/";
 const PUBLIC_FRONTEND_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000/';
+
+let responseStream;
 
 let is_populating = false;
 
@@ -94,7 +98,7 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-app.use('/api_v2', verifyToken);
+app.use('/api', verifyToken);
 
 async function singlePopulate() {
     const nowTime = Math.floor(new Date().getTime()/1000);
@@ -144,11 +148,11 @@ app.use(express.static(path.join(__dirname, 'public')));
  *
  * <NOT NEED FOR END PRODUCT USED FOR TESTING ONLY>
  */
-app.get('/api_v2/monitor-channels', async (req, res) => {
+app.get('/api/monitor-channels', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
 })
 
-app.post('/api_v2/generate_api_key', async (req, res) => {
+app.post('/api/generate_api_key', async (req, res) => {
   const userName = req.headers.authorization;
 
   if (userName) {
@@ -178,20 +182,29 @@ app.post('/api_v2/generate_api_key', async (req, res) => {
  * - frequency : The frequency to monitor
  */
 
-app.get('/api_v2/monitor-channels/start', async (req, res) => {
-  const file = req.query['file'] || '';
-
+app.get('/api/monitor-channels/start', async (req, res) => {
+  try {
+    if (responseStream) {
+      responseStream.end()
+    }
+  } catch (error) {
+    console.log("err");
+  }
+  const cId = req.query['id'] || '';
+  const new_sdr_url = await getAddressFromChannelId("mydb", cId);
   // Pass through cookies to startMonitorMP3
   const headers = req.headers;
 
   try {
-    if (file) {
+    if (freq) {
       const params = {
-        file: file,
+        freq: freq, 
       };
-      const responseStream = await startMonitorMP3(SDR_URL, params, headers);
+      await stopMonitor(new_sdr_url, headers);
+      responseStream = await startMonitorRadio(new_sdr_url, params, headers);
 
-      res.setHeader('Content-Type', 'audio/mpeg');
+
+      res.setHeader('Content-Type', 'stream');
 
       responseStream.pipe(res);
 
@@ -226,54 +239,8 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
   }
 });
 
-/**
- * API for monitoring frequencies
- *
- * /monitor-channels/{frequency}
- */
-app.get('/api_v2/monitor-channels/:frequency', async (req, res) => {
-  const frequency = req.params.frequency;
 
-  try {
-    await stopMonitor(SDR_URL, SDR_PORT);
-    const responseStream = await startMonitor(SDR_URL, SDR_PORT, frequency);
-
-    res.setHeader('Content-Type', 'audio/mpeg');
-
-    responseStream.pipe(res);
-  } catch (error) {
-    console.error('Error occurred while getting channel:', error);
-    res.status(500).send({
-      code: 500,
-      message: 'Error occurred while getting channel',
-      error: error.message,
-    });
-  }
-});
-
-
-
-/**
- * API for stop monitor channels
- *
- * /monitor-channels/stop
- */
-app.get('/api_v2/monitor-channels/stop', async (req, res) => {
-  try{
-    const response = await stopMonitor(SDR_URL, SDR_PORT);
-
-    res.send(response);
-  }
-  catch(error){
-    res.status(500).send({
-      code: 500,
-      message: "Error occurred stopping channel",
-      error: error.message,
-    })
-  }
-})
-
-app.get('/api_v2/active-channels', async (req, res) => {
+app.get('/api/active-channels', async (req, res) => {
   try{
     console.log('getting active channels')
     let returnVal = {}
@@ -291,7 +258,7 @@ app.get('/api_v2/active-channels', async (req, res) => {
   }
 });
 
-app.get('/api_v2/analytics/data', async (req, res) => {
+app.get('/api/analytics/data', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -323,7 +290,7 @@ app.get('/api_v2/analytics/data', async (req, res) => {
   }
 });
 
-app.get('/api_v2/notification', async (req, res) => {
+app.get('/api/notification', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -332,8 +299,8 @@ app.get('/api_v2/notification', async (req, res) => {
   res.send(await checkNotificationState(requestObj, "mydb"));
 });
 
-//http://localhost:9000/api_v2/notification?1=[-100, 5, 600]
-app.get('/api_v2/analytics/strength-dump', async (req, res) => {
+//http://localhost:9000/api/notification?1=[-100, 5, 600]
+app.get('/api/analytics/strength-dump', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -344,7 +311,7 @@ app.get('/api_v2/analytics/strength-dump', async (req, res) => {
   res.attachment(`strength-data-${nowTime}.csv`).send(myFile);
 });
 
-app.get('/api_v2/analytics/util-dump', async (req, res) => {
+app.get('/api/analytics/util-dump', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -390,7 +357,7 @@ app.post('/sdr/upload_data', async (req, res) => {
   }
 });
 
-app.get('/api_v2/testdata', async (req, res) => {
+app.get('/api/testdata', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
   await populateTestData();
 });

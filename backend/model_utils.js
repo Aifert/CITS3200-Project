@@ -1,7 +1,7 @@
 const { Client } = require('pg')
 const fs = require('fs');
 
-const ALIVETIME = 150;
+const ALIVETIME = 15000;
 const STRENGTHMAX = 40;
 const STRENGTHMIN = -50;
 
@@ -570,6 +570,17 @@ async function santityCheckDatabase(dbName) {
   }
 }
 
+async function getAddressFromChannelId(dbName, c_id) {
+  try {
+     await recheckConnection(dbName);
+     let query = `SELECT * FROM "devices" WHERE d_id == (SELECT MAX(d_id) FROM "channels" WHERE c_id = ${c_id})`;
+     const res = (await client.query(query)).rows[0]
+     return `http://${res.address}:${res.port}/`;
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   getAliveChannels,
   getOfflineChannels,
@@ -579,7 +590,8 @@ module.exports = {
   processIncomingData,
   generateStrengthDataDump,
   generateUtilDataDump,
-  checkNotificationState
+  checkNotificationState,
+  getAddressFromChannelId
 }
 
 

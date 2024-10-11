@@ -39,10 +39,10 @@ const DynamicChannels = ({ data, handleStateClick, audioRef, sliderValue }) => {
       if (!isNaN(volume)) {
         audioRef.current.volume = volume;
       }
-      handleStateClick(channel);
+      handleStateClick(channel, true);
     } else {
       // Pause the current channel
-      handleStateClick(channel);
+      handleStateClick(channel, false);
     }
   };
 
