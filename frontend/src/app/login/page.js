@@ -10,6 +10,8 @@ const LoginPage = () => {
     const URL = process.env.NEXT_PUBLIC_URL || 'http://localhost';
 
     useEffect(() => {
+        document.title = "Login Page";
+        
         if (status === 'authenticated') {
             const searchParams = new URLSearchParams(window.location.search);
             const requestedUrl = searchParams.get('requestedUrl');

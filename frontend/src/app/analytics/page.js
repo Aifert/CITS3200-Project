@@ -15,6 +15,7 @@ const AnalyticsPage = () => {
   const [errorMessage, setErrorMessage] = useState(null);
   const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:9000/api_v2/';
+  const [favorites, setFavorites] = useState([]);
 
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -24,6 +25,11 @@ const AnalyticsPage = () => {
       const storedTimeScale = localStorage.getItem("time-scale");
       if (storedTimeScale) {
         setSelectedTimeScale(storedTimeScale);
+      }
+
+      const storedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
+      if (storedFavorites) {
+        setFavorites(storedFavorites);
       }
     }
   }, []);
@@ -126,7 +132,7 @@ const AnalyticsPage = () => {
       const analyticsData = await makeApiRequest(analyticsUrl);
       console.log('Analytics data response:', analyticsData);
 
-      const processedData = allChannels.map(channel => {
+      let processedData = allChannels.map(channel => {
         const channelId = channel['channel-id'];
         const analyticsForChannel = analyticsData?.[channelId] || {};
         const strengthData = analyticsForChannel?.strength?.values || {};
@@ -210,10 +216,17 @@ const AnalyticsPage = () => {
           strength: analyticsForChannel?.strength?.average ? analyticsForChannel?.strength?.average.toFixed(3) : 'No data',
           dataUtilisation,
           dataStrength,
-          isFavorite: channel.isFavorite,
+          isFavorite: favorites.includes(channelId),
           id: channel['channel-id'],
         };
       });
+
+      processedData = processedData.sort((a, b) => {
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        return 0;
+      });
+
       console.log('Processed Data:', processedData);
       setChannelData(processedData);
 
@@ -224,6 +237,7 @@ const AnalyticsPage = () => {
   }, [timeScales, selectedTimeScale, status, backendUrl, makeApiRequest]);
 
   useEffect(() => {
+    document.title = "Analytics";
     fetchChannelData();
 
     const { sampleRate } = timeScales[selectedTimeScale];
@@ -250,17 +264,30 @@ const AnalyticsPage = () => {
   }
 
   const toggleFavorite = (channelId) => {
-    const updatedChannels = channelData.map(channel =>
-      channel.id === channelId
-        ? { ...channel, isFavorite: !channel.isFavorite }
-        : channel
-    );
-    setChannelData(updatedChannels);
-
-    const favorites = updatedChannels.filter(channel => channel.isFavorite);
-    const nonFavorites = updatedChannels.filter(channel => !channel.isFavorite);
-    setChannelData([...favorites, ...nonFavorites]);
+    const updatedFavorites = favorites.includes(channelId)
+      ? favorites.filter(id => id !== channelId) // Remove if already favorite
+      : [...favorites, channelId]; // Add if not already favorite
+    
+    setFavorites(updatedFavorites);
+    localStorage.setItem("favorites", JSON.stringify(updatedFavorites)); // Persist in localStorage
+  
+    // Re-sort the channelData to put favorites at the top
+    const updatedChannelData = channelData.map(channel => ({
+      ...channel,
+      isFavorite: updatedFavorites.includes(channel.id)
+    }));
+  
+    updatedChannelData.sort((a, b) => {
+      if (a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && b.isFavorite) return 1;
+      return 0;
+    });
+  
+    setChannelData(updatedChannelData); // Update the UI to reflect the new order
   };
+  
+  
+  
 
   return (
     <div className="w-full mx-auto p-6">

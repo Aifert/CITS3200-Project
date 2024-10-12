@@ -130,6 +130,7 @@ const DashboardPage = () => {
   }, [status, makeApiRequest, backendUrl]);
 
   useEffect(() => {
+    document.title = "Channel-Listening";
     if (status === 'authenticated') {
       setIsLoading(false);
     } else if (status === 'unauthenticated') {
