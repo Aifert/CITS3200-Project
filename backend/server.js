@@ -191,15 +191,13 @@ app.get('/api/monitor-channels/start', async (req, res) => {
     console.log("err");
   }
   const cId = req.query['id'] || '';
-  const new_sdr_url = await getAddressFromChannelId("mydb", cId);
+  const newInfo = await getAddressFromChannelId("mydb", cId);
+  const new_sdr_url = newInfo[0];
+  const params = newInfo[1];
   // Pass through cookies to startMonitorMP3
   const headers = req.headers;
 
   try {
-    if (freq) {
-      const params = {
-        freq: freq, 
-      };
       await stopMonitor(new_sdr_url, headers);
       responseStream = await startMonitorRadio(new_sdr_url, params, headers);
 
@@ -223,11 +221,7 @@ app.get('/api/monitor-channels/start', async (req, res) => {
       responseStream.on('end', () => {
         if (!res.writableFinished) res.end();
       });
-    } else {
-      res.status(400).send({
-        message: 'No file provided',
-      });
-    }
+      
   } catch (error) {
     console.error('Error occurred while getting channel:', error);
     if (!res.headersSent) {
