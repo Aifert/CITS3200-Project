@@ -1,7 +1,8 @@
 CREATE TABLE "devices" (
   "d_id" integer PRIMARY KEY,
   "d_address" inet NOT NULL,
-  "d_port" integer NOT NULL
+  "d_port" integer NOT NULL,
+  "d_stream" integer
 );
 
 CREATE TABLE "channels" (

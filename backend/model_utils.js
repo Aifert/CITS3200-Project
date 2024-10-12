@@ -331,8 +331,8 @@ async function updateDeviceInfo(dataObj, dbName) {
   await recheckConnection(dbName);
   let query = "";
   if (await isDeviceNew(dataObj["soc-id"], dbName)) {
-    query = `INSERT INTO "devices" ("d_id", "d_address", "d_port")
-                  VALUES (${dataObj["soc-id"]}, '${dataObj.address.split(":")[0]}', ${dataObj.address.split(":")[1]})`;
+    query = `INSERT INTO "devices" ("d_id", "d_address", "d_port", "d_stream")
+                  VALUES (${dataObj["soc-id"]}, '${dataObj.address.split(":")[0]}', ${dataObj.address.split(":")[1]}), 0`;
   } else {
     query = `UPDATE "devices" SET "d_address" = '${dataObj.address.split(":")[0]}',
                    "d_port" = ${dataObj.address.split(":")[1]}
@@ -581,6 +581,36 @@ async function getAddressFromChannelId(dbName, c_id) {
   }
 }
 
+async function isValidStream(dbName, c_id) {
+  try {
+     await recheckConnection(dbName);
+     let query = `SELECT d.d_stream, d.d_id, c.c_freq FROM "devices" AS d JOIN "channels" AS c ON c.d_id = d.d_id WHERE c.c_id = ${c_id}`;
+     const res = (await client.query(query)).rows[0]
+     if (res["d_stream"] == 0) {
+      query = `UPDATE "devices" SET d_stream = ${res["c_freq"]} WHERE d_id = ${res["d_id"]}`
+      await client.query(query);
+      return true;
+     } else if (res["d_stream"] == res["c_freq"]) {
+      return true;
+     }
+     return false;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function resetStream(dbName, c_id) {
+  await recheckConnection(dbName);
+  let query = `UPDATE "devices" SET d_stream = 0 WHERE d_id = (SELECT MAX(d_id) FROM "channels" WHERE c_id = ${c_id}`;
+  await client.query(query);
+}
+
+async function getDeviceStream(dbName, d_id) {
+  await recheckConnection(dbName);
+  let query = `SELECT MAX(d_stream) FROM "devices" WHERE d_id = ${d_id}`
+  return (await client.query(query)).rows[0]["d_stream"];
+}
+
 module.exports = {
   getAliveChannels,
   getOfflineChannels,
@@ -591,7 +621,10 @@ module.exports = {
   generateStrengthDataDump,
   generateUtilDataDump,
   checkNotificationState,
-  getAddressFromChannelId
+  getAddressFromChannelId,
+  isValidStream,
+  resetStream,
+  getDeviceStream,
 }
 
 

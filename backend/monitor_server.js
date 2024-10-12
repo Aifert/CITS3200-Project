@@ -15,7 +15,7 @@ async function startMonitorRadio(SDR_URL, params, headers) {
     });
 
     if (tuneResponse.status == 200){
-      streamResponse = await axios.get(`${SDR_URL}stream`, {
+        streamResponse = await axios.get(`${SDR_URL}stream`, {
         headers: headers,
         responseType: 'stream',
         insecureHTTPParser: true,
