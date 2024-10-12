@@ -1,7 +1,5 @@
 const axios = require('axios');
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; //TODO: remove this
-
 async function startMonitorRadio(SDR_URL, params, headers) {
   try {
     // First, tune to the specified file
@@ -31,8 +29,7 @@ async function startMonitorRadio(SDR_URL, params, headers) {
     }
   }
   catch (error) {
-    console.log(":(")
-    //throw new Error(error.message);
+    throw new Error(error.message);
   }
 }
 async function startMonitorMP3(SDR_URL, params, headers) {

@@ -98,7 +98,7 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
-app.use('/api', verifyToken);
+app.use('/api_v2', verifyToken);
 
 async function singlePopulate() {
     const nowTime = Math.floor(new Date().getTime()/1000);
@@ -148,11 +148,11 @@ app.use(express.static(path.join(__dirname, 'public')));
  *
  * <NOT NEED FOR END PRODUCT USED FOR TESTING ONLY>
  */
-app.get('/api/monitor-channels', async (req, res) => {
+app.get('/api_v2/monitor-channels', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
 })
 
-app.post('/api/generate_api_key', async (req, res) => {
+app.post('/api_v2/generate_api_key', async (req, res) => {
   const userName = req.headers.authorization;
 
   if (userName) {
@@ -182,7 +182,7 @@ app.post('/api/generate_api_key', async (req, res) => {
  * - frequency : The frequency to monitor
  */
 
-app.get('/api/monitor-channels/start', async (req, res) => {
+app.get('/api_v2/monitor-channels/start', async (req, res) => {
   try {
     if (responseStream) {
       responseStream.end()
@@ -221,7 +221,7 @@ app.get('/api/monitor-channels/start', async (req, res) => {
       responseStream.on('end', () => {
         if (!res.writableFinished) res.end();
       });
-      
+
   } catch (error) {
     console.error('Error occurred while getting channel:', error);
     if (!res.headersSent) {
@@ -234,7 +234,7 @@ app.get('/api/monitor-channels/start', async (req, res) => {
 });
 
 
-app.get('/api/active-channels', async (req, res) => {
+app.get('/api_v2/active-channels', async (req, res) => {
   try{
     console.log('getting active channels')
     let returnVal = {}
@@ -252,7 +252,7 @@ app.get('/api/active-channels', async (req, res) => {
   }
 });
 
-app.get('/api/analytics/data', async (req, res) => {
+app.get('/api_v2/analytics/data', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -284,7 +284,7 @@ app.get('/api/analytics/data', async (req, res) => {
   }
 });
 
-app.get('/api/notification', async (req, res) => {
+app.get('/api_v2/notification', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -293,8 +293,8 @@ app.get('/api/notification', async (req, res) => {
   res.send(await checkNotificationState(requestObj, "mydb"));
 });
 
-//http://localhost:9000/api/notification?1=[-100, 5, 600]
-app.get('/api/analytics/strength-dump', async (req, res) => {
+//http://localhost:9000/api_v2/notification?1=[-100, 5, 600]
+app.get('/api_v2/analytics/strength-dump', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -305,7 +305,7 @@ app.get('/api/analytics/strength-dump', async (req, res) => {
   res.attachment(`strength-data-${nowTime}.csv`).send(myFile);
 });
 
-app.get('/api/analytics/util-dump', async (req, res) => {
+app.get('/api_v2/analytics/util-dump', async (req, res) => {
   const sendObj = req.query;
   let requestObj = {}
   for (const elem in sendObj) {
@@ -351,7 +351,7 @@ app.post('/sdr/upload_data', async (req, res) => {
   }
 });
 
-app.get('/api/testdata', async (req, res) => {
+app.get('/api_v2/testdata', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
   await populateTestData();
 });
