@@ -147,3 +147,35 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 * 'SESChannelList.csv' placed in folder 'rasp-pi/SESChannelList'
 * row format:
   * Channel Name, Receive Frequency (MHz), Transmit Frequency (MHz), Band Width
+
+## Run on boot
+
+## USB configuration
+### Place two items in root directory on USB prior to booting SoC:
+#### SESChannelList.csv
+```
+Channel Name,Receive Frequency,Transmit Frequency,Band Width
+CB66,477.0625,477.0625,12.5K
+CB67,477.0875,477.0875,12.5K
+CB68,477.1125,477.1125,12.5K
+CB69,477.1375,477.1375,12.5K
+CB70,477.1625,477.1625,12.5K
+```
+#### config.txt
+```
+network_name=yourNetwork
+network_password=yourNetworkPassword
+server_address=https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/sdr
+api_key=yourAPIkey
+targeting_VHF=False
+k=1.5
+```
+##### api_key
+* generated in the front end, one per Entra ID authenticated user.
+##### targeting_VHF
+* `True`: analytics for Very High Frequency channels
+* `False`: analytics for Ultra High Frequency channels
+##### k
+* `1.5`: for ~threshold of no false utilization positives
+* `0.0`(min): for lots of false utilization positives
+* `2.0`+: for no false utilization positives
