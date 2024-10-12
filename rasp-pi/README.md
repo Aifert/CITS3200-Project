@@ -149,6 +149,21 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
   * Channel Name, Receive Frequency (MHz), Transmit Frequency (MHz), Band Width
 
 ## Run on boot
+### Setup Information
+#### Place the `rasp-pi` folder from repo into `/opt/` on the SoC
+`sudo mv /path/to/rasp-pi /opt/`
+
+#### Place the boot script where it needs to live
+`sudo mv /opt/rasp-pi/boot-script.sh /usr/local/bin/`
+
+#### Give the boot script executability
+`sudo chmod +x /usr/local/bin/boot-script.sh`
+
+#### Give the boot script permissions to do everything
+`sudo chown root:root /usr/local/bin/boot-script.sh`  
+`sudo chmod 700 /usr/local/bin/boot-script.sh`  
+
+
 
 ## USB configuration
 ### Place two items in root directory on USB prior to booting SoC:
