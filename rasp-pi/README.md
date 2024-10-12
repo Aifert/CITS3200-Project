@@ -194,3 +194,5 @@ k=1.5
 * `1.5`: for ~threshold of no false utilization positives
 * `0.0`(min): for lots of false utilization positives
 * `2.0`+: for no false utilization positives
+##### comments
+* `#`: anything after a # on a line will be a comment & ignored

@@ -47,13 +47,42 @@ read_config() {
 # MAIN EXECUTION
 if mount_usb; then
     read_config "/mnt/usb/config.txt"
-    
     #print some values to verify it's working
     echo "Network Name: $network_name"
     echo "Server Address: $server_address"
     echo "API Key: $api_key"
     echo "Targeting VHF: $targeting_VHF"
     echo "K value: $k"
+    #configure wifi using NetworkManager
+    nmcli radio wifi on
+    nmcli dev wifi rescan
+    #try to connect to the specified network
+    if nmcli dev wifi connect "$network_name" password "$network_password"; then
+        echo "Successfully connected to $network_name"
+    else
+        echo "Failed to connect to $network_name. Trying without specifying frequency..."
+        if nmcli dev wifi connect "$network_name" password "$network_password"; then
+            echo "Successfully connected to $network_name"
+        else
+            echo "Failed to connect to $network_name"
+        fi
+    fi 
+    #wait for connection & display network information
+    echo "Waiting for Wi-Fi connection..."
+    for i in {1..30}; do
+        if nmcli -t -f DEVICE,STATE dev | grep -q "^wlan0:connected$"; then
+            echo "Wi-Fi connected"
+            nmcli dev wifi show-password
+            ip addr show wlan0
+            break
+        fi
+        sleep 1
+    done
+    if ! nmcli -t -f DEVICE,STATE dev | grep -q "^wlan0:connected$"; then
+        echo "Failed to confirm Wi-Fi connection"
+        nmcli dev status
+        iwconfig wlan0
+    fi
 else
     echo "No USB drive with config.txt found"
 fi
