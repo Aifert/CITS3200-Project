@@ -30,11 +30,15 @@ go build ./cmd/main.go
  - Tune to an MP3 file by navigating to /tune?file=yourfile.mp3
  - Listen to the stream at /stream
 
-2. Stream Radio Frequency: (Not yet implemented)
+2. Stream Radio Frequency:
  - Tune to a frequency by navigating to /tune?freq=(yourfrequency)
  - Listen to the stream at /stream
+ - Stop using the SDR at /stop
+> [!NOTE]
+> If no valid SDR device is connected, or ffmpeg is not intalled properly, the /tune endpoint will error after a delay of 90 seconds
 
 ## Dependencies
 
 - rtl_fm: Required for streaming live radio frequencies.
 - go-mp3: Used for decoding MP3 files and retrieving the sample rate.
+- ffmpeg: Used for generating a MP3 file from rtl_fm

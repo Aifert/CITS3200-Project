@@ -9,7 +9,8 @@ const https = require('https');
 const {
   startMonitorMP3,
   stopMonitor,
-  decideMonitorMode
+  decideMonitorMode,
+  startMonitorRadio,
 } = require('./monitor_server.js');
 
 const {
@@ -21,20 +22,23 @@ const {
   processIncomingData,
   generateStrengthDataDump,
   generateUtilDataDump,
-  checkNotificationState
+  checkNotificationState,
+  getAddressFromChannelId,
 } = require('./model_utils.js');
 
 const {
   saveApiKey,
-  compareApiKey
+  compareApiKey,
 } = require('./auth_utils.js');
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 9000;
-const SDR_URL = process.env.NEXT_PUBLIC_SDR_URL || "http://host.docker.internal:4001/"
+const SDR_URL =/* process.env.NEXT_PUBLIC_SDR_URL ||*/ "http://192.168.1.103:4001/";
 const PUBLIC_FRONTEND_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000/';
+
+let responseStream;
 
 let is_populating = false;
 
@@ -179,19 +183,26 @@ app.post('/api_v2/generate_api_key', async (req, res) => {
  */
 
 app.get('/api_v2/monitor-channels/start', async (req, res) => {
-  const file = req.query['file'] || '';
-
+  try {
+    if (responseStream) {
+      responseStream.end()
+    }
+  } catch (error) {
+    console.log("err");
+  }
+  const cId = req.query['id'] || '';
+  const newInfo = await getAddressFromChannelId("mydb", cId);
+  const new_sdr_url = newInfo[0];
+  const params = newInfo[1];
   // Pass through cookies to startMonitorMP3
   const headers = req.headers;
 
   try {
-    if (file) {
-      const params = {
-        file: file,
-      };
-      const responseStream = await startMonitorMP3(SDR_URL, params, headers);
+      await stopMonitor(new_sdr_url, headers);
+      responseStream = await startMonitorRadio(new_sdr_url, params, headers);
 
-      res.setHeader('Content-Type', 'audio/mpeg');
+
+      res.setHeader('Content-Type', 'stream');
 
       responseStream.pipe(res);
 
@@ -210,11 +221,7 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
       responseStream.on('end', () => {
         if (!res.writableFinished) res.end();
       });
-    } else {
-      res.status(400).send({
-        message: 'No file provided',
-      });
-    }
+
   } catch (error) {
     console.error('Error occurred while getting channel:', error);
     if (!res.headersSent) {
@@ -226,52 +233,6 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
   }
 });
 
-/**
- * API for monitoring frequencies
- *
- * /monitor-channels/{frequency}
- */
-app.get('/api_v2/monitor-channels/:frequency', async (req, res) => {
-  const frequency = req.params.frequency;
-
-  try {
-    await stopMonitor(SDR_URL, SDR_PORT);
-    const responseStream = await startMonitor(SDR_URL, SDR_PORT, frequency);
-
-    res.setHeader('Content-Type', 'audio/mpeg');
-
-    responseStream.pipe(res);
-  } catch (error) {
-    console.error('Error occurred while getting channel:', error);
-    res.status(500).send({
-      code: 500,
-      message: 'Error occurred while getting channel',
-      error: error.message,
-    });
-  }
-});
-
-
-
-/**
- * API for stop monitor channels
- *
- * /monitor-channels/stop
- */
-app.get('/api_v2/monitor-channels/stop', async (req, res) => {
-  try{
-    const response = await stopMonitor(SDR_URL, SDR_PORT);
-
-    res.send(response);
-  }
-  catch(error){
-    res.status(500).send({
-      code: 500,
-      message: "Error occurred stopping channel",
-      error: error.message,
-    })
-  }
-})
 
 app.get('/api_v2/active-channels', async (req, res) => {
   try{

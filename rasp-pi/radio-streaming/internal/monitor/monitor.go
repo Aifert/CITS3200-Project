@@ -31,7 +31,7 @@ func StartRadioMonitoring(frequency string) (*MonitoringService, error) {
 		"-M", "fm",
 		"-s", "44100", // Sample rate
 		"-g", "150",    // Gain (adjust as needed)
-		//"-d", "1"TODO: Add device specifier later when 2 devices are availible
+		"-d", "1", //TODO: Add device specifier later when 2 devices are availible
 	)
 
 	// Prepare the ffmpeg command to encode raw audio to MP3

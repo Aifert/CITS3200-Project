@@ -6,46 +6,83 @@ import (
 	"os"
 	"log"
 	"time"
+	"fmt"
 	//"os/exec"
 	"radio-streaming/internal/pool"
-	"bytes"
 )
 
 const BUFFERSIZE = 8192
 
+// WaitForFileSize waits for a file to reach at least sizeLimit within the timeout period.
+// If the file size doesn't grow within the timeout, it returns an error.
+func WaitForFileSize(filePath string, sizeLimit int64, timeout time.Duration) error {
+    ticker := time.NewTicker(500 * time.Millisecond) // Check file size every 500ms
+    defer ticker.Stop()
+
+    timeoutChan := time.After(timeout)
+    
+    for {
+        select {
+        case <-ticker.C:
+            fileInfo, err := os.Stat(filePath)
+            if err != nil {
+                return fmt.Errorf("failed to stat file: %v", err)
+            }
+
+            if fileInfo.Size() >= sizeLimit {
+                return nil // File has reached the desired size
+            }
+
+        case <-timeoutChan:
+            return fmt.Errorf("file did not reach %d bytes within the timeout period", sizeLimit)
+        }
+    }
+}
+
 // Continuously reads audio data from the provided content and broadcasts it to all clients
 //
 // Adapted from https://github.com/Icelain/radio/blob/main/main.go
-func stream(connectionPool *pool.ConnectionPool, content []byte, delay time.Duration) {
+func stream(connectionPool *pool.ConnectionPool, filePath string, delay time.Duration) {
+    buffer := make([]byte, BUFFERSIZE)
 
-	buffer := make([]byte, BUFFERSIZE)
+    for {
+        file, err := os.Open(filePath)
+        if err != nil {
+            log.Printf("Error opening file: %v", err)
+            return
+        }
+        defer file.Close()
 
-	for {
-		buffer = make([]byte, BUFFERSIZE)
-		tempfile := bytes.NewReader(content)
-		ticker := time.NewTicker(delay)
 
-		for range ticker.C {
 
-			_, err := tempfile.Read(buffer)
+        ticker := time.NewTicker(delay)
+        defer ticker.Stop()
 
-			if err == io.EOF {
+        for range ticker.C {
+            // Read data in chunks
+            n, err := file.Read(buffer)
+            if err == io.EOF {
+                // If EOF is reached, wait for more data
+                continue
+            } else if err != nil {
+                log.Printf("Error reading file: %v", err)
+                return
+            }
 
-				ticker.Stop()
-				break
-
-			}
-
-			connectionPool.Broadcast(buffer)
-
-		}
-
-	}
-
+            // Broadcast the new chunk of data to the clients
+            connectionPool.Broadcast(buffer[:n])
+        }
+    }
 }
 
 // Calculates the delay based on sample rate of MP3 file
 func CalculateDelayForMP3(filePath string) (time.Duration, error) {
+	// Wait for the file to reach BUFFERSIZE
+	err := WaitForFileSize(filePath, BUFFERSIZE, 60*time.Second)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		return 0, err
@@ -72,31 +109,19 @@ func CalculateDelayForMP3(filePath string) (time.Duration, error) {
 
 // Logic for streaming a file to clients
 func StreamFile(cp *pool.ConnectionPool, filePath string) {
-	// Calculate the delay
-	delay, err := CalculateDelayForMP3(filePath)
-	if err != nil {
-		log.Printf("Error reading sample rate: %v", err)
-		return
-	}
+    // Calculate the delay
+    delay, err := CalculateDelayForMP3(filePath)
+    if err != nil {
+        log.Printf("Error reading sample rate: %v", err)
+        return
+    }
 
-	// Read the entire file content
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Printf("Error opening file: %v", err)
-		return
-	}
-	defer file.Close()
-
-	ctn, err := io.ReadAll(file)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	go stream(cp, ctn, delay)
+    // Stream the file content
+    go stream(cp, filePath, delay)
 }
 
 // Logic for streaming a frequency to clients
-func StreamFrequency(cp *pool.ConnectionPool, frequency string) {
-	// TODO: Not yet implemented
+func StreamFrequency(cp *pool.ConnectionPool) {
+	StreamFile(cp, "pkg/audio/stream.mp3");
 }
 
