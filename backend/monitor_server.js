@@ -11,7 +11,8 @@ async function startMonitorRadio(SDR_URL, params, headers) {
     console.log(`${SDR_URL}tune${paramsStr}`)
     const tuneResponse = await axios.get(`${SDR_URL}tune${paramsStr}`, {
       headers: headers,
-      insecureHTTPParser: true
+      insecureHTTPParser: true,
+      rejectUnauthorized: false,
     });
 
     if (tuneResponse.status == 200){
