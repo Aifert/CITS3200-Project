@@ -332,7 +332,7 @@ async function updateDeviceInfo(dataObj, dbName) {
   let query = "";
   if (await isDeviceNew(dataObj["soc-id"], dbName)) {
     query = `INSERT INTO "devices" ("d_id", "d_address", "d_port", "d_stream")
-                  VALUES (${dataObj["soc-id"]}, '${dataObj.address.split(":")[0]}', ${dataObj.address.split(":")[1]}, 0) `;
+                  VALUES (${dataObj["soc-id"]}, '${dataObj.address}', 9000, 0) `;
   } else {
     query = `UPDATE "devices" SET "d_address" = '${dataObj.address.split(":")[0]}',
                    "d_port" = ${dataObj.address.split(":")[1]}
@@ -576,7 +576,7 @@ async function getAddressFromChannelId(dbName, c_id) {
      await recheckConnection(dbName);
      let query = `SELECT d.d_address, d.d_port, c.c_freq FROM "devices" AS d JOIN "channels" AS c ON c.d_id = d.d_id WHERE c.c_id = ${c_id}`;
      const res = (await client.query(query)).rows[0]
-     return [`http://${res.d_address}:${res.d_port}/`, {freq: res.c_freq}];
+     return [`http://${res.d_address}/`, {freq: res.c_freq}];
   } catch (error) {
     throw error;
   }

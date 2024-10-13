@@ -193,6 +193,12 @@ app.post('/api_v2/generate_api_key', async (req, res) => {
 app.get('/api_v2/monitor-channels/start', async (req, res) => {
 
   const cId = req.query['id'] || '';
+  const newInfo = await getAddressFromChannelId("mydb", cId);
+  const new_sdr_url = newInfo[0];
+  const params = newInfo[1];
+  
+  // Pass through cookies to startMonitorMP3
+  const headers = req.headers;
   if (!(await isValidStream("mydb", cId))) {
      res.status(204).send({
         message: 'Channel is busy',
@@ -204,10 +210,7 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
     const idx = responseStreams[cId].indexOf(res);
     if (idx !== -1) {
       responseStreams[cId].splice(idx, 1)
-    } else {
-      console.log("oops -1")
     }
-    console.log(responseStreams[cId].length);
     if (responseStreams[cId].length=== 0) {
       console.log("RESET")
       await resetStream("mydb", cId);
@@ -229,7 +232,10 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
       }
       responseStreams[cId].push(res);
       console.log("added")
-      res.setHeader('Content-Type', 'audio/mpeg');
+      await stopMonitor(new_sdr_url, headers);
+      responseStream = await startMonitorRadio(new_sdr_url, params, headers);
+      res.setHeader('Content-Type', 'stream');
+      responseStream.pipe(res);
 
   } catch (error) {
     console.error('Error occurred while getting channel:', error);
@@ -357,68 +363,6 @@ app.get('/sdr/tune', async (req, res) => {
     res.status(403).send({
       message: "Invalid API Key"
     });
-  }
-});
-
-app.post('/sdr/pipe_stream', async (req, res) => {
-  const apiKey = req.headers.authorization.split(' ')[1];
-  const deviceId = parseInt(req.headers["device-id"]);
-  const compareResponse = true;//await compareApiKey(apiKey);
-  let c_id = await getStreamChannelFromDevice("mydb", deviceId);
-  if (compareResponse == true) {
-    try{
-      const newFrame = req.body;
-      if (c_id in responseStreams) {
-        for (let audioS = 0; audioS < responseStreams[c_id].length; ++audioS) {
-          responseStreams[c_id][audioS].write(newFrame);
-        }
-      }
-
-        res.status(200).send({
-          message: "Data successfully processed",
-        });
-    }
-    catch(error){
-      res.status(500).send({
-        message: "Error occurred while processing data",
-        error: error.message,
-      })
-    }
-  }
-  else{
-    res.status(403).send({
-      message: "Invalid API key",
-    })
-  }
-});
-
-app.post('/sdr/upload_data', async (req, res) => {
-  const apiKey = req.headers.authorization.split(' ')[1];
-
-  const compareResponse = await compareApiKey(apiKey);
-
-  if (compareResponse == true) {
-    try{
-      const response = await processIncomingData(req.body, "mydb");
-
-      if (response){
-        res.status(200).send({
-          message: "Data successfully processed",
-          data: response,
-        });
-      }
-    }
-    catch(error){
-      res.status(500).send({
-        message: "Error occurred while processing data",
-        error: error.message,
-      })
-    }
-  }
-  else{
-    res.status(403).send({
-      message: "Invalid API key",
-    })
   }
 });
 
