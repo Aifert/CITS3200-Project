@@ -376,7 +376,6 @@ app.post('/sdr/pipe_stream', async (req, res) => {
 
         res.status(200).send({
           message: "Data successfully processed",
-          data: response,
         });
     }
     catch(error){
