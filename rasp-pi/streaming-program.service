@@ -1,0 +1,13 @@
+[Unit]
+Description=Streaming Program Service
+After=network.target
+
+[Service]
+ExecStart=/opt/rasp-pi/radio-streaming/main
+WorkingDirectory=/opt/rasp-pi/radio-streaming
+Restart=always
+User=root
+EnvironmentFile=/etc/environment
+
+[Install]
+WantedBy=multi-user.target

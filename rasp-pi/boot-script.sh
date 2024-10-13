@@ -53,6 +53,7 @@ if mount_usb; then
     echo "API Key: $api_key"
     echo "Targeting VHF: $targeting_VHF"
     echo "K value: $k"
+
     #configure wifi using NetworkManager
     nmcli radio wifi on
     nmcli dev wifi rescan
@@ -82,6 +83,16 @@ if mount_usb; then
         echo "Failed to confirm Wi-Fi connection"
         nmcli dev status
         iwconfig wlan0
+    fi
+
+    #remove old SESChannelList.csv if it exists and copy new one off USB
+    channel_list_folder="/opt/rasp-pi/SESChannelList"
+    rm -f "$channel_list_folder/SESChannelList.csv"
+    if [ -f "/mnt/usb/SESChannelList.csv" ]; then
+        cp "/mnt/usb/SESChannelList.csv" "$channel_list_folder/"
+        echo "Copied new SESChannelList.csv"
+    else
+        echo "No SESChannelList.csv found on USB"
     fi
 else
     echo "No USB drive with config.txt found"

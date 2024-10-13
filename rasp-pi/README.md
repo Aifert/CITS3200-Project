@@ -128,7 +128,8 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 				"strength" {
 					1724322719: -75.1,
 					1724322724: -73.2
-				}
+				},
+        "channel-name": Fremantle,
 			},
 			163825000: {
 				"usage": [
@@ -137,7 +138,8 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 				"strength" {
 					1724322600: -105.1,
 					1724322724: -103.2
-				}
+				},
+        "channel-name": Marble Bar,
 			}
 		}
 	}
@@ -150,8 +152,11 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 
 ## Run on boot
 ### Setup Information
-#### Place the `rasp-pi` folder from repo into `/opt/` on the SoC
-`sudo mv /path/to/rasp-pi /opt/`
+#### Ensure the RTL-SDRv4 drivers have been installed (top of this doc)
+#### Place the rasp-pi folder from repo into /opt/ on the SoC
+`sudo mv /path/to/rasp-pi /opt/`  
+`sudo chown -R root:root /opt/rasp-pi`  
+`sudo chmod -R 755 /opt/rasp-pi`  
 
 #### Place the boot script where it needs to live
 `sudo mv /opt/rasp-pi/boot-script.sh /usr/local/bin/`
@@ -163,9 +168,14 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 `sudo chown root:root /usr/local/bin/boot-script.sh`  
 `sudo chmod 700 /usr/local/bin/boot-script.sh`  
 
-
+#### Ensure rasp-pi/radio-streaming/README.md instructions have been followed to build `main` executable
+`cd /opt/rasp-pi/radio-streaming`  
+`sudo apt install golang`  
+`sudo go mod tidy`  
+`sudo go build ./cmd/main.go`  
 
 ## USB configuration
+### Format the USB as FAT32 for guaranteed compatibility
 ### Place two items in root directory on USB prior to booting SoC:
 #### SESChannelList.csv
 ```
@@ -191,8 +201,8 @@ k=1.5
 * `True`: analytics for Very High Frequency channels
 * `False`: analytics for Ultra High Frequency channels
 ##### k
-* `1.5`: for ~threshold of no false utilization positives
+* `2.0`: for ~threshold of no false utilization positives
 * `0.0`(min): for lots of false utilization positives
-* `2.0`+: for no false utilization positives
+* `3.0`+: for no false utilization positives
 ##### comments
 * `#`: anything after a # on a line will be a comment & ignored

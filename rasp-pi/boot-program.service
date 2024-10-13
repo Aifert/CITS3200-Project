@@ -1,0 +1,11 @@
+[Unit]
+Description=Boot Program Service
+Before=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/boot-script.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -100,19 +100,17 @@ RTL_POWER_OUTPUT_FILE_NAME = 'rtl_power_output.csv'
 RTL_POWER_IN_PROGRESS_FILE_NAME = 'rtl_power_in_progress.csv'
 RTL_POWER_OUTPUT_FOLDER_NAME = 'rtl_powerOutput'
 NUM_RTL_POWER_CONTEXT_COLUMNS = 6
-K: float = 1.2 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
+K: float = 2.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
 # ...raise this value to raise your squelch floor for activity!
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
 SERVER_ADDRESS: str = 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/sdr' #server's URL
-#DATA_ENDPOINT_FOR_SERVER: str = '/upload_data' #where we should POST the data we gather
-DATA_ENDPOINT_FOR_SERVER: str = '/upload_data' #local
-#SERVER_ADDRESS: str = 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/sdr' #server's URL
+DATA_ENDPOINT_FOR_SERVER: str = '/upload_data' #where we should POST the data we gather
 MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS: int = 30 #timeout parameter to requests.post
 RTL_POWER_GAIN_DB: int = 0 #gain to add to rtl_power output, needs to be set else uses automatic (throws our baseline off)
 RTL_POWER_SDR_DEVICE_INDEX: int = 0 #using RTL-SDRv4 number 0 (of [0, 1]) since 1 is used for audio streaming
 RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each sample, rtl_power supports a minimum of 1sec
 RTL_POWER_EXIT_TIMER_SECONDS: int = 60 #number of seconds rtl_power will sample data for before outputting a data file, which we then parse & attempt to send to the server
-API_KEY: str = 'aifert-MDUtOVxi1wK_ry9qZyr5OCSTjzu7RUGcvy1_YfHyXSw' #(TODO, needs to be read from the config txt file on boot)
+API_KEY: str = 'joseph-bGNgkmouTMk8xj1GDwiVYbXHt5wb94f6U2XAB3ac7o' #(TODO, needs to be read from the config txt file on boot)
 
 # GLOBAL VARIABLES
 targeting_VHF: bool = False #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
