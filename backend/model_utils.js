@@ -337,8 +337,8 @@ async function updateDeviceInfo(dataObj, dbName) {
     query = `INSERT INTO "devices" ("d_id", "d_address", "d_port", "d_stream")
                   VALUES (${dataObj["soc-id"]}, '${dataObj.address}', 9000, 0) `;
   } else {
-    query = `UPDATE "devices" SET "d_address" = '${dataObj.address.split(":")[0]}',
-                   "d_port" = ${dataObj.address.split(":")[1]}
+    query = `UPDATE "devices" SET "d_address" = '${dataObj.address}',
+                   "d_port" = 9000 
                    WHERE "d_id"=${dataObj["soc-id"]}`;
   }
   await client.query(query);
