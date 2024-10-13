@@ -55,9 +55,11 @@ async function connectToDatabase(dbName = "mydb", isNew = false) {
 async function recheckConnection(dbName = "mydb") {
   let isNew = false;
   if (!hasEverConnected) {
-    await client.connect();
+    await connectToDatabase(dbName, isNew);
+    //await client.connect();
     hasEverConnected = true;
   }
+  /*
   if ((client.database != dbName) || (!isConnected && !isConnecting)) {
     if (client.database != dbName) {
       const exists = (await client.query(`SELECT datname FROM pg_database WHERE datname = '${dbName}'`)).rows.length;
@@ -69,6 +71,7 @@ async function recheckConnection(dbName = "mydb") {
     }
     await connectToDatabase(dbName, isNew);
   }
+  */
 }
 
 function convertToAPIForm(arr) {
