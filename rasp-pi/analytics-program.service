@@ -1,6 +1,7 @@
 [Unit]
 Description=Analytics Program Service
-After=network.target
+After=boot-program.service
+Wants=boot-program.service
 
 [Service]
 ExecStart=/usr/bin/python3 /opt/rasp-pi/process_and_report_analytics_data.py

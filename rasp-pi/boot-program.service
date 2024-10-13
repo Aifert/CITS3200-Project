@@ -1,6 +1,8 @@
 [Unit]
 Description=Boot Program Service
-Before=network.target
+After=basic.target network-online.target
+Wants=network-online.target
+Before=analytics-program.service streaming-program.service
 
 [Service]
 Type=oneshot

@@ -44,7 +44,30 @@ read_config() {
     done
 }
 
+# FUNCTION TO WAIT FOR NetworkManager
+wait_for_networkmanager() {
+    echo "Waiting for NetworkManager..."
+    for i in {1..60}; do
+        if systemctl is-active --quiet NetworkManager; then
+            echo "NetworkManager is active"
+            return 0
+        fi
+        sleep 1
+    done
+    echo "Timeout waiting for NetworkManager"
+    return 1
+}
+
 # MAIN EXECUTION
+#is network manager live?
+sudo systemctl is-enabled NetworkManager
+
+#wait for NetworkManager
+if ! wait_for_networkmanager; then
+    exit 1
+fi
+
+#mount & read USB
 if mount_usb; then
     read_config "/mnt/usb/config.txt"
     #print some values to verify it's working

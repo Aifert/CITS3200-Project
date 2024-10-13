@@ -168,6 +168,14 @@ It's worth noting that more advanced (and typically more expensive) SDR hardware
 `sudo chown root:root /usr/local/bin/boot-script.sh`  
 `sudo chmod 700 /usr/local/bin/boot-script.sh`  
 
+#### Move systemd unit files into system folder & enable them
+`cd /opt/rasp-pi`  
+`sudo mv analytics-program.service streaming-program.service boot-program.service /etc/systemd/system`  
+`sudo systemctl daemon-reload`  
+`sudo systemctl enable analytics-program.service`  
+`sudo systemctl enable streaming-program.service`  
+`sudo systemctl enable boot-program.service`  
+
 #### Ensure rasp-pi/radio-streaming/README.md instructions have been followed to build `main` executable
 `cd /opt/rasp-pi/radio-streaming`  
 `sudo apt install golang`  

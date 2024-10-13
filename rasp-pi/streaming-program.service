@@ -1,6 +1,7 @@
 [Unit]
 Description=Streaming Program Service
-After=network.target
+After=boot-program.service
+Wants=boot-program.service
 
 [Service]
 ExecStart=/opt/rasp-pi/radio-streaming/main
