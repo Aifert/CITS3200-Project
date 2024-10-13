@@ -29,16 +29,17 @@ func StartRadioMonitoring(frequency string) (*MonitoringService, error) {
 		"rtl_fm",
 		"-f", frequency,
 		"-M", "fm",
-		"-s", "44100", // Sample rate
-		"-g", "150",    // Gain (adjust as needed)
+		"-s", "22050", // Sample rate
+		"-g", "1",    // Gain (adjust as needed)
 		"-d", "1", //TODO: Add device specifier later when 2 devices are availible
+		"-l", "3",
 	)
 
 	// Prepare the ffmpeg command to encode raw audio to MP3
 	ffmpegCmd := exec.Command(
 		"ffmpeg",
 		"-f", "s16le",           // Input format: 16-bit little-endian PCM
-		"-ar", "44100",          // Input sample rate
+		"-ar", "22050",          // Input sample rate
 		"-ac", "1",              // Number of audio channels
 		"-i", "pipe:0",          // Input from stdin
 		"-codec:a", "libmp3lame", // Audio codec

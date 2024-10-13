@@ -41,6 +41,8 @@ read_config() {
         #create the variable
         eval "${key}='${value}'"
         echo "Loaded: $key = $value"
+        #append to /etc/environment
+        echo "${key}=${value}" | sudo tee -a /etc/environment > /dev/null
     done
 }
 
@@ -69,6 +71,11 @@ fi
 
 #mount & read USB
 if mount_usb; then
+    #backup current environment file
+    sudo cp /etc/environment /etc/environment.bak
+    #clear the current contents of /etc/environment
+    sudo truncate -s 0 /etc/environment
+    #read config.txt
     read_config "/mnt/usb/config.txt"
     #print some values to verify it's working
     echo "Network Name: $network_name"
@@ -76,6 +83,8 @@ if mount_usb; then
     echo "API Key: $api_key"
     echo "Targeting VHF: $targeting_VHF"
     echo "K value: $k"
+    #reload environment variables
+    source /etc/environment
 
     #configure wifi using NetworkManager
     nmcli radio wifi on
