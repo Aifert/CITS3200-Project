@@ -5,8 +5,8 @@ import uuid #for receiving MAC address of SoC to hash & send a portion of the di
 mac = uuid.getnode()
 hashed_mac = hashlib.sha256(str(mac).encode()).hexdigest()
 soc_id = int(hashed_mac[:4], 16)
-#serverURL = 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/sdr/pipe_stream'
-serverURL = 'http://192.168.20.20:9000/sdr/tune?deviceId=1'
+serverURL = 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/sdr/pipe_stream'
+#serverURL = 'http://192.168.20.20:9000/sdr/tune?deviceId=1'
 API_KEY: str = 'aifert-MDUtOVxi1wK_ry9qZyr5OCSTjzu7RUGcvy1_YfHyXSw'
 headers = {
 	"Content-Type": "stream",
