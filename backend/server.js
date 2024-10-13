@@ -193,10 +193,8 @@ app.post('/api_v2/generate_api_key', async (req, res) => {
 app.get('/api_v2/monitor-channels/start', async (req, res) => {
 
   const cId = req.query['id'] || '';
-  const newInfo = await getAddressFromChannelId("mydb", cId);
-  const new_sdr_url = newInfo[0];
-  const params = newInfo[1];
-  
+
+
   // Pass through cookies to startMonitorMP3
   const headers = req.headers;
   if (!(await isValidStream("mydb", cId))) {
@@ -227,6 +225,9 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
   });
 
   try {
+      const newInfo = await getAddressFromChannelId("mydb", cId);
+      const new_sdr_url = newInfo[0];
+      const params = newInfo[1];
       if (!(cId in responseStreams)) {
         responseStreams[cId] = []
       }
@@ -268,12 +269,12 @@ app.get('/api_v2/active-channels', async (req, res) => {
 });
 
 app.get('/api_v2/analytics/data', async (req, res) => {
-  const sendObj = req.query;
-  let requestObj = {}
-  for (const elem in sendObj) {
-    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
-  }
   try{
+    const sendObj = req.query;
+    let requestObj = {}
+    for (const elem in sendObj) {
+      requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
+    }
     const strengthData = await getChannelStrength(requestObj)
     const utilisationData = await getChannelUtilisation(requestObj)
     let returnVal = {}
@@ -300,12 +301,50 @@ app.get('/api_v2/analytics/data', async (req, res) => {
 });
 
 app.get('/api_v2/notification', async (req, res) => {
-  const sendObj = req.query;
-  let requestObj = {}
-  for (const elem in sendObj) {
-    requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
+  try {
+    const sendObj = req.query;
+    let requestObj = {}
+    for (const elem in sendObj) {
+      requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
+    }
+    res.send(await checkNotificationState(requestObj, "mydb")); 
+  } catch (error) {
+    res.status(500).send({
+      code: 500,
+      message: "Error occurred while getting channels",
+      error: error.message,
+    })
   }
-  res.send(await checkNotificationState(requestObj, "mydb"));
+});
+
+app.post('/sdr/upload_data', async (req, res) => {
+  const apiKey = req.headers.authorization.split(' ')[1];
+
+  const compareResponse = await compareApiKey(apiKey);
+
+  if (compareResponse == true) {
+    try{
+      const response = await processIncomingData(req.body, "mydb");
+
+      if (response){
+        res.status(200).send({
+          message: "Data successfully processed",
+          data: response,
+        });
+      }
+    }
+    catch(error){
+      res.status(500).send({
+        message: "Error occurred while processing data",
+        error: error.message,
+      })
+    }
+  }
+  else{
+    res.status(403).send({
+      message: "Invalid API key",
+    })
+  }
 });
 
 //http://localhost:9000/api_v2/notification?1=[-100, 5, 600]
@@ -333,37 +372,6 @@ app.get('/api_v2/analytics/util-dump', async (req, res) => {
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'backend_index.html'));
-});
-
-app.get('/sdr/tune', async (req, res) => {
-  const apiKey = req.headers.authorization.split(' ')[1];
-  const deviceId = parseInt(req.headers["device-id"]);
-  const compareResponse = true;//await compareApiKey(apiKey);
-
-  if (compareResponse == true) {
-    try{
-        const myFreq = await getDeviceStream("mydb", deviceId);
-        if (myFreq == 0) {
-          res.status(200).send({
-          message: "Nothing To Stream",
-          });
-        } else {
-        res.status(200).send({
-          message: "New Stream",
-          data: {freq: myFreq},
-        });
-      }
-    } catch(error){
-      res.status(500).send({
-        message: "Error occurred while processing data",
-        error: error.message,
-      });
-    }
-  } else {
-    res.status(403).send({
-      message: "Invalid API Key"
-    });
-  }
 });
 
 app.get('/api_v2/testdata', async (req, res) => {
