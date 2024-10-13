@@ -28,6 +28,7 @@ const {
   isValidStream,
   resetStream,
   getDeviceStream,
+  getStreamChannelFromDevice,
 } = require('./model_utils.js');
 
 const {
@@ -108,7 +109,7 @@ app.use('/api_v2', verifyToken);
 async function singlePopulate() {
     const nowTime = Math.floor(new Date().getTime()/1000);
     let testObj1 = {
-      "soc-id": 1,
+      "soc-id": 16707,
       "address": "127.10.20.30:8980",
       "data": {
         467687500: {
@@ -193,25 +194,31 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
   if (!(await isValidStream("mydb", cId))) {
      res.status(204).send({
         message: 'Channel is busy',
-        error: error.message,
       });
      return;
   }
   const remFromList = async (req, cId) => {
-    const idx = responseStreams[cId].indexOf(req);
+    console.log("REMOVED")
+    const idx = responseStreams[cId].indexOf(res);
     if (idx !== -1) {
       responseStreams[cId].splice(idx, 1)
+    } else {
+      console.log("oops -1")
     }
-    if (responseStreams[cId].length === 0) {
+    console.log(responseStreams[cId].length);
+    if (responseStreams[cId].length=== 0) {
+      console.log("RESET")
       await resetStream("mydb", cId);
     }
   }
-  req.on("close", async function() {
-    await remFromList(req, cId);
+  res.on("close", async function() {
+    console.log("close");
+    await remFromList(res, cId);
   });
 
-  req.on("end", async function() {
-    await remFromList(req, cId);
+  res.on("error", async function() {
+    console.log("error")
+    await remFromList(res, cId);
   });
 
   try {
@@ -219,6 +226,7 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
         responseStreams[cId] = []
       }
       responseStreams[cId].push(res);
+      console.log("added")
       res.setHeader('Content-Type', 'audio/mpeg');
 
   } catch (error) {
@@ -321,7 +329,7 @@ app.get('/', (req, res) => {
 
 app.get('/sdr/tune', async (req, res) => {
   const apiKey = req.headers.authorization.split(' ')[1];
-  const deviceId = req.headers["device-id"];
+  const deviceId = parseInt(req.headers["device-id"]);
   const compareResponse = true;//await compareApiKey(apiKey);
 
   if (compareResponse == true) {
@@ -341,7 +349,7 @@ app.get('/sdr/tune', async (req, res) => {
       res.status(500).send({
         message: "Error occurred while processing data",
         error: error.message,
-      })
+      });
     }
   } else {
     res.status(403).send({
@@ -352,17 +360,15 @@ app.get('/sdr/tune', async (req, res) => {
 
 app.post('/sdr/pipe_stream', async (req, res) => {
   const apiKey = req.headers.authorization.split(' ')[1];
-
+  const deviceId = parseInt(req.headers["device-id"]);
   const compareResponse = true;//await compareApiKey(apiKey);
-
+  let c_id = await getStreamChannelFromDevice("mydb", deviceId);
   if (compareResponse == true) {
     try{
       const newFrame = req.body;
-      for (let c in responseStreams) {
-        if (responseStreams[c]) {
-          responseStreams[c].write(newFrame);
-        } else {
-          console.log(":(")
+      if (c_id in responseStreams) {
+        for (let audioS = 0; audioS < responseStreams[c_id].length; ++audioS) {
+          responseStreams[c_id][audioS].write(newFrame);
         }
       }
 
@@ -392,7 +398,6 @@ app.post('/sdr/upload_data', async (req, res) => {
 
   if (compareResponse == true) {
     try{
-      console.log(req.body)
       const response = await processIncomingData(req.body, "mydb");
 
       if (response){
