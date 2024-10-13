@@ -1,101 +1,149 @@
-## Running the Cits3200 Next App
+Running the CITS3200 Next App
 
-Developed on:
+# Developed on:
 
-- Ubuntu 22.04.3 LTS WSL 2
-
+Ubuntu 22.04.3 LTS WSL 2
 Before you start, ensure you have the following installed:
 
-- Node.js (version 14.x or higher recommended)
-- npm (comes with Node.js)
+Docker and Docker Compose (for containerized application management)
 
-0. Installation of Node.js
+# Steps to Run the Application
 
-```bash
-$ sudo apt update
+Clone the Project Repository:
 
-$ curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-
-$ sudo apt install -y nodejs
-```
-
-1. Navigate to the Project Directory
+If you haven't already, clone the repository to your local machine:
 
 ```bash
-cd CITS3200-Project
+git clone https://github.com/your-repository-url.git
 ```
 
-
-2. Running the Development Server
-   To start the development server and view the application in your browser:
+Navigate to the Project Directory:
 
 ```bash
-$ npm install
-
-$ npm run dev
+cd CITS3200-Project-Window
 ```
 
-3. Build production (Not needed for development)
+# Running the Development Environment Using Docker Compose:
+
+Use Docker Compose to build and start the application in development mode:
 
 ```bash
-$ npm run build
-
-$ npm run start
+docker-compose -f docker-compose.dev.yml up --build
 ```
 
-The application will now run in production mode on https://<server-ip>:3000 (or something similar).
+This will launch all the necessary services, including the database, frontend, and backend, inside Docker containers.
 
-## Setting Up Environment Variables
-1. Copy the .env.local.default file to a .env.local file in the frontend directory of your project.
-2. Add the required variables with their corresponding values, following the format below:
+Accessing the Application:
 
----
+The application should now be accessible on http://localhost:3000.
+The backend will be running on http://localhost:9000.
+Stopping the Application:
 
-## Technologies Used
+To stop the running containers:
 
-- Next.js: React framework for server-side rendering and static site generation.
-- React: JavaScript library for building user interfaces.
-- Node.js: JavaScript runtime environment for executing JavaScript on the server.
-- npm: Package managers to install dependencies.
-
----
-
-## Project Structure
-
-Here's a brief overview of the project's structure:
-
-```plaintext
-CITS3200-Project/
-├── frontend/
-│     ├── pages/
-│     │   ├── api/
-│     │   │   └── auth/
-│     │   │       └── [...nextauth].js  # NextAuth.js API route for authentication
-│     ├── src/
-│     │   ├── app/
-│     │   │   ├── layout.js             # Global layout for the application
-│     │   │   ├── page.js               # Root page (renders at `/`)
-│     │   │   ├── login/
-│     │   │   │   └── page.js           # Login page (renders at `/login`)
-│     │   ├── components/               # Reusable UI components
-│     │   │   ├── Navbar.js             # Navigation bar component
-│     │   ├── styles/                   # Global and component-specific styles
-│     ├── public/                       # Static assets (images, fonts, etc.)
-│     ├── .env.local                    # Environment variables for local development
-│     ├── next.config.js                # Next.js configuration file
-│     ├── package.json                  # Dependencies and scripts
-└──    └── README.md                     # Project documentation (this file)
+```bash
+docker-compose down --remove-orphans
 ```
 
-## Warning: Directory Structure
-The directory structure of this project is carefully designed to work with Next.js and its routing system. Any changes to this structure could lead to unexpected behavior or application errors. Specifically:
+After running --build, you should be able to use below command to relaunch:
 
-Do Not Move or Rename Core Directories:
-- The src directory contains key folders like app, pages, and api, which are essential for routing and functionality.
-- The app directory defines the routes for the application. Moving or renaming files within this directory could break the routing.
-- The api folder inside pages is responsible for handling API requests. Changing its structure could result in API routes not functioning as expected.
-- Middleware: The middleware file is crucial for securing certain routes (e.g., the dashboard). If using custom middleware, ensure it is placed correctly as per the project’s design.
-- Static Files: The public directory should contain all static files like images, fonts, and other assets. Modifying this directory may lead to issues with how static assets are served.
+```bash
+docker-compose -f docker-compose.dev.yml up
+```
 
-## Environment Variables
-This project relies on specific environment variables that must be configured correctly to ensure proper operation. These variables are stored in an .env.local file in the root directory. The following environment variables are required:
+# Build the Production Environment (Optional):
+
+Use Docker Compose to build and start the production version:
+
+```bash
+docker-compose -f docker-compose.prod.yml up --build
+```
+
+Access the Production Application:
+The production application will run on http://your-production-url.
+
+# Technologies Used
+
+Next.js: React framework for server-side rendering and static site generation.
+React: JavaScript library for building user interfaces.
+Node.js: JavaScript runtime environment.
+Docker: Containerization platform to isolate and deploy applications.
+PostgreSQL: Relational database system used by the backend.
+
+# Directory Structure Frontend specific
+
+CITS3200-Project-Window/
+
+├── API
+│ ├── SOC_API.md # Documentation for the SOC API.
+│ └── WEB_API.md # Documentation for the Web API.
+├── Dockerfile # Main Dockerfile for the project.
+├── Dockerfile.db # Dockerfile to build the PostgreSQL database container.
+├── Dockerfile.frontend # Dockerfile to build the frontend container.
+├── Dockerfile.nginx # Dockerfile for configuring NGINX.
+├── Dockerfile.web # Dockerfile for the backend web server.
+├── README
+│ ├── RRMS_WebServer_database.png # Diagram of the RRMS database setup.
+│ ├── database_README.md # Instructions for setting up the database.
+│ ├── deployment_README.md # Instructions for deploying the app.
+│ ├── frontend_README.md # Frontend-specific documentation.
+│ ├── radio_streaming_README.md # Radio streaming setup guide.
+│ ├── rasp_pi_README.md # Raspberry Pi setup instructions.
+│ └── security_README.md # Security considerations for the project.
+├── README.md # Main project README.
+├── RRMS.jpg # Image related to the RRMS project.
+├── docker-compose.dev.yml # Docker Compose for development environment.
+├── docker-compose.yml # Docker Compose for orchestrating the services.
+├── frontend
+│ ├── README.md # Frontend-specific README.
+│ ├── jsconfig.json # JavaScript project configuration.
+│ ├── middleware.js # Middleware for handling session or routing logic.
+│ ├── next.config.mjs # Next.js configuration file.
+│ ├── package-lock.json # Dependency lock file for consistent installs.
+│ ├── pages
+│ │ └── api
+│ │ └── auth
+│ │ └── [...nextauth].js # NextAuth.js API for authentication.
+│ ├── postcss.config.mjs # PostCSS configuration for styling.
+│ ├── public # Static assets like images and icons.
+│ ├── src
+│ │ ├── app # Main Next.js application routes.
+│ │ │ ├── analytics # Analytics page.
+│ │ │ ├── api-key # API key generation and display page.
+│ │ │ ├── channel-listening # Channel listening page.
+│ │ │ ├── globals.css # Global CSS for styling the app.
+│ │ │ ├── layout.js # Layout component for the entire app.
+│ │ │ ├── login # Login page.
+│ │ │ └── single-channel # Single-channel page.
+│ │ ├── components # Reusable frontend components.
+│ │ ├── DynamicChannel.js # Component for dynamic channel rendering.
+│ │ ├── Navbar.js # Navigation bar component.
+│ │ ├── NotificationBell.js # Notification bell component.
+│ │ └── NotificationContext.js # Context provider for managing notifications.
+│ └── tailwind.config.js # Tailwind CSS configuration.
+├── nginx.conf # NGINX configuration file.
+├── package-lock.json # Root lock file for managing dependencies.
+└── package.json # Root package file for project dependencies and scripts.
+
+# Environment Variables
+
+This project relies on specific environment variables for both development and production. Be sure to update your .env.local or .env file with the correct values.
+
+Set Up Environment Variables:
+Ensure that your .env.local or .env file is correctly configured. Refer to the .env.local.default file as a template, and copy it to .env.local in the root directory:
+
+## Sample .env.local for Local Development:
+
+AZURE_AD_CLIENT_ID=your-client-id
+AZURE_AD_CLIENT_SECRET=your-client-secret
+AZURE_AD_TENANT_ID=your-tenant-id
+NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=http://localhost:3000/
+NEXT_PUBLIC_BACKEND_URL=http://localhost:9000/api_v2/
+NEXT_PUBLIC_SDR_URL=http://host.docker.internal:4001/
+
+Ensure that your .env.local file remains confidential and is not committed to source control.
+
+# Warning: Directory Structure
+
+The structure of this project is designed to work seamlessly with Next.js and Docker. Do not modify the core directories such as src, pages, or app unless absolutely necessary.

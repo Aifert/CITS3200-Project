@@ -301,6 +301,7 @@ const renderButton = () => {
     };
 
   useEffect(() => {
+    document.title = "Channel Page";
     fetchChannelData();
 
   }, [selectedTimeScale, fetchChannelData]);
