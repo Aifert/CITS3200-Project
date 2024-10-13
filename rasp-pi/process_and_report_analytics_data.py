@@ -530,7 +530,8 @@ def prepare_channel_data() -> str:
             #only include channels that have data
             channel_data = {
                 "usage": [],
-                "strength": {}
+                "strength": {},
+                "channel-name": channel.name,
             }
             for utilization_state in channel.utilization_states:
                 channel_data["usage"].append([utilization_state.timestamp_unix, utilization_state.is_start_time])

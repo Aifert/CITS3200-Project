@@ -109,12 +109,14 @@ async function singlePopulate() {
         467687500: {
           "usage": Math.random() > 0.7 ? [[nowTime-5, "true"], [nowTime, "false"]] : [],
           "strength": {
-          }
+          },
+          "channel-name": "Fremantle",
         },
         457712500: {
           "usage": Math.random() > 0.7 ? [[nowTime-5, "true"], [nowTime, "false"]] : [],
           "strength": {
-          }
+          },
+          "channel-name": "Marble Bar",
         }
       }
     }

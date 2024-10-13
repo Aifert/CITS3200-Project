@@ -347,11 +347,11 @@ async function isChannelNew(deviceId, freq, dbName) {
   return (await client.query(query)).rows.length === 0;
 }
 
-async function updateChannelInfo(deviceId, freq, dbName) {
+async function updateChannelInfo(deviceId, freq, channel_name, dbName) {
   await recheckConnection(dbName);
   if (await isChannelNew(deviceId, freq, dbName)) {
     const query = `INSERT INTO "channels" (c_freq, c_name, d_id)
-                  VALUES (${freq}, 'Channel ${freq}', ${deviceId})`;
+                  VALUES (${freq}, '${channel_name}', ${deviceId})`;
     await client.query(query);
   }
 }
@@ -369,7 +369,8 @@ async function processIncomingData(dataObj, dbName) {
     for (let frequency in dataObj.data) {
       let startTime = [Math.floor(new Date().getTime()/1000), false];
       const freqObj = dataObj.data[frequency];
-      await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
+      const channel_name = dataObj.data[frequency]["channel-name"];
+      await updateChannelInfo(dataObj["soc-id"], frequency, channel_name, dbName);
       const channelId = (await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)).rows[0]["c_id"];
       if ("strength" in freqObj) {
         for (let timePeriod in freqObj.strength) {
