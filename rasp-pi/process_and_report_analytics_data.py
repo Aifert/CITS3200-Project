@@ -515,7 +515,7 @@ def generate_address() -> str:
     port = DEFAULT_PORT
     address = f"{ip_address}:{port}"
     #print(address) #DEBUG
-	return json.loads(subprocess.run(["curl localhost:4040/api/tunnels"], capture_output=True, shell=True).stdout)["tunnels"][0]["public_url"]
+    return json.loads(subprocess.run(["curl localhost:4040/api/tunnels"], capture_output=True, shell=True).stdout)["tunnels"][0]["public_url"]
 
 # FOR EACH SESChannel IN SES_channels WITH DATA, REPRESENT IN JSON THE CONTENTS OF YOUR utilization_states AND signal_strength_samples
 # ...AND INCLUDE message_id AND address AND soc-id METADATA
@@ -626,8 +626,8 @@ def main():
     #python global statements (for assigning to our global variables)
     
     subprocess.run(["pkill -9 -f ngrok"], shell=True)
-	subprocess.Popen(["ngrok http http://localhost:4001"], shell=True, stdout = subprocess.DEVNULL)
-	time.sleep(1)
+    subprocess.Popen(["ngrok http http://localhost:4001"], shell=True, stdout = subprocess.DEVNULL)
+    time.sleep(1)
     global SES_channels
     parse_SES_channels() #Just so the data structures get cleared nicely, and its a quick operation, do it again
 
