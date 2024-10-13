@@ -233,7 +233,6 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
       }
       responseStreams[cId].push(res);
       console.log("added")
-      await stopMonitor(new_sdr_url, headers);
       responseStream = await startMonitorRadio(new_sdr_url, params, headers);
       res.setHeader('Content-Type', 'stream');
       responseStream.pipe(res);
