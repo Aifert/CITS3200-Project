@@ -19,6 +19,7 @@ async function startMonitorRadio(SDR_URL, params, headers) {
         headers: headers,
         responseType: 'stream',
         insecureHTTPParser: true,
+        rejectUnauthorized: false,
       });
 
       return streamResponse.data;

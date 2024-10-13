@@ -8,6 +8,7 @@ package server
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"net/http"
 	"sync"
 	"radio-streaming/internal/pool"
@@ -30,6 +31,8 @@ var monitoringService *monitor.MonitoringService
 func StartServer() {
 	// Initialize connection pool
 	connPool := pool.NewConnectionPool()
+	freqStore := 0
+	fileStore := ""
 
 	// Define HTTP handlers
 	http.HandleFunc("/stream", func(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +40,7 @@ func StartServer() {
 	})
 
 	http.HandleFunc("/tune", func(w http.ResponseWriter, r *http.Request) {
-		TuneHandler(w, r, connPool)
+		TuneHandler(w, r, connPool, &freqStore)
 	})
 
 	http.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +84,7 @@ func StreamHandler(w http.ResponseWriter, r *http.Request, connPool *pool.Connec
 
 // Allows clients to change the audio source being streamed.
 // Usage [Address]:4001/tune?["file=blahblah" OR "freq=blahblah"]
-func TuneHandler(w http.ResponseWriter, r *http.Request, connPool *pool.ConnectionPool) {
+func TuneHandler(w http.ResponseWriter, r *http.Request, connPool *pool.ConnectionPool, freqStore *int64) {
 	file := r.URL.Query().Get("file")
 	freq := r.URL.Query().Get("freq")
 
@@ -90,9 +93,9 @@ func TuneHandler(w http.ResponseWriter, r *http.Request, connPool *pool.Connecti
 		fileMutex.Lock()
 		currentFile = "pkg/audio/" + file  // Update the current file
 		fileMutex.Unlock()
-
+		*freqStore := rand.IntN(10000)+1
 		// Re-stream the new file to all clients
-		go stream.StreamFile(connPool, currentFile)
+		go stream.StreamFile(connPool, currentFile, freqStore)
 	} else if freq != "" {
 		// Placeholder for radio streaming
 		fmt.Fprintf(w, "Tuning to frequency: %s", freq)
@@ -112,8 +115,8 @@ func TuneHandler(w http.ResponseWriter, r *http.Request, connPool *pool.Connecti
 
 		// Simulate some work
 		fmt.Println("Monitoring...")
-
-		go stream.StreamFrequency(connPool);
+		*freqStore = freq
+		go stream.StreamFrequency(connPool, freqStore);
 
 
 

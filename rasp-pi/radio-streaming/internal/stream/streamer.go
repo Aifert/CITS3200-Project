@@ -42,10 +42,14 @@ func WaitForFileSize(filePath string, sizeLimit int64, timeout time.Duration) er
 // Continuously reads audio data from the provided content and broadcasts it to all clients
 //
 // Adapted from https://github.com/Icelain/radio/blob/main/main.go
-func stream(connectionPool *pool.ConnectionPool, filePath string, delay time.Duration) {
+func stream(connectionPool *pool.ConnectionPool, freq *int64, filePath string, delay time.Duration) {
     buffer := make([]byte, BUFFERSIZE)
+    thisStreamFreq := *freq
 
     for {
+        if *freq != thisStreamFreq {
+            return
+        }
         file, err := os.Open(filePath)
         if err != nil {
             log.Printf("Error opening file: %v", err)
@@ -59,6 +63,9 @@ func stream(connectionPool *pool.ConnectionPool, filePath string, delay time.Dur
         defer ticker.Stop()
 
         for range ticker.C {
+            if *freq != thisStreamFreq {
+                return
+            }   
             // Read data in chunks
             n, err := file.Read(buffer)
             if err == io.EOF {
@@ -108,7 +115,7 @@ func CalculateDelayForMP3(filePath string) (time.Duration, error) {
 }
 
 // Logic for streaming a file to clients
-func StreamFile(cp *pool.ConnectionPool, filePath string) {
+func StreamFile(cp *pool.ConnectionPool, freq *int64, filePath string) {
     // Calculate the delay
     delay, err := CalculateDelayForMP3(filePath)
     if err != nil {
@@ -117,11 +124,11 @@ func StreamFile(cp *pool.ConnectionPool, filePath string) {
     }
 
     // Stream the file content
-    go stream(cp, filePath, delay)
+    go stream(cp, freq, filePath, delay)
 }
 
 // Logic for streaming a frequency to clients
-func StreamFrequency(cp *pool.ConnectionPool) {
-	StreamFile(cp, "pkg/audio/stream.mp3");
+func StreamFrequency(cp *pool.ConnectionPool, freq *int64) {
+	StreamFile(cp, freq, "pkg/audio/stream.mp3");
 }
 
