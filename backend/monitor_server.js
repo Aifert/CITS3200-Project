@@ -6,18 +6,14 @@ async function startMonitorRadio(SDR_URL, params, headers) {
     const queryParams = Object.entries(params)
       .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
       .join('&');
-    NODE_TLS_REJECT_UNAUTHORIZED=0
     const paramsStr = queryParams ? `?${queryParams}` : '';
     console.log(`${SDR_URL}tune${paramsStr}`)
     const tuneResponse = await axios.get(`${SDR_URL}tune${paramsStr}`, {
-      headers: headers,
       insecureHTTPParser: true,
       rejectUnauthorized: false,
     });
-
     if (tuneResponse.status == 200){
         streamResponse = await axios.get(`${SDR_URL}stream`, {
-        headers: headers,
         responseType: 'stream',
         insecureHTTPParser: true,
         rejectUnauthorized: false,
