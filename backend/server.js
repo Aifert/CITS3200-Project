@@ -241,9 +241,8 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
     console.error('Error occurred while getting channel:', error);
     if (!res.headersSent) {
       res.status(500).send({
-        message: 'Error occurred while getting channel',
+        message: `Error occurred while getting ${newInfo}`,
         error: error.message,
-        addr: newInfo,
       });
     }
   }
