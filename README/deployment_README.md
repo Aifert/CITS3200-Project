@@ -40,3 +40,46 @@ You'll need to configure the following GitHub Secrets in your repository:
 
 ## Step 3: Set Up Docker Hub Webhooks
 Go to your Docker Hub repository and set up a webhook with the Azure webhook URL (found in Azure's Deployment Center) for both your web and frontend images. This will automatically trigger deployments when new Docker images are pushed.
+
+## Step 4: Include this in your docker-compose in Deployment Center
+
+``` bash
+version: '3.8'
+services:
+  web:
+    image: yelaoshi/web:latest
+    environment:
+      - NODE_ENV=production
+      - PORT=9000
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_NAME=mydb
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      - db
+    command: node backend/server.js
+
+  db:
+    image: yelaoshi/db:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+
+  frontend:
+    image: yelaoshi/frontend:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    command: npm start
+
+  nginx:
+    image: yelaoshi/nginx-custom:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+      - frontend
+```

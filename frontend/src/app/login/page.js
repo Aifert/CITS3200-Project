@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 const LoginPage = () => {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const URL = process.env.NEXT_PUBLIC_URL || 'http://localhost';
+    const URL = process.env.NEXTAUTH_URL || 'http://localhost';
 
     useEffect(() => {
         document.title = "Login Page";
-        
+
         if (status === 'authenticated') {
             const searchParams = new URLSearchParams(window.location.search);
             const requestedUrl = searchParams.get('requestedUrl');
