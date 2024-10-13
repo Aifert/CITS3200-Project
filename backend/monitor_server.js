@@ -1,12 +1,12 @@
 const axios = require('axios');
-
+NODE_TLS_REJECT_UNAUTHORIZED=0
 async function startMonitorRadio(SDR_URL, params, headers) {
   try {
     // First, tune to the specified file
     const queryParams = Object.entries(params)
       .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
       .join('&');
-
+    NODE_TLS_REJECT_UNAUTHORIZED=0
     const paramsStr = queryParams ? `?${queryParams}` : '';
     console.log(`${SDR_URL}tune${paramsStr}`)
     const tuneResponse = await axios.get(`${SDR_URL}tune${paramsStr}`, {
