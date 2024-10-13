@@ -25,7 +25,7 @@
 
 #### Parameters Example
 
-	/data/upload?soc-id=162475163&address=128.10.20.30:8080&data={162475000:{usage:[1724322719, false],strength={1724322719:-75.1}}}
+	/data/upload?soc-id=162475163&address=128.10.20.30:8080&data={162475000:{usage:[1724322719, false],strength={1724322719:-75.1},channel-name=Fremantle}}
 
 	{
 		"soc-id": 162475163,
@@ -40,7 +40,8 @@
 				"strength" {
 					1724322719: -75.1,
 					1724322724: -73.2
-				}
+				},
+				"channel-name": Fremantle,
 			},
 			163825000: {
 				"usage": [
@@ -49,7 +50,8 @@
 				"strength" {
 					1724322600: -105.1,
 					1724322724: -103.2
-				}
+				},
+				"channel-name": Marble Bar,
 			}
 		}
 	}

@@ -331,8 +331,8 @@ async function updateDeviceInfo(dataObj, dbName) {
   await recheckConnection(dbName);
   let query = "";
   if (await isDeviceNew(dataObj["soc-id"], dbName)) {
-    query = `INSERT INTO "devices" ("d_id", "d_address", "d_port")
-                  VALUES (${dataObj["soc-id"]}, '${dataObj.address.split(":")[0]}', ${dataObj.address.split(":")[1]})`;
+    query = `INSERT INTO "devices" ("d_id", "d_address", "d_port", "d_stream")
+                  VALUES (${dataObj["soc-id"]}, '${dataObj.address.split(":")[0]}', ${dataObj.address.split(":")[1]}, 0) `;
   } else {
     query = `UPDATE "devices" SET "d_address" = '${dataObj.address.split(":")[0]}',
                    "d_port" = ${dataObj.address.split(":")[1]}
@@ -347,11 +347,11 @@ async function isChannelNew(deviceId, freq, dbName) {
   return (await client.query(query)).rows.length === 0;
 }
 
-async function updateChannelInfo(deviceId, freq, dbName) {
+async function updateChannelInfo(deviceId, freq, channel_name, dbName) {
   await recheckConnection(dbName);
   if (await isChannelNew(deviceId, freq, dbName)) {
     const query = `INSERT INTO "channels" (c_freq, c_name, d_id)
-                  VALUES (${freq}, 'Channel ${freq}', ${deviceId})`;
+                  VALUES (${freq}, '${channel_name}', ${deviceId})`;
     await client.query(query);
   }
 }
@@ -369,7 +369,8 @@ async function processIncomingData(dataObj, dbName) {
     for (let frequency in dataObj.data) {
       let startTime = [Math.floor(new Date().getTime()/1000), false];
       const freqObj = dataObj.data[frequency];
-      await updateChannelInfo(dataObj["soc-id"], frequency, dbName);
+      const channel_name = dataObj.data[frequency]["channel-name"];
+      await updateChannelInfo(dataObj["soc-id"], frequency, channel_name, dbName);
       const channelId = (await client.query(`SELECT c_id FROM "channels" WHERE c_freq = ${frequency} AND d_id = ${dataObj["soc-id"]}`)).rows[0]["c_id"];
       if ("strength" in freqObj) {
         for (let timePeriod in freqObj.strength) {
@@ -581,6 +582,47 @@ async function getAddressFromChannelId(dbName, c_id) {
   }
 }
 
+async function isValidStream(dbName, c_id) {
+  try {
+     await recheckConnection(dbName);
+     let query = `SELECT d.d_stream, d.d_id, c.c_freq FROM "devices" AS d JOIN "channels" AS c ON c.d_id = d.d_id WHERE c.c_id = ${c_id}`;
+     const res = (await client.query(query)).rows[0]
+     console.log(res);
+     if (res["d_stream"] == 0) {
+      query = `UPDATE "devices" SET d_stream = ${res["c_freq"]} WHERE d_id = ${res["d_id"]}`
+      await client.query(query);
+      return true;
+     } else if (res["d_stream"] == res["c_freq"]) {
+      return true;
+     }
+     return false;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function resetStream(dbName, c_id) {
+  await recheckConnection(dbName);
+  let query = `UPDATE "devices" SET d_stream = 0 WHERE d_id = (SELECT MAX(d_id) FROM "channels" WHERE c_id = ${c_id})`;
+  await client.query(query);
+}
+
+async function getDeviceStream(dbName, d_id) {
+  await recheckConnection(dbName);
+  let query = `SELECT MAX(d_stream) FROM "devices" WHERE d_id = ${d_id}`;
+  return (await client.query(query)).rows[0]["max"];
+}
+
+async function getStreamChannelFromDevice(dbName, d_id) {
+  let query = `SELECT MAX(c_id) FROM "channels" WHERE c_freq = (SELECT MAX(d_stream) FROM "devices" WHERE d_id = ${d_id})`
+  let res = await client.query(query);
+
+  if (res.rows.length == 0) {
+    return -1;
+  }
+  return res.rows[0]["max"];
+}
+
 module.exports = {
   getAliveChannels,
   getOfflineChannels,
@@ -591,7 +633,11 @@ module.exports = {
   generateStrengthDataDump,
   generateUtilDataDump,
   checkNotificationState,
-  getAddressFromChannelId
+  getAddressFromChannelId,
+  isValidStream,
+  resetStream,
+  getDeviceStream,
+  getStreamChannelFromDevice,
 }
 
 
