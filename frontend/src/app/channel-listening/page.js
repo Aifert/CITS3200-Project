@@ -150,25 +150,21 @@ const DashboardPage = () => {
     }
   };
 
-  const handleStateClick = (channel, startStream) => {
+  const handleStateClick = async (channel, startStream) => {
     const selectedChannel = channelData.find(item => item.name === channel);
     const selectedChanneldata = data.find(item => item.name === channel);
-
-    if (selectedChannel) {
       const audioElement = audioRef.current;
       const sourceElement = document.getElementById('audioSource');
 
-      const testUrl = `${backendUrl}monitor-channels/start?id=${selectedChannel.id}`;
+    if (selectedChannel) {
 
+      const testUrl = `${backendUrl}monitor-channels/start?id=${selectedChannel.id}`;
 
       ///// for now set to play if OFFLINE, need to change this
       if (startStream) {
         audioElement.load();
-
-        console.log(testUrl);
-
         sourceElement.src = testUrl;
-
+        console.log(sourceElement.src);
         audioElement.play().catch(error => {
           console.error('Error playing audio:', error);
         });
@@ -177,6 +173,11 @@ const DashboardPage = () => {
       else {
         audioElement.pause();
         sourceElement.src = "";
+        try {
+          audioElement.load()
+        } catch (error) {
+          console.log("ignoring empty load error");
+        }
       }
 
     } else {
