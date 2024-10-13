@@ -43,3 +43,7 @@ This document provides an easy-to-understand summary of the security measures in
 - **API Key Security**: API keys for external integrations are generated using secure methods and stored in a way that ensures no one can retrieve them. Each key is linked to a specific user or device and is verified before access is granted.
 
 - **API Key Expiry & Management**: We recommend regularly rotating API keys to limit exposure and revoking any keys that are no longer in use.
+
+## 8. Known Defect - Streaming Endpoint
+- **Unsecured Endpoint**: Currently, the endpoint just for streaming from a raspberry pi is inauthenticated. This is due to the Ngrok tunnelling service, as it doesn't allow an IP whitelist on its free plan (which is used for development). The Ngrok URL is randomised and hidden to the user however, so it would be difficult to hijack.
+- **Solution**: If a certificate is made for the Azure WebApp, and an IP whitelist only allowing connections from the verified WebApp, this defect would no longer be an issue
