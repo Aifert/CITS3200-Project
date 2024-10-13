@@ -322,7 +322,7 @@ app.post('/sdr/upload_data', async (req, res) => {
 
   const compareResponse = await compareApiKey(apiKey);
 
-  if (compareResponse == true || true) {
+  if (compareResponse == true) {
     try{
       const response = await processIncomingData(req.body, "mydb");
 
