@@ -100,20 +100,15 @@ RTL_POWER_OUTPUT_FILE_NAME = 'rtl_power_output.csv'
 RTL_POWER_IN_PROGRESS_FILE_NAME = 'rtl_power_in_progress.csv'
 RTL_POWER_OUTPUT_FOLDER_NAME = 'rtl_powerOutput'
 NUM_RTL_POWER_CONTEXT_COLUMNS = 6
-K: float = 2.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
-# ...raise this value to raise your squelch floor for activity!
 DEFAULT_PORT: int = 8080 #port number to send to server as where we'll expect communication
-SERVER_ADDRESS: str = 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/sdr' #server's URL
 DATA_ENDPOINT_FOR_SERVER: str = '/upload_data' #where we should POST the data we gather
 MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS: int = 30 #timeout parameter to requests.post
 RTL_POWER_GAIN_DB: int = 0 #gain to add to rtl_power output, needs to be set else uses automatic (throws our baseline off)
 RTL_POWER_SDR_DEVICE_INDEX: int = 0 #using RTL-SDRv4 number 0 (of [0, 1]) since 1 is used for audio streaming
 RTL_POWER_INTEGRATION_INTERVAL_SECONDS: int = 1 #number of seconds between each sample, rtl_power supports a minimum of 1sec
 RTL_POWER_EXIT_TIMER_SECONDS: int = 60 #number of seconds rtl_power will sample data for before outputting a data file, which we then parse & attempt to send to the server
-API_KEY: str = 'joseph-bGNgkmouTMk8xj1GDwiVYbXHt5wb94f6U2XAB3ac7o' #(TODO, needs to be read from the config txt file on boot)
 
 # GLOBAL VARIABLES
-targeting_VHF: bool = False #aiming to analyze Very High Frequency range, False means Ultra High Frequency range
 targeting_test_range: bool = False #set to True to target the test range in CONSTANTS
 min_targeted_frequency_hz: int #minimum SESChannelList.csv frequency we are analyzing
 max_targeted_frequency_hz: int #maximum SESChannelList.csv frequency we are analyzing
@@ -133,6 +128,12 @@ sliding_windows_thresholds_above_noise_floor_db: List[float] = [] #threshold abo
 # ...int((channel_frequency_hz - min_rtl_power_frequency_hz) / sliding_windows_band_width_hz)
 message_id: int = 0 # tally for how many messages sent to the server while running, to send with each update, so DB knows if data has been lost since last period
 data_queue = [] #queue for data strings that need to be sent to the web server
+# USB READS
+api_key: str = None #(read from the config.txt file on USB on boot)
+targeting_VHF: bool = True #aiming to analyze Very High Frequency range, False means Ultra High Frequency range, read from config.txt file on USB from boot
+server_address: str = 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net/sdr' #server's URL
+K: float = 2.0 #multiplier for associated_standard_deviation calculation when setting sliding_windows_thresholds_above_noise_floor_db
+# ...raise this value to raise your squelch floor for activity!
 
 # FUNCTIONS
 
@@ -554,11 +555,11 @@ def upload_data(json_data_to_upload: str) -> bool:
     try:
         while len(data_queue) > 0:
             next_data = data_queue[0]
-            url = f"{SERVER_ADDRESS}{DATA_ENDPOINT_FOR_SERVER}"
+            url = f"{server_address}{DATA_ENDPOINT_FOR_SERVER}"
             #headers for the request
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {API_KEY}"
+                "Authorization": f"Bearer {api_key}"
             }
             #POST the request
             response = requests.post(url, data=next_data, headers=headers, timeout=MAX_TIME_TO_SEND_DATA_TO_SERVER_SECONDS, verify=False)
@@ -622,12 +623,23 @@ def parse_SES_channels():
     # ...ensure there is at least 1Hz difference between min & max, else rtl_power will generate a file 0.5Gb large with a sample rate of 0Hz! Insert this 1Hz if it's needed.
     set_rtl_power_frequency_range()
 
+def read_environment_variables_from_USB():
+    global api_key
+    global targeting_VHF
+    global server_address
+    global K
+    api_key = str(os.environ.get('api_key'))
+    targeting_VHF = bool(os.environ.get('targeting_VHF'))
+    server_address = str(os.environ.get('server_address'))
+    K = float(os.environ.get('k'))
+    print(api_key) #DEBUG
+    print(targeting_VHF) #DEBUG
+    print(server_address) #DEBUG
+    print(K) #DEBUG
+
 def main():
     #python global statements (for assigning to our global variables)
     
-    subprocess.run(["pkill -9 -f ngrok"], shell=True)
-    subprocess.Popen(["ngrok http http://localhost:4001"], shell=True, stdout = subprocess.DEVNULL)
-    time.sleep(1)
     global SES_channels
     parse_SES_channels() #Just so the data structures get cleared nicely, and its a quick operation, do it again
 
@@ -704,6 +716,11 @@ def copy_new_csv_data():
     shutil.copyfile(full_path_to_rtl_power_in_progress, full_path_to_rtl_power_output)
 
 if __name__ == "__main__":
+    #get environment variables from the USB config.txt
+    read_environment_variables_from_USB()
+    subprocess.run(["pkill -9 -f ngrok"], shell=True)
+    subprocess.Popen(["ngrok http http://localhost:4001"], shell=True, stdout = subprocess.DEVNULL)
+    time.sleep(1)
     parse_SES_channels()
     first_time = False #So we don't parse the file on the first run
     while True:
