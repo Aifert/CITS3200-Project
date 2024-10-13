@@ -5,8 +5,8 @@ import uuid #for receiving MAC address of SoC to hash & send a portion of the di
 def get_stream(url):
 	mac = uuid.getnode()
 	hashed_mac = hashlib.sha256(str(mac).encode()).hexdigest()
-    soc_id = int(hashed_mac[:4], 16)
-
+	soc_id = int(hashed_mac[:4], 16)
+	print(soc_id)
 	s = requests.Session()
 	while True:
 		try:
@@ -20,7 +20,7 @@ def get_stream(url):
 						headers = {
 						"Content-Type": "application/octet-stream",
 						"Authorization": f"Bearer {API_KEY}",
-						"Device-Id": soc_id,
+						"Device-Id": str(soc_id),
 						}
 						requests.post(serverURL, data=line, headers=headers, timeout=5, verify=False)
 		except:
