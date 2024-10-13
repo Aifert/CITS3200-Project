@@ -30,8 +30,11 @@ After it boots up again run `rtl_test` at the terminal with the RTL-SDR plugged 
 
 (source: https://www.rtl-sdr.com/V4/)
 
-## Process For Gathering Analytics Data
-As outlined in process_and_report_analytics_data.py
+## Install ngrok
+`cd /usr/local/bin`  
+`sudo wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-arm64.tgz`  
+`sudo tar xvzf ./ngrok-v3-stable-linux-arm64.tgz -C .`  
+`ngrok authtoken 2nNMZKDeuUYuAlFNRGSlrCidFyB_7o94W8jSupfj9LgHMQdKg`  
 
 ## Run on boot
 ### Setup Information
