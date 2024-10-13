@@ -572,14 +572,16 @@ async function santityCheckDatabase(dbName) {
 }
 
 async function getAddressFromChannelId(dbName, c_id) {
+  return ["https://f8a2-2001-8003-907b-7600-4362-c75b-8bcb-57d4.ngrok-free.app/", {freq: 477112500}];
+  /*
   try {
      await recheckConnection(dbName);
      let query = `SELECT d.d_address, d.d_port, c.c_freq FROM "devices" AS d JOIN "channels" AS c ON c.d_id = d.d_id WHERE c.c_id = ${c_id}`;
      const res = (await client.query(query)).rows[0]
-     return [`http://${res.d_address}/`, {freq: res.c_freq}];
+     return [`${res.d_address}/`, {freq: res.c_freq}];
   } catch (error) {
     throw error;
-  }
+  }*/
 }
 
 async function isValidStream(dbName, c_id) {
