@@ -115,9 +115,9 @@ func CalculateDelayForMP3(filePath string) (time.Duration, error) {
 }
 
 // Logic for streaming a file to clients
-func StreamFile(cp *pool.ConnectionPool, freq *int, filePath string) {
+func StreamFile(cp *pool.ConnectionPool, freq *int, filePath string, delayPath string) {
     // Calculate the delay
-    delay, err := CalculateDelayForMP3(filePath)
+    delay, err := CalculateDelayForMP3(delayPath)
     if err != nil {
         log.Printf("Error reading sample rate: %v", err)
         return
@@ -129,6 +129,6 @@ func StreamFile(cp *pool.ConnectionPool, freq *int, filePath string) {
 
 // Logic for streaming a frequency to clients
 func StreamFrequency(cp *pool.ConnectionPool, freq *int) {
-	StreamFile(cp, freq, "pkg/audio/stream.mp3");
+	StreamFile(cp, freq, "pkg/audio/stream.mp3", "pkg/audio/delaystream.mp3");
 }
 

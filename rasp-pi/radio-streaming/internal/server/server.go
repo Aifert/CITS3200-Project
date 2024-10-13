@@ -94,7 +94,7 @@ func TuneHandler(w http.ResponseWriter, r *http.Request, connPool *pool.Connecti
 		fileMutex.Unlock()
 		*freqStore = rand.Int()
 		// Re-stream the new file to all clients
-		go stream.StreamFile(connPool, freqStore, currentFile)
+		go stream.StreamFile(connPool, freqStore, currentFile, currentFile)
 	} else if freq != "" {
 		// Placeholder for radio streaming
 		fmt.Fprintf(w, "Tuning to frequency: %s", freq)
