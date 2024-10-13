@@ -224,9 +224,9 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
     await remFromList(res, cId);
   });
 
+  const newInfo = await getAddressFromChannelId("mydb", cId);
+  const new_sdr_url = newInfo[0];
   try {
-      const newInfo = await getAddressFromChannelId("mydb", cId);
-      const new_sdr_url = newInfo[0];
       const params = newInfo[1];
       if (!(cId in responseStreams)) {
         responseStreams[cId] = []
@@ -243,6 +243,7 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
       res.status(500).send({
         message: 'Error occurred while getting channel',
         error: error.message,
+        addr: newInfo,
       });
     }
   }
