@@ -33,7 +33,7 @@ func StartRadioMonitoring(frequency string, freqStore int) (*MonitoringService, 
 		"-s", "22050", // Sample rate
 		"-g", "1",    // Gain (adjust as needed)
 		"-d", "1", //TODO: Add device specifier later when 2 devices are availible
-		"-l", "5",
+		"-l", "3",
 	)
 
 
@@ -50,7 +50,7 @@ func StartRadioMonitoring(frequency string, freqStore int) (*MonitoringService, 
 		"-f", "mp3",             // Output format
 		"-write_xing", "0",      // Do not write Xing header
 		"-id3v2_version", "0",   // Do not write ID3v2 tags
-		"-af", "afftdn=nr=12, lowpass=f=1500, highpass=f=50 ",
+		"-af", "afftdn=nr=15, lowpass=f=1000, highpass=f=50 ",
 		"-",                     // Output to stdout
 				 // Apply Fast Fourier Transform to filter white noise
 	)
