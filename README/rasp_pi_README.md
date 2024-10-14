@@ -34,7 +34,9 @@ After it boots up again run `rtl_test` at the terminal with the RTL-SDR plugged 
 `cd /usr/local/bin`  
 `sudo wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-arm64.tgz`  
 `sudo tar xvzf ./ngrok-v3-stable-linux-arm64.tgz -C .`  
-`ngrok authtoken 2nNMZKDeuUYuAlFNRGSlrCidFyB_7o94W8jSupfj9LgHMQdKg`  
+`ngrok authtoken <NGROK AUTH TOKEN>`  
+You should source or supply your own ngrok token to be used to stream from the raspberry pi. A free account will suffice.
+(Note: A previous version of this documentation has a token included as default, that token is no longer valid)
 
 ## Run on boot
 ### Setup Information

@@ -4,8 +4,9 @@ Project RRMS {
 
 Table Devices {
   d_id integer [primary key, note: "Unique preallocated random id identifying a specific raspberry pi"]
-  d_address inet [not null, note: "Current Public IP address for this raspberry pi"]
-  d_port integer [not null, note: "Current Port for accessing this raspberry pi"]
+  d_address varchar [not null, note: "Current NGrok URL for this raspberry pi"]
+  d_port integer [not null, note: "Current Port for accessing this raspberry pi (now unused)"]
+  d_stream integer [not null, note: "Current frequency being streamed from this device"]
 }
 
 Table Channels {
@@ -13,7 +14,6 @@ Table Channels {
   d_id integer [not null]
   c_name varchar2 [not null, note: "DFES Channel name"]
   c_freq integer  [not null, note: "DFES Channel frequency"]
-  c_endpoint integer [note: "Unique random integer, which acts as the HTTP endpoint for streaming"]
 }
 
 Table Utilisation {
@@ -21,8 +21,6 @@ Table Utilisation {
   c_id integer [not null]
   a_start_time integer [not null, note: "Start time for a period where channel was used/was being monitored"]
   a_end_time integer [note: "End time for a period where channel was used, if null assume ongoing"]
-  duration integer [note: "For ease of use, =end_time-start_time"]
-  is_active bool [default: false, note: "True=no data because channel was being monitored"]
 }
 
 Table Strength {
@@ -32,18 +30,6 @@ Table Strength {
   s_strength float  [not null, note: "Measured in Dbm"]
 }
 
-Table Sessions {
-  session_id integer [primary key, increment, note: "identifies a client session to track ongoing monitoring"]
-  auth_token varchar2 [not null, note: "Entra-ID token for verification - Not sure if necessary"]
-}
-
-Table Session_Listeners {
-  session_id integer [primary key]
-  c_id integer [primary key]
-}
-
 Ref: Devices.d_id < Channels.d_id
 Ref: Channels.c_id < Utilisation.c_id
 Ref: Channels.c_id < Strength.c_id
-Ref: Sessions.session_id < Session_Listeners.session_id
-Ref: Session_Listeners.c_id > Channels.c_id
