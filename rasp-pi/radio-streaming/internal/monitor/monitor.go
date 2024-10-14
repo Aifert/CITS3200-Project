@@ -5,21 +5,22 @@ import (
 	"os"
 	"os/exec"
 	"log"
+	"strconv"
 )
 
 type MonitoringService struct {
 	RtlFmCmd   *exec.Cmd
-	FFmpegCmd  *exec.Cmd
+	FFmpegCmdOutput  *exec.Cmd
 	OutputFile string
 }
 
 // startRadioMonitoring starts the rtl_fm process at the given frequency,
-func StartRadioMonitoring(frequency string) (*MonitoringService, error) {
+func StartRadioMonitoring(frequency string, freqStore int) (*MonitoringService, error) {
 	// Generate the output file path
-	outputFile := fmt.Sprintf("./pkg/audio/stream.mp3")
+	outputFile := fmt.Sprintf("./pkg/audio/stream"+strconv.Itoa(freqStore)+".mp3")
 
 	// Create or truncate the output file
-	file, err := os.Create(outputFile)
+	oFile, err := os.Create(outputFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create output file: %w", err)
 	}
@@ -35,41 +36,45 @@ func StartRadioMonitoring(frequency string) (*MonitoringService, error) {
 		"-l", "3",
 	)
 
-	// Prepare the ffmpeg command to encode raw audio to MP3
-	ffmpegCmd := exec.Command(
+
+
+	ffmpegCmdOutput := exec.Command(
 		"ffmpeg",
 		"-f", "s16le",           // Input format: 16-bit little-endian PCM
 		"-ar", "22050",          // Input sample rate
 		"-ac", "1",              // Number of audio channels
+		
 		"-i", "pipe:0",          // Input from stdin
 		"-codec:a", "libmp3lame", // Audio codec
 		"-b:a", "128k",          // Audio bitrate
 		"-f", "mp3",             // Output format
 		"-write_xing", "0",      // Do not write Xing header
 		"-id3v2_version", "0",   // Do not write ID3v2 tags
+		"-af", "afftdn=nr=15, lowpass=f=1000, highpass=f=50 ",
 		"-",                     // Output to stdout
+				 // Apply Fast Fourier Transform to filter white noise
 	)
 
 	// Pipe rtl_fm output to ffmpeg input
 	rtlFmStdout, err := rtlFmCmd.StdoutPipe()
 	if err != nil {
-		file.Close()
+		oFile.Close()
 		return nil, fmt.Errorf("failed to get rtl_fm stdout: %w", err)
 	}
-	ffmpegCmd.Stdin = rtlFmStdout
+	ffmpegCmdOutput.Stdin = rtlFmStdout
 
 	// Set ffmpeg output to the file
-	ffmpegCmd.Stdout = file
+	ffmpegCmdOutput.Stdout = oFile
 
 	// Start rtl_fm command
 	if err := rtlFmCmd.Start(); err != nil {
-		file.Close()
+		oFile.Close()
 		return nil, fmt.Errorf("failed to start rtl_fm: %w", err)
 	}
 
-	// Start ffmpeg command
-	if err := ffmpegCmd.Start(); err != nil {
-		file.Close()
+
+	if err := ffmpegCmdOutput.Start(); err != nil {
+		oFile.Close()
 		rtlFmCmd.Process.Kill()
 		rtlFmCmd.Wait()
 		return nil, fmt.Errorf("failed to start ffmpeg: %w", err)
@@ -78,10 +83,10 @@ func StartRadioMonitoring(frequency string) (*MonitoringService, error) {
 	// Store the commands and output file path in the MonitoringService
 	service := &MonitoringService{
 		RtlFmCmd:   rtlFmCmd,
-		FFmpegCmd:  ffmpegCmd,
+		FFmpegCmdOutput:  ffmpegCmdOutput,
 		OutputFile: outputFile,
 	}
-
+	fmt.Println("starting streaming")
 	return service, nil
 }
 
@@ -90,20 +95,21 @@ func StopRadioMonitoring(service *MonitoringService) error {
     var err error
 
     // Terminate the ffmpeg process gracefully
-    if service.FFmpegCmd != nil && service.FFmpegCmd.Process != nil {
+    if service.FFmpegCmdOutput != nil && service.FFmpegCmdOutput.Process != nil {
         // Wait for ffmpeg process to exit
-        if killErr := service.FFmpegCmd.Process.Kill(); killErr != nil {
-		log.Printf("Failed to forcefully kill ffmpeg process: %v", killErr)
-		return fmt.Errorf("failed to kill ffmpeg process: %w", err)
-	}
+        if killErr := service.FFmpegCmdOutput.Process.Kill(); killErr != nil {
+			log.Printf("Failed to forcefully kill ffmpeg process: %v", killErr)
+			return fmt.Errorf("failed to kill ffmpeg process: %w", err)
+		}
     }
+
 
     // Terminate the rtl_fm process
     if service.RtlFmCmd != nil && service.RtlFmCmd.Process != nil {
-	if killErr := service.RtlFmCmd.Process.Kill(); killErr != nil {
-		log.Printf("Failed to forcefully kill rtl_fm process: %v", killErr)
-		return fmt.Errorf("failed to kill rtl_fm process: %w", err)
-	}
+		if killErr := service.RtlFmCmd.Process.Kill(); killErr != nil {
+			log.Printf("Failed to forcefully kill rtl_fm process: %v", killErr)
+			return fmt.Errorf("failed to kill rtl_fm process: %w", err)
+		}
     }
 
     return nil

@@ -1,12 +1,13 @@
 package stream
 
 import (
-	"github.com/hajimehoshi/go-mp3"
+	//"github.com/hajimehoshi/go-mp3"
 	"io"
 	"os"
 	"log"
 	"time"
 	"fmt"
+	"strconv"
 	//"os/exec"
 	"radio-streaming/internal/pool"
 )
@@ -42,12 +43,14 @@ func WaitForFileSize(filePath string, sizeLimit int64, timeout time.Duration) er
 // Continuously reads audio data from the provided content and broadcasts it to all clients
 //
 // Adapted from https://github.com/Icelain/radio/blob/main/main.go
-func stream(connectionPool *pool.ConnectionPool, freq *int64, filePath string, delay time.Duration) {
+func stream(connectionPool *pool.ConnectionPool, freq *int, filePath string, delay time.Duration) {
     buffer := make([]byte, BUFFERSIZE)
     thisStreamFreq := *freq
+    fmt.Println("starting streaming again")
 
     for {
         if *freq != thisStreamFreq {
+			fmt.Println("starting new, closing old")
             return
         }
         file, err := os.Open(filePath)
@@ -64,6 +67,7 @@ func stream(connectionPool *pool.ConnectionPool, freq *int64, filePath string, d
 
         for range ticker.C {
             if *freq != thisStreamFreq {
+				fmt.Println("starting new, closing old")
                 return
             }   
             // Read data in chunks
@@ -84,26 +88,7 @@ func stream(connectionPool *pool.ConnectionPool, freq *int64, filePath string, d
 
 // Calculates the delay based on sample rate of MP3 file
 func CalculateDelayForMP3(filePath string) (time.Duration, error) {
-	// Wait for the file to reach BUFFERSIZE
-	err := WaitForFileSize(filePath, BUFFERSIZE, 60*time.Second)
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		return 0, err
-	}
-	defer file.Close()
-
-	decoder, err := mp3.NewDecoder(file)
-	if err != nil {
-		log.Printf("Error decoding file: %v", err)
-		return 0, err
-	}
-
-	// Get the sample rate from the decoder
-	sampleRate := decoder.SampleRate()
+	sampleRate := 22050
 	log.Printf("File Samplerate: %v", sampleRate)
 
 	// Calculate the delay using the sample rate and buffer size
@@ -115,9 +100,9 @@ func CalculateDelayForMP3(filePath string) (time.Duration, error) {
 }
 
 // Logic for streaming a file to clients
-func StreamFile(cp *pool.ConnectionPool, freq *int64, filePath string) {
+func StreamFile(cp *pool.ConnectionPool, freq *int, filePath string, delayPath string) {
     // Calculate the delay
-    delay, err := CalculateDelayForMP3(filePath)
+    delay, err := CalculateDelayForMP3(delayPath)
     if err != nil {
         log.Printf("Error reading sample rate: %v", err)
         return
@@ -128,7 +113,7 @@ func StreamFile(cp *pool.ConnectionPool, freq *int64, filePath string) {
 }
 
 // Logic for streaming a frequency to clients
-func StreamFrequency(cp *pool.ConnectionPool, freq *int64) {
-	StreamFile(cp, freq, "pkg/audio/stream.mp3");
+func StreamFrequency(cp *pool.ConnectionPool, freq *int) {
+	StreamFile(cp, freq, "pkg/audio/stream"+strconv.Itoa(*freq)+".mp3", "pkg/audio/stream"+strconv.Itoa(*freq)+".mp3");
 }
 

@@ -337,8 +337,8 @@ async function updateDeviceInfo(dataObj, dbName) {
     query = `INSERT INTO "devices" ("d_id", "d_address", "d_port", "d_stream")
                   VALUES (${dataObj["soc-id"]}, '${dataObj.address}', 9000, 0) `;
   } else {
-    query = `UPDATE "devices" SET "d_address" = '${dataObj.address.split(":")[0]}',
-                   "d_port" = ${dataObj.address.split(":")[1]}
+    query = `UPDATE "devices" SET "d_address" = '${dataObj.address}',
+                   "d_port" = 9000 
                    WHERE "d_id"=${dataObj["soc-id"]}`;
   }
   await client.query(query);
@@ -361,7 +361,7 @@ async function updateChannelInfo(deviceId, freq, channel_name, dbName) {
 
 async function processIncomingData(dataObj, dbName) {
   try{
-    await santityCheckDatabase(dbName)
+    //await santityCheckDatabase(dbName)
     await recheckConnection(dbName);
     let recentMin = `SELECT c.c_freq, j.m FROM "channels" AS c JOIN (SELECT c_id, MAX(a_start_time) AS m FROM "utilisation" WHERE a_end_time IS NULL GROUP BY c_id) AS j ON c.c_id=j.c_id`
     let results = (await client.query(recentMin)).rows;
@@ -422,7 +422,7 @@ async function processIncomingData(dataObj, dbName) {
         await client.query(query);
       }
     }
-    await santityCheckDatabase(dbName)
+    //await santityCheckDatabase(dbName)
     return "Successfully processed data"
   }  catch(error) {
     throw error;
@@ -575,8 +575,7 @@ async function santityCheckDatabase(dbName) {
 }
 
 async function getAddressFromChannelId(dbName, c_id) {
-  return ["https://f8a2-2001-8003-907b-7600-4362-c75b-8bcb-57d4.ngrok-free.app/", {freq: 477112500}];
-  /*
+
   try {
      await recheckConnection(dbName);
      let query = `SELECT d.d_address, d.d_port, c.c_freq FROM "devices" AS d JOIN "channels" AS c ON c.d_id = d.d_id WHERE c.c_id = ${c_id}`;
@@ -584,7 +583,7 @@ async function getAddressFromChannelId(dbName, c_id) {
      return [`${res.d_address}/`, {freq: res.c_freq}];
   } catch (error) {
     throw error;
-  }*/
+  }
 }
 
 async function isValidStream(dbName, c_id) {
