@@ -41,8 +41,8 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const app = express();
 app.use(express.raw({ type: 'application/octet-stream', limit: '10mb' }));
 const PORT = process.env.PORT || 9000;
-const SDR_URL =/* process.env.NEXT_PUBLIC_SDR_URL ||*/ "http://192.168.1.103:4001/";
-const PUBLIC_FRONTEND_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000/';
+const SDR_URL = process.env.NEXT_PUBLIC_SDR_URL || "http://192.168.1.103:4001/";
+const PUBLIC_FRONTEND_URL = process.env.NEXTAUTH_URL || 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net';
 
 let responseStreams = {};
 let actualResponseStreams = {};
@@ -315,7 +315,7 @@ app.get('/api_v2/notification', async (req, res) => {
     for (const elem in sendObj) {
       requestObj[elem] = sendObj[elem].includes("[")?JSON.parse(sendObj[elem]):(isNaN(sendObj[elem])?sendObj[elem]:parseInt(sendObj[elem]));
     }
-    res.send(await checkNotificationState(requestObj, "mydb")); 
+    res.send(await checkNotificationState(requestObj, "mydb"));
   } catch (error) {
     res.status(500).send({
       code: 500,
