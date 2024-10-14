@@ -107,14 +107,15 @@ func TuneHandler(w http.ResponseWriter, r *http.Request, connPool *pool.Connecti
 		}
 
 		var err error
-		monitoringService, err = monitor.StartRadioMonitoring(freq)
+		*freqStore = rand.Int()
+		monitoringService, err = monitor.StartRadioMonitoring(freq, *freqStore)
 		if err != nil {
 			fmt.Println("Error starting monitoring service:", err)
 		}
 
 		// Simulate some work
 		fmt.Println("Monitoring...")
-		*freqStore = rand.Int()
+
 		go stream.StreamFrequency(connPool, freqStore);
 
 
