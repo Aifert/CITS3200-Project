@@ -7,7 +7,9 @@ import { useRouter } from "next/navigation";
 const LoginPage = () => {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const URL = process.env.NEXTAUTH_URL || 'http://localhost';
+    const URL = 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net';
+
+    console.log("URL : ", URL);
 
     useEffect(() => {
         document.title = "Login Page";
@@ -15,10 +17,11 @@ const LoginPage = () => {
         if (status === 'authenticated') {
             const searchParams = new URLSearchParams(window.location.search);
             const requestedUrl = searchParams.get('requestedUrl');
-            const port = searchParams.get('port') || '3000';
             if (requestedUrl) {
                 const decodedUrl = decodeURIComponent(requestedUrl);
-                const redirectUrl = `${URL}:${port}${decodedUrl}`;
+                const redirectUrl = `${URL}${decodedUrl}`;
+
+                console.log(`Redirecting to: ${redirectUrl}`);
 
                 window.location.href = redirectUrl;
             } else {
@@ -34,10 +37,13 @@ const LoginPage = () => {
     const handleSignIn = async () => {
         const searchParams = new URLSearchParams(window.location.search);
         const requestedUrl = searchParams.get('requestedUrl');
-        const port = searchParams.get('port') || '3000';
+
+        console.log(requestedUrl);
         const callbackUrl = requestedUrl
-            ? `${URL}:${port}${decodeURIComponent(requestedUrl)}`
+            ? `${URL}${decodeURIComponent(requestedUrl)}`
             : '/analytics';
+
+        console.log(`Callback URL: ${callbackUrl}`);
 
         const result = await signIn("azure-ad", {
             redirect: false,

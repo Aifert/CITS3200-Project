@@ -72,80 +72,61 @@
 /data/multiple will be used whenever the server is lacking analytics data at any particular data point, and so an SoC can send the missing information, if it has it. Data will be sent as JSON - unless otherwise mentioned.
 
 
-## SoC Monitoring
+## SoC Monitoring WebServer → SoC
 
-SoC Monitoring requires a constant connection, so will utilise websockets for this purpose.
+SoC Monitoring requires a constant connection, so will a HTTP stream interface for this purpose.
 We assume the Web Server hold the IP information of the SoC already.
 
 
-### Socket soc-init
+### POST /tune
 
-#### soc-init Parameters
+#### Parameters
 
-|           |          |               |                                                                                                      |
-| --------- | -------- | ------------- | ---------------------------------------------------------------------------------------------------- |
-| **Name**  | **Type** | **Data Type** | **Description**                                                                                      |
-| type      | Required | String        | "soc-init"|
-| frequency | Required | Float         | Desired Frequency for RoIP Monitoring|
+|             |          |                   |                                                                                                  |
+| ----------- | -------- | ----------------- | ------------------------------------------------------------------------------------------------ |
+| **Name**    | **Type** | **Data Type**     | **Description**                                                                                  |
+| freq     | Required | Integer       | The Hz value the SDR should stream |
 
 
 #### Parameters Example
 
+	/tune?freq=477112500
+
 	{
-		"type": "soc-init",
-		"frequency": 162.475
+		"freq": 477112500,
 	}
+
+
+#### Responses
+
+|          |                   |                                                                     |
+| -------- | ----------------- | ------------------------------------------------------------------- |
+| **Code** | **Content-Type**  | **Example**                                                         |
+| 200      | application/json  | {"code": 200}                                                       |
+| 400      | application/json  | {"code": 400, "messages": ["Parameter 'timestamps' not provided"]} |
+| 500      | application/json  | {"code": 400, "messages": ["Internal Server Error"]}               |
 
 
 #### When to Use
 
-Soc-init is designed to be originally sent from the Web Server, when monitoring is first requested
+When changing which frequency should be streamed, send this request to the raspberry pi and rtl_fm will restart
 
-
-### Socket soc-abort
+### GET STREAM /stream
 
 #### Parameters
 
-|           |          |               |                                                 |
-| --------- | -------- | ------------- | ----------------------------------------------- |
-| **Name**  | **Type** | **Data Type** | **Description**                                 |
-| type      | Required | String        | "soc-abort"                                     |
-| frequency | Required | Float         | Frequency no longer desired for RoIP Monitoring |
+ N/A
+
+#### Responses
+
+|          |                   |                                                                     |
+| -------- | ----------------- | ------------------------------------------------------------------- |
+| **Code** | **Content-Type**  | **Example**                                                         |
+| 200      | application/json  | {"code": 200}                                                       |
+| 400      | application/json  | {"code": 400, "messages": ["Parameter 'timestamps' not provided"]} |
+| 500      | application/json  | {"code": 400, "messages": ["Internal Server Error"]}               |
 
 
-#### Parameters Example
+#### When to Use
 
-	{
-		"type": "soc-abort",
-		"frequency": 162.475
-	}
-
-
-#### Response Parameters
-
-|           |          |               |                                                 |
-| --------- | -------- | ------------- | ----------------------------------------------- |
-| **Name**  | **Type** | **Data Type** | **Description**                                 |
-| type      | Required | String        | "soc-init"                                      |
-| frequency | Required | Float         | Frequency no longer desired for RoIP Monitoring |
-
-
-
-
-#### Response Parameters Example
-
-	{
-		"type": "soc-abort",
-		"frequency": 162.475
-	}
-
-This is how the web server can indicate to an SoC that live RoIP is no longer required
-
-Soc-abort is designed to be originally sent from the web server.
-
-
-### Socket stream
-
-TBA - Need to investigate implementations.
-
-Current thoughts is either send raw binary through websockets, or use a library such as FFMPEG
+A 200 response will begin a stream, so the HTTP request does not get closed, and will stream all mp3 audio as it comes in
