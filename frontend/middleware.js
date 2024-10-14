@@ -25,7 +25,7 @@ export async function middleware(req) {
 
     loginUrl.searchParams.set('requestedUrl', encodeURIComponent(pathname));
 
-    console.log(`Redirecting to login. RequestedUrl:`, loginUrl.searchParams.get('requestedUrl'));
+    console.log(`Redirecting to login. RequestedUrl:`, loginUrl);
     return NextResponse.redirect(loginUrl);
   }
 
