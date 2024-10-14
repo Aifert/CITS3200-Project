@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 const LoginPage = () => {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const URL = process.env.NEXTAUTH_URL || 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net';
+    const URL = 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net';
 
     console.log("URL : ", URL);
 
