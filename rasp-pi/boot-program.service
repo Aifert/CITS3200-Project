@@ -1,0 +1,13 @@
+[Unit]
+Description=Boot Program Service
+After=basic.target network-online.target
+Wants=network-online.target
+Before=analytics-program.service streaming-program.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/boot-script.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
