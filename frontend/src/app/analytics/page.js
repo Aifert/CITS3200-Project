@@ -218,6 +218,7 @@ const AnalyticsPage = () => {
           dataStrength,
           isFavorite: favorites.includes(channelId),
           id: channel['channel-id'],
+          device: channel['device-id'],
         };
       });
 
@@ -335,7 +336,7 @@ const AnalyticsPage = () => {
       {channelData.map((channel, index) => (
         <div key={index} className="mb-10">
           {/* First Row: Channel Information */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4 p-4 bg-white border-b border-gray-300">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9 gap-4 p-4 bg-white border-b border-gray-300">
             <div className="flex items-center justify-center border-r border-gray-300">
               {channel.status === 'Active' ? (
                 <Link href="/channel-listening">
@@ -346,6 +347,9 @@ const AnalyticsPage = () => {
               ) : (
                 <span>{channel.status}</span>
               )}
+            </div>
+            <div className="flex col-span-1 items-center justify-center border-r border-gray-300">
+              <span> Device {channel.device}</span>
             </div>
             <div className="flex col-span-2 items-center justify-center border-r border-gray-300">
               <Link href={`/single-channel?channelId=[${channel.id}]`} className="text-blue-600 hover:underline">

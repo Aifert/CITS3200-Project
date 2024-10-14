@@ -73,6 +73,7 @@ const DynamicChannels = ({ data, handleStateClick, audioRef, sliderValue }) => {
       <thead>
         <tr>
           <th style={{ border: '1px solid gray', padding: '8px' }}>State</th>
+          <th style={{ border: '1px solid gray', padding: '8px' }}>Device</th>
           <th style={{ border: '1px solid gray', padding: '8px' }}>Channel</th>
           <th style={{ border: '1px solid gray', padding: '8px' }}>Volume</th>
           <th style={{ border: '1px solid gray', padding: '8px' }}>Frequency</th>
@@ -84,6 +85,10 @@ const DynamicChannels = ({ data, handleStateClick, audioRef, sliderValue }) => {
           <tr key={i} style={{ borderTop: '1px solid gray', borderBottom: '1px solid gray' }}>
             <td style={{ padding: '8px', textAlign: 'center' }}>
               {renderButton(row.status, row, i)}
+            </td>
+
+            <td style={{ padding: '8px', textAlign: 'center', color: 'black' }}>
+             {row.device}
             </td>
 
             {/* Remove 'Channel ' from the row.name */}
