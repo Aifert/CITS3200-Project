@@ -361,7 +361,7 @@ async function updateChannelInfo(deviceId, freq, channel_name, dbName) {
 
 async function processIncomingData(dataObj, dbName) {
   try{
-    await santityCheckDatabase(dbName)
+    //await santityCheckDatabase(dbName)
     await recheckConnection(dbName);
     let recentMin = `SELECT c.c_freq, j.m FROM "channels" AS c JOIN (SELECT c_id, MAX(a_start_time) AS m FROM "utilisation" WHERE a_end_time IS NULL GROUP BY c_id) AS j ON c.c_id=j.c_id`
     let results = (await client.query(recentMin)).rows;
@@ -422,7 +422,7 @@ async function processIncomingData(dataObj, dbName) {
         await client.query(query);
       }
     }
-    await santityCheckDatabase(dbName)
+    //await santityCheckDatabase(dbName)
     return "Successfully processed data"
   }  catch(error) {
     throw error;
