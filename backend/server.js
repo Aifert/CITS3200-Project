@@ -197,6 +197,7 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
 
   // Pass through cookies to startMonitorMP3
   const headers = req.headers;
+  console.log(req.headers)
   if (!(await isValidStream("mydb", cId))) {
      res.status(204).send({
         message: 'Channel is busy',
@@ -224,9 +225,9 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
     await remFromList(res, cId);
   });
 
+  const newInfo = await getAddressFromChannelId("mydb", cId);
+  const new_sdr_url = newInfo[0];
   try {
-      const newInfo = await getAddressFromChannelId("mydb", cId);
-      const new_sdr_url = newInfo[0];
       const params = newInfo[1];
       if (!(cId in responseStreams)) {
         responseStreams[cId] = []
@@ -241,7 +242,7 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
     console.error('Error occurred while getting channel:', error);
     if (!res.headersSent) {
       res.status(500).send({
-        message: 'Error occurred while getting channel',
+        message: `Error occurred while getting stream`,
         error: error.message,
       });
     }
