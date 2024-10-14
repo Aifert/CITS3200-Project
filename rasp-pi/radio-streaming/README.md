@@ -11,18 +11,19 @@ This project implements a Go-based radio streaming service that can stream both 
 
 1. Install Dependencies:
 ```bash
-go mod tidy
+sudo apt install golang
+sudo go mod tidy
 sudo apt install rtl-sdr # For Debian/Ubuntu
 sudo pacman -S rtl-sdr # For Arch
 ```
 
 2. Build the application
 ```bash
-go build ./cmd/main.go
+sudo go build ./cmd/main.go
 ```
 3. Run the server
 ```bash
-./main
+sudo ./main
 ```
 
 ## Usage
