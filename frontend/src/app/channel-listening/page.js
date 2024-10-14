@@ -108,6 +108,7 @@ const DashboardPage = () => {
           utilisation: analyticsForChannel?.utilisation?.average ? analyticsForChannel?.utilisation?.average.toFixed(3) : 'No data',
           strength: analyticsForChannel?.strength?.average ? analyticsForChannel?.strength?.average.toFixed(3) : 'No data',
           id: channel['channel-id'],
+          device: channel["device-id"]
         };
       });
 

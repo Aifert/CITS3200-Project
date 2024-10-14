@@ -22,6 +22,9 @@ const DynamicChannels = ({ data, handleStateClick, audioRef, sliderValue }) => {
 
   // Function to handle play/pause button clicks
   const handlePlayPauseClick = (index, channel, state) => {
+    if (channel.status != "Active") {
+      return;
+    }
     const isCurrentlyPlaying = isPlayingArray[index];
 
     // Update the play/pause state for the clicked channel and reset others to false
@@ -39,10 +42,10 @@ const DynamicChannels = ({ data, handleStateClick, audioRef, sliderValue }) => {
       if (!isNaN(volume)) {
         audioRef.current.volume = volume;
       }
-      handleStateClick(channel, true);
+      handleStateClick(channel.name, true);
     } else {
       // Pause the current channel
-      handleStateClick(channel, false);
+      handleStateClick(channel.name, false);
     }
   };
 
@@ -52,7 +55,7 @@ const DynamicChannels = ({ data, handleStateClick, audioRef, sliderValue }) => {
       <button
         onClick={() => handlePlayPauseClick(index, channel, state)}
         style={{
-          backgroundColor: isPlayingArray[index] ? 'red' : 'green',
+          backgroundColor: channel.status !== "Active" ? 'white' : isPlayingArray[index] ? 'red' : 'green',
           color: 'black',
           padding: '5px 10px',
           border: 'none',
@@ -60,7 +63,7 @@ const DynamicChannels = ({ data, handleStateClick, audioRef, sliderValue }) => {
           cursor: 'pointer',
         }}
       >
-        {isPlayingArray[index] ? 'Pause' : 'Play'}
+        {channel.status !== "Active" ? channel.status : isPlayingArray[index] ? 'Pause' : 'Play'}
       </button>
     );
   };
@@ -70,6 +73,7 @@ const DynamicChannels = ({ data, handleStateClick, audioRef, sliderValue }) => {
       <thead>
         <tr>
           <th style={{ border: '1px solid gray', padding: '8px' }}>State</th>
+          <th style={{ border: '1px solid gray', padding: '8px' }}>Device</th>
           <th style={{ border: '1px solid gray', padding: '8px' }}>Channel</th>
           <th style={{ border: '1px solid gray', padding: '8px' }}>Volume</th>
           <th style={{ border: '1px solid gray', padding: '8px' }}>Frequency</th>
@@ -80,12 +84,16 @@ const DynamicChannels = ({ data, handleStateClick, audioRef, sliderValue }) => {
         {data.map((row, i) => (
           <tr key={i} style={{ borderTop: '1px solid gray', borderBottom: '1px solid gray' }}>
             <td style={{ padding: '8px', textAlign: 'center' }}>
-              {renderButton(row.status, row.name, i)}
+              {renderButton(row.status, row, i)}
+            </td>
+
+            <td style={{ padding: '8px', textAlign: 'center', color: 'black' }}>
+             {row.device}
             </td>
 
             {/* Remove 'Channel ' from the row.name */}
             <td style={{ padding: '8px', textAlign: 'center', color: 'black' }}>
-              {row.name.replace('Channel ', '')}
+              <a href={`/single-channel?channelId=[${row.id}]`}>{row.name}</a>
             </td>
 
             {/* Volume slider control */}

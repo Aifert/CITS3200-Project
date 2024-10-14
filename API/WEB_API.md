@@ -54,8 +54,7 @@ When first loading/reloading/opening, get a list of channels to request streamin
 | Name | Type | Data Type | Description |
 | :---- | :---- | :---- | :---- |
 | session-id | Required | String | Unique string identifying the session |
-| channel-id | Optional | Integer | Radio channel name to listen in to (preferred over frequency) |
-| frequency | Optional | Float | Radio frequency to listen in to |
+| channel-id | Optional | Integer | Radio channel name to listen in to |
 
 #### Parameters Example
 
@@ -70,58 +69,18 @@ When first loading/reloading/opening, get a list of channels to request streamin
 | :---- | :---- | :---- | :---- |
 | code | Required | Integer | HTTP response code |
 | errors | Optional | List\[String\] | If response is not 2xx, error messages are here |
-| endpoint | Optional | Integer | Unique integer to be used as a streaming endpoint (Or a cryptographic key) |
+| stream | Required | A byte stream of MPEG audio
 
 #### Responses Example
 
 	{
 		"code": 200,
-		"endpoint": 642982454
+		"stream": <BYTE STREAM>
 	}
 
 #### When to Use
 
-When requesting to connect to a stream, the web server will generate an http endpoint to connect to and provide it here.
-
-### GET /monitor-channels/stop
-
-#### Parameters
-
-| Name | Type | Data Type | Description |
-| :---- | :---- | :---- | :---- |
-| session-id | Required | String | Unique string identifying the session |
-| channel-id | Optional | Integer | Radio channel name to stop listening (preferred over endpoint) |
-| endpoint | Optional | Integer | Web Server end point to stop listening to |
-
-#### Parameters Example
-
-	{
-		"session-id": 10437528,
-		"channel-id": 21892
-	}
-
-#### Responses Parameters
-
-| Name | Type | Data Type | Description |
-| :---- | :---- | :---- | :---- |
-| code | Required | Integer | HTTP response code |
-| errors | Optional | List\[String\] | If response is not 2xx, error messages are here |
-
-#### Responses Example
-
-	{
-		"code": 200
-	}
-
-#### When to Use
-
-When stopping listening to a radio stream, tell the server to stop streaming data
-
-### STREAM /monitor-channels/{endpoint}
-
-#### When to use
-
-This is not an HTTP request, it is a raw TCP socket for MP3 data streaming straight to the website. The endpoint should be unique and not guessable.
+When requesting to connect to a stream, the web server will generate an http audio stream and return it
 
 ## HTTP from Front-end → WebServer Analytics
 
