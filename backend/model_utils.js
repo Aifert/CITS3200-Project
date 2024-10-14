@@ -93,9 +93,9 @@ async function getAliveChannels(dbName) {
   // On a currently non-streaming device
   // unless the channel itself is being streamed
   const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name, ch.d_id FROM "strength" AS st INNER JOIN "channels" AS ch ON st.c_id = ch.c_id 
-                WHERE st.s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME} AND 
-                ((d_id NOT IN (SELECT d_id FROM "channels" AS c INNER JOIN "session_listeners" AS sl ON c.c_id = sl.c_id)) 
-                OR (st.c_id IN (SELECT c_id FROM "session_listeners")))`;
+                WHERE st.s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME} AND (
+                (ch.d_id, ch.c_freq) IN (SELECT d.d_id, MAX(d.d_stream) FROM "channels" AS c LEFT OUTER JOIN "devices" AS d ON d.d_id=c.d_id GROUP BY d.d_id)
+                OR (ch.d_id, 0) IN (SELECT d.d_id, MAX(d.d_stream) FROM "channels" AS c LEFT OUTER JOIN "devices" AS d ON d.d_id=c.d_id GROUP BY d.d_id))`;
   
   let res = await client.query(query);
   return convertToAPIForm(res.rows);
@@ -107,9 +107,12 @@ async function getBusyChannels(dbName) {
   // On a currently streaming device
   // but not the channel being streamed
   const query = `SELECT DISTINCT ch.c_id, ch.c_freq, ch.c_name, ch.d_id FROM "strength" AS st INNER JOIN "channels" AS ch ON st.c_id = ch.c_id 
-                WHERE st.s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME} AND 
-                ((d_id IN (SELECT d_id FROM "channels" AS c INNER JOIN "session_listeners" AS sl ON c.c_id = sl.c_id)) 
-                AND NOT (st.c_id IN (SELECT c_id FROM "session_listeners")))`;
+                WHERE st.s_sample_time > ${Math.floor(new Date().getTime()/1000) - ALIVETIME} AND NOT (
+                (ch.d_id, ch.c_freq) IN (SELECT d.d_id, MAX(d.d_stream) FROM "channels" AS c LEFT OUTER JOIN "devices" AS d ON d.d_id=c.d_id GROUP BY d.d_id)
+                OR (ch.d_id, 0) IN (SELECT d.d_id, MAX(d.d_stream) FROM "channels" AS c LEFT OUTER JOIN "devices" AS d ON d.d_id=c.d_id GROUP BY d.d_id))
+                `;
+
+                //SELECT d.d_id, MAX(d.d_stream) FROM "channels" AS c LEFT OUTER JOIN "devices" AS d ON d.d_id=c.d_id GROUP BY d.d_id;
   
   let res = await client.query(query);
   return convertToAPIForm(res.rows);

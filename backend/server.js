@@ -45,6 +45,7 @@ const SDR_URL = process.env.NEXT_PUBLIC_SDR_URL || "http://192.168.1.103:4001/";
 const PUBLIC_FRONTEND_URL = 'https://cits3200-d5bhb7d7gaeqg2b0.australiacentral-01.azurewebsites.net';
 
 let responseStreams = {};
+let actualResponseStreams = {};
 
 let is_populating = false;
 
@@ -212,6 +213,7 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
     }
     if (responseStreams[cId].length=== 0) {
       console.log("RESET")
+      actualResponseStreams[cId] = null;
       await resetStream("mydb", cId);
     }
   }
@@ -228,19 +230,25 @@ app.get('/api_v2/monitor-channels/start', async (req, res) => {
   const newInfo = await getAddressFromChannelId("mydb", cId);
   const new_sdr_url = newInfo[0];
   try {
+      res.setHeader('Content-Type', 'stream');
       const params = newInfo[1];
       if (!(cId in responseStreams)) {
         responseStreams[cId] = []
+        responseStream = await startMonitorRadio(new_sdr_url, params, headers);
+        actualResponseStreams[cId] = responseStream
+        responseStream.pipe(res);
+      } else {
+        if (actualResponseStreams[cId]) {
+          actualResponseStreams[cId].pipe(res)
+        }
       }
       responseStreams[cId].push(res);
       console.log("added")
-      responseStream = await startMonitorRadio(new_sdr_url, params, headers);
-      res.setHeader('Content-Type', 'stream');
-      responseStream.pipe(res);
 
   } catch (error) {
     console.error('Error occurred while getting channel:', error);
     if (!res.headersSent) {
+      res.setHeader('Content-Type', 'application/json');
       res.status(500).send({
         message: `Error occurred while getting stream`,
         error: error.message,

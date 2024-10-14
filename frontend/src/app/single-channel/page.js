@@ -10,6 +10,7 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip,
 
 const ChannelContent = () => {
   const [channelData, setChannelData] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [availableChannels, setAvailableChannels] = useState([]);
   const [selectedTimeScale, setSelectedTimeScale] = useState('24 hours');
@@ -26,7 +27,6 @@ const ChannelContent = () => {
   }, [searchParams]);
 
 
-  const [isPlaying, setIsPlaying] = useState(false);
   // const [currentPlayingIndex, setCurrentPlayingIndex] = useState(null);
   const [sliderValue, setSliderValue] = useState(50);
   const audioRef = useRef(null);
@@ -56,58 +56,61 @@ const ChannelContent = () => {
     }
   };
 
-// Function to toggle the play/pause state
-const handleStateClick = () => {
-  console.log(channelData);
+  const handleStateClick = async (channel) => {
+    let startStream = true;
+    if (isPlaying == channel.id) {
+      startStream = false;
+      setIsPlaying(null);
+    } else {
+      setIsPlaying(channel.id)
+    }
+      const audioElement = audioRef.current;
+      const sourceElement = document.getElementById('audioSource');
+    let selectedChannel = channel;
+    if (selectedChannel) {
 
-  const sourceElement = document.getElementById('audioSource');
+      const testUrl = `${backendUrl}monitor-channels/start?id=${selectedChannel.id}`;
 
-  const channel = channelData.name;
-  const frequency = channelData.frequency;
-  const sessionId = '12345';
+      ///// for now set to play if OFFLINE, need to change this
+      if (startStream) {
+        audioElement.load();
+        sourceElement.src = testUrl;
+        console.log(sourceElement.src);
+        audioElement.play().catch(error => {
+          console.error('Error playing audio:', error);
+        });
+      }
 
-  const stopUrl = `${backendUrl}monitor-channels/stop`;
-  const testUrl = `${backendUrl}monitor-channels/start?file=test-1.mp3`;
+      else {
+        audioElement.pause();
+        sourceElement.src = "";
+        try {
+          audioElement.load()
+        } catch (error) {
+          console.log("ignoring empty load error");
+        }
+      }
 
-  const audioElement = audioRef.current;
-
-  // Flip the `isPlaying` state
-  setIsPlaying(!isPlaying);
-
-  // Optionally perform additional logic when the state changes
-  if (!isPlaying) {
-    console.log('Playing...');
-    console.log(testUrl);
-
-    sourceElement.src = testUrl;
-    audioElement.load();
-
-    audioElement.play().catch(error => {
-      console.error('Error playing audio:', error);
-    });
-
-  } else {
-    console.log('Paused...');
-    audioElement.pause();
-    sourceElement.src = stopUrl;
-  }
-};
+    } else {
+      alert(`Channel ${channel} not found!`);
+    }
+  };
 
 
 // Function to render the play/pause button with dynamic styles
-const renderButton = () => {
+const renderButton = (channel) => {
   return (
     <button
-      onClick={handleStateClick}
+      onClick={()=> handleStateClick(channel)}
       style={{
-        backgroundColor: isPlaying ? 'red' : 'green',
+        backgroundColor: channel.id == isPlaying ? 'red' : 'green',
         color: 'white',
         padding: '10px',
         borderRadius: '5px',
         cursor: 'pointer'
       }}
     >
-      {isPlaying ? 'Pause' : 'Play'}
+      {channel.id == isPlaying ? 'Pause' : 'Play'}
     </button>
   );
 };
@@ -417,7 +420,7 @@ const renderButton = () => {
                   style={{
                     position: 'absolute',
                     top: '0',
-                    left: `${channel.strength < 0 ? 0 : channel.strength > 100 ? 100 : channel.strength}%`,
+                    left: `${parseInt(channel.strength) < -50 ? 0 : parseInt(channel.strength) > 40 ? 100 : (parseInt(channel.strength)+50)/90.0*100.0}%`,
                     height: '100%',
                     width: '2px',
                     background: 'black',
@@ -430,7 +433,7 @@ const renderButton = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white border-b border-gray-300">
             <div className="flex items-left justify-center border-r border-gray-300">
               <div style={{ padding: '8px', textAlign: 'center' }}>
-                {renderButton(channel.name)}
+                {renderButton(channel)}
               </div>
             </div>
 
