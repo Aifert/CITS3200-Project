@@ -118,7 +118,7 @@ const DynamicChannels = ({ data, handleStateClick, audioRef, sliderValue }) => {
                   style={{
                     position: 'absolute',
                     top: '0',
-                    left: `${row.strength}%`,
+                    left: `${parseInt(row.strength) < -50 ? 0 : parseInt(row.strength) > 40 ? 100 : (parseInt(row.strength)+50)/90.0*100.0}%`,
                     height: '100%',
                     width: '2px',
                     background: 'black',

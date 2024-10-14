@@ -420,7 +420,7 @@ const renderButton = (channel) => {
                   style={{
                     position: 'absolute',
                     top: '0',
-                    left: `${channel.strength < 0 ? 0 : channel.strength > 100 ? 100 : channel.strength}%`,
+                    left: `${parseInt(channel.strength) < -50 ? 0 : parseInt(channel.strength) > 40 ? 100 : (parseInt(channel.strength)+50)/90.0*100.0}%`,
                     height: '100%',
                     width: '2px',
                     background: 'black',
