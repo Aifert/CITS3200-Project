@@ -100,7 +100,7 @@ const verifyToken = async (req, res, next) => {
     }
   } else {
     const requestedUrl = req.originalUrl;
-    return res.redirect(`${PUBLIC_FRONTEND_URL}login?requestedUrl=${encodeURIComponent(requestedUrl)}&port=${PORT}`);
+    return res.redirect(`${PUBLIC_FRONTEND_URL}/login?requestedUrl=${encodeURIComponent(requestedUrl)}&port=${PORT}`);
   }
 };
 
